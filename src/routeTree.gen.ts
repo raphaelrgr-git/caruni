@@ -17,6 +17,7 @@ import { Route as AppMinhasCaronasRouteImport } from './routes/app.minhas-carona
 import { Route as AppCarteiraRouteImport } from './routes/app.carteira'
 import { Route as AppBuscarRouteImport } from './routes/app.buscar'
 import { Route as AppRotaIdRouteImport } from './routes/app.rota.$id'
+import { Route as AppChatRotaIdRouteImport } from './routes/app.chat.$rotaId'
 
 const AppRoute = AppRouteImport.update({
   id: '/app',
@@ -58,6 +59,11 @@ const AppRotaIdRoute = AppRotaIdRouteImport.update({
   path: '/rota/$id',
   getParentRoute: () => AppRoute,
 } as any)
+const AppChatRotaIdRoute = AppChatRotaIdRouteImport.update({
+  id: '/chat/$rotaId',
+  path: '/chat/$rotaId',
+  getParentRoute: () => AppRoute,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -67,6 +73,7 @@ export interface FileRoutesByFullPath {
   '/app/minhas-caronas': typeof AppMinhasCaronasRoute
   '/app/perfil': typeof AppPerfilRoute
   '/app/': typeof AppIndexRoute
+  '/app/chat/$rotaId': typeof AppChatRotaIdRoute
   '/app/rota/$id': typeof AppRotaIdRoute
 }
 export interface FileRoutesByTo {
@@ -76,6 +83,7 @@ export interface FileRoutesByTo {
   '/app/minhas-caronas': typeof AppMinhasCaronasRoute
   '/app/perfil': typeof AppPerfilRoute
   '/app': typeof AppIndexRoute
+  '/app/chat/$rotaId': typeof AppChatRotaIdRoute
   '/app/rota/$id': typeof AppRotaIdRoute
 }
 export interface FileRoutesById {
@@ -87,6 +95,7 @@ export interface FileRoutesById {
   '/app/minhas-caronas': typeof AppMinhasCaronasRoute
   '/app/perfil': typeof AppPerfilRoute
   '/app/': typeof AppIndexRoute
+  '/app/chat/$rotaId': typeof AppChatRotaIdRoute
   '/app/rota/$id': typeof AppRotaIdRoute
 }
 export interface FileRouteTypes {
@@ -99,6 +108,7 @@ export interface FileRouteTypes {
     | '/app/minhas-caronas'
     | '/app/perfil'
     | '/app/'
+    | '/app/chat/$rotaId'
     | '/app/rota/$id'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -108,6 +118,7 @@ export interface FileRouteTypes {
     | '/app/minhas-caronas'
     | '/app/perfil'
     | '/app'
+    | '/app/chat/$rotaId'
     | '/app/rota/$id'
   id:
     | '__root__'
@@ -118,6 +129,7 @@ export interface FileRouteTypes {
     | '/app/minhas-caronas'
     | '/app/perfil'
     | '/app/'
+    | '/app/chat/$rotaId'
     | '/app/rota/$id'
   fileRoutesById: FileRoutesById
 }
@@ -184,6 +196,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppRotaIdRouteImport
       parentRoute: typeof AppRoute
     }
+    '/app/chat/$rotaId': {
+      id: '/app/chat/$rotaId'
+      path: '/chat/$rotaId'
+      fullPath: '/app/chat/$rotaId'
+      preLoaderRoute: typeof AppChatRotaIdRouteImport
+      parentRoute: typeof AppRoute
+    }
   }
 }
 
@@ -193,6 +212,7 @@ interface AppRouteChildren {
   AppMinhasCaronasRoute: typeof AppMinhasCaronasRoute
   AppPerfilRoute: typeof AppPerfilRoute
   AppIndexRoute: typeof AppIndexRoute
+  AppChatRotaIdRoute: typeof AppChatRotaIdRoute
   AppRotaIdRoute: typeof AppRotaIdRoute
 }
 
@@ -202,6 +222,7 @@ const AppRouteChildren: AppRouteChildren = {
   AppMinhasCaronasRoute: AppMinhasCaronasRoute,
   AppPerfilRoute: AppPerfilRoute,
   AppIndexRoute: AppIndexRoute,
+  AppChatRotaIdRoute: AppChatRotaIdRoute,
   AppRotaIdRoute: AppRotaIdRoute,
 }
 
