@@ -1,6 +1,6 @@
 import * as React from "react";
 import { Link, Outlet, useLocation } from "@tanstack/react-router";
-import { Home, Search, CalendarClock, User, Wallet, MessageCircle, Sun, Moon } from "lucide-react";
+import { Home, Search, CalendarClock, User, Wallet, MessageCircle, Sun, Moon, LogOut } from "lucide-react";
 import { useTheme } from "@/lib/theme";
 import { BrandLogo } from "./Brand";
 import { saldoAtual, formatBRL } from "@/data/mock";
@@ -68,7 +68,13 @@ export function AppShell({ children }: { children?: React.ReactNode }) {
           })}
         </nav>
         <div className="border-t border-border p-3">
-          <div className="flex items-center justify-between">
+          <Link
+            to="/"
+            className="mb-3 flex items-center gap-3 rounded-md px-3 py-2 text-sm text-warn transition-colors hover:bg-warn/10"
+          >
+            <LogOut size={16} /> Sair do App
+          </Link>
+          <div className="flex items-center justify-between px-3">
             <div>
               <div className="label-cockpit">Modo demo</div>
               <div className="text-xs text-muted-foreground">Dados mockados</div>
@@ -83,11 +89,11 @@ export function AppShell({ children }: { children?: React.ReactNode }) {
         <Link to="/" className="text-foreground"><BrandLogo /></Link>
         <div className="flex items-center gap-2">
           <Link
-            to="/app/carteira"
-            className="inline-flex items-center gap-2 rounded-md border border-border bg-surface px-2.5 py-1.5"
+            to="/"
+            className="inline-flex h-9 w-9 items-center justify-center rounded-md border border-border bg-surface text-muted-foreground transition-colors hover:bg-surface-2"
+            aria-label="Sair"
           >
-            <Wallet size={14} className="text-muted-foreground" />
-            <span className="num text-xs font-semibold">{formatBRL(saldoAtual)}</span>
+            <LogOut size={16} />
           </Link>
           <ThemeToggle />
         </div>

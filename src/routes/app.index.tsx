@@ -3,6 +3,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { Clock, Users, ShieldCheck, ArrowRight, MessageCircle, Fuel, TrendingUp, CalendarCheck, AlertCircle, MapPin, Navigation, Search, Car, Info } from "lucide-react";
 import { RouteMap } from "@/components/RouteMap";
 import { Avatar, CnhBadge, PresenceBar, StarRating } from "@/components/Brand";
+import { Drawer } from "vaul";
 import {
   proximaCarona,
   semanaCaronas,
@@ -15,12 +16,6 @@ import {
 } from "@/data/mock";
 
 export const Route = createFileRoute("/app/")({
-  head: () => ({
-    meta: [
-      { title: "CarUni — Início" },
-      { name: "description", content: "Sua próxima carona, ganhos do mês e reputação no painel CarUni." },
-    ],
-  }),
   component: AppHome,
 });
 
@@ -35,219 +30,168 @@ function AppHome() {
   
   const motorista = prox.motorista;
 
+  if (!mounted) return null;
+
   return (
-    <div className="mx-auto max-w-6xl p-5 md:p-8 space-y-8 pb-24 lg:pb-12">
-      {/* HEADER */}
-      <header className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
-        <div>
-          <h1 className="text-2xl font-semibold tracking-tight text-foreground">
-            Bom dia, {eu.nome.split(" ")[0]}
-          </h1>
-          <p className="mt-1 text-sm text-muted-foreground">
-            Aqui está o resumo das suas caronas e ganhos.
-          </p>
-        </div>
-        <Link
-          to="/app/buscar"
-          className="inline-flex items-center gap-2 rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground shadow-sm hover:bg-primary/90 transition-colors"
-        >
-          <Search size={16} /> Buscar Carona
-        </Link>
-      </header>
+    <>
+      {/* FULL SCREEN MAP */}
+      <div className="fixed inset-x-0 bottom-[64px] top-[56px] lg:bottom-0 lg:left-60 lg:top-0 z-0 bg-background">
+        <RouteMap
+          path={prox.rota.caminho}
+          origin={prox.rota.origem.coord}
+          destination={prox.rota.destino.coord}
+          height="100%"
+          className="h-full w-full"
+        />
 
-      {/* MAIN GRID */}
-      <div className="grid gap-6 lg:grid-cols-3">
-        
-        {/* LEFT COLUMN: Próxima Carona & Semana */}
-        <div className="lg:col-span-2 flex flex-col gap-6">
-          
-          {/* Card: Próxima Carona */}
-          <section className="rounded-xl border border-border bg-surface p-5 sm:p-7 shadow-sm">
-            <div className="flex items-start justify-between mb-6">
-              <div>
-                <h2 className="text-lg font-semibold text-foreground">Próxima Carona</h2>
-                <div className="mt-1.5 flex items-center gap-1.5 text-sm text-muted-foreground">
-                  <MapPin size={14} className="text-primary" />
-                  {prox.rota.origem.label.split('·')[0]} → {prox.rota.destino.label.split('·')[0]}
-                </div>
-              </div>
-              <div className="text-right">
-                <p className="num text-2xl font-bold text-foreground sm:text-3xl" suppressHydrationWarning>
-                  {mounted ? formatHora(prox.horario) : "--:--"}
-                </p>
-                <span className="mt-1 inline-flex items-center gap-1 rounded-full bg-warn/15 px-2 py-0.5 text-[11px] font-medium text-warn" suppressHydrationWarning>
-                  <Clock size={11} /> em {mounted ? prox.minutosFaltando : 23} min
-                </span>
-              </div>
-            </div>
-
-            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-5 rounded-lg border border-border bg-background p-4 mb-6">
-              <div className="flex items-center gap-3">
-                <Avatar name={motorista.nome} color={motorista.cor} size={42} iniciais={motorista.iniciais} />
-                <div>
-                  <div className="flex items-center gap-2">
-                    <span className="text-sm font-medium text-foreground">{motorista.nome}</span>
-                    {motorista.cnhVerificada && <CnhBadge />}
-                  </div>
-                  <div className="mt-1 flex items-center gap-3 text-xs text-muted-foreground">
-                    <StarRating value={motorista.avaliacao} />
-                    {motorista.carro && <span className="flex items-center gap-1 num"><Car size={12}/> {motorista.carro.placa}</span>}
-                  </div>
-                </div>
-              </div>
-              
-              <div className="flex items-center gap-6 sm:justify-end border-t border-border pt-4 sm:pt-0 sm:border-0">
-                <div>
-                  <p className="text-[10px] uppercase tracking-wider text-muted-foreground font-semibold">Vagas</p>
-                  <p className="num mt-0.5 text-base font-semibold text-foreground">
-                    {prox.ocupadas}<span className="text-muted-foreground text-sm font-normal">/{prox.rota.vagas}</span>
-                  </p>
-                </div>
-                <div className="h-8 w-px bg-border hidden sm:block"></div>
-                <div>
-                  <p className="text-[10px] uppercase tracking-wider text-muted-foreground font-semibold">Valor Fixo</p>
-                  <p className="num mt-0.5 text-base font-semibold text-primary">{formatBRL(prox.valor)}</p>
-                </div>
-              </div>
-            </div>
-
-            <div className="flex gap-3">
-              <Link
-                to="/app/viagem-ativa"
-                className="flex-1 inline-flex items-center justify-center gap-2 rounded-md bg-primary py-2.5 text-sm font-medium text-primary-foreground hover:bg-primary/90 transition-colors"
-              >
-                <Navigation size={16} /> Iniciar
-              </Link>
-              <Link
-                to="/app/chat/$rotaId"
-                params={{ rotaId: prox.rota.id }}
-                className="flex-1 inline-flex items-center justify-center gap-2 rounded-md border border-border bg-surface py-2.5 text-sm font-medium text-foreground hover:bg-surface-2 transition-colors"
-              >
-                <MessageCircle size={16} /> Chat da Rota
-                <span className="num flex h-4 w-4 items-center justify-center rounded-full bg-primary text-[10px] font-bold text-primary-foreground">2</span>
-              </Link>
-            </div>
-          </section>
-
-          {/* Card: Esta semana */}
-          <section className="rounded-xl border border-border bg-surface p-5 sm:p-7 shadow-sm">
-            <div className="flex items-center justify-between mb-5">
-              <h3 className="text-base font-semibold text-foreground">Sua Semana</h3>
-              <Link to="/app/minhas-caronas" className="text-xs text-primary hover:underline">
-                Ver todas
-              </Link>
-            </div>
-            <div className="grid grid-cols-2 gap-3 sm:grid-cols-5">
-              {semanaCaronas.map((c) => {
-                const isSub = c.status === "substituto";
-                const isFeita = c.status === "feita";
-                const tone = isFeita
-                    ? "border-border text-muted-foreground bg-background"
-                    : isSub
-                    ? "border-warn/30 bg-warn/5 text-warn"
-                    : "border-primary/30 bg-primary/5 text-primary";
-                
-                return (
-                  <div key={c.data} className={`rounded-lg border p-3 ${tone}`}>
-                    <div className="flex items-baseline justify-between mb-2">
-                      <span className="text-[10px] font-medium uppercase">{c.dia}</span>
-                      <span className="num text-[10px] opacity-70">{c.data}</span>
-                    </div>
-                    <div className="flex items-center text-[10px] font-medium">
-                      {isSub ? (
-                        <span className="inline-flex items-center gap-1"><AlertCircle size={12} /> Substituto</span>
-                      ) : isFeita ? (
-                        <span className="inline-flex items-center gap-1"><CalendarCheck size={12} /> Concluída</span>
-                      ) : (
-                        <span className="inline-flex items-center gap-1"><Clock size={12} /> Agendada</span>
-                      )}
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          </section>
-
+        {/* MOBILE TOP OVERLAY */}
+        <div className="absolute top-4 left-4 right-4 z-10 flex items-center justify-between pointer-events-none lg:hidden">
+          <div className="pointer-events-auto rounded-full bg-background/85 px-4 py-2 backdrop-blur-xl shadow-lg border border-border/50">
+            <span className="text-xs font-semibold text-foreground">Pronto, {eu.nome.split(" ")[0]}?</span>
+          </div>
+          <Link to="/app/buscar" className="pointer-events-auto h-10 w-10 flex items-center justify-center rounded-full bg-background/85 backdrop-blur-xl shadow-lg border border-border/50 text-foreground transition-transform hover:scale-105">
+             <Search size={16} />
+          </Link>
         </div>
 
-        {/* RIGHT COLUMN: Map, Reputação, Ganhos */}
-        <aside className="flex flex-col gap-6">
-          
-          {/* Card: Mapa Contido */}
-          <div className="rounded-xl border border-border bg-surface shadow-sm overflow-hidden flex flex-col h-[280px]">
-            <div className="px-4 py-3 border-b border-border bg-surface flex items-center justify-between">
-              <span className="text-sm font-semibold text-foreground">Trajeto Ao Vivo</span>
-              <span className="text-xs text-muted-foreground num">{prox.rota.km} km</span>
-            </div>
-            <div className="flex-1 relative bg-surface-2">
-              <RouteMap
-                path={prox.rota.caminho}
-                origin={prox.rota.origem.coord}
-                destination={prox.rota.destino.coord}
-                height="100%"
-                className="w-full h-full"
-              />
-            </div>
+        {/* DESKTOP SIDE PANEL (Google Maps Web Style) */}
+        <div className="hidden lg:block absolute top-6 left-6 z-20 w-[420px] max-h-[calc(100vh-3rem)] overflow-y-auto rounded-3xl bg-background/95 backdrop-blur-3xl shadow-2xl border border-border/60 pointer-events-auto custom-scrollbar">
+          <div className="p-6">
+            <AppHomeContent prox={prox} motorista={motorista} />
           </div>
-
-          {/* Card: Ganhos */}
-          <div className="rounded-xl border border-border bg-surface p-5 shadow-sm">
-            <div className="flex items-start justify-between">
-              <div>
-                <p className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">Ganhos no Mês</p>
-                <p className="num mt-1 text-2xl font-bold text-foreground">{formatBRL(ganhosMes.total)}</p>
-              </div>
-              <span className="inline-flex items-center gap-1 rounded-full bg-success/10 px-2 py-1 text-[11px] font-medium text-success">
-                <TrendingUp size={12} /> +12%
-              </span>
-            </div>
-            
-            {/* Mini gráfico */}
-            <div className="mt-5 flex items-end gap-2 h-14">
-              {ganhosMes.semanal.map((v, i) => {
-                const max = Math.max(...ganhosMes.semanal);
-                const h = (v / max) * 100;
-                return (
-                  <div key={i} className="flex h-full flex-1 flex-col justify-end gap-1">
-                    <div className="w-full rounded-sm bg-primary/40 transition-all hover:bg-primary" style={{ height: `${h}%` }} />
-                  </div>
-                );
-              })}
-            </div>
-            
-            <div className="mt-4 flex items-center justify-between border-t border-border pt-4">
-              <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
-                <Fuel size={14} className="text-primary" />
-                Gasolina poupada
-              </div>
-              <span className="num text-sm font-semibold text-foreground">{formatBRL(ganhosMes.combustivelRecuperado)}</span>
-            </div>
-          </div>
-
-          {/* Card: Reputação */}
-          <div className="rounded-xl border border-border bg-surface p-5 shadow-sm flex flex-col gap-4">
-            <div>
-              <div className="flex items-center justify-between mb-1.5">
-                <span className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">Presença</span>
-                <span className="num text-xs font-bold text-foreground">{eu.presenca}%</span>
-              </div>
-              <PresenceBar value={eu.presenca} label={false} />
-            </div>
-            
-            <div>
-              <div className="flex items-center justify-between mb-1.5">
-                <span className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">Avaliação</span>
-                <StarRating value={eu.avaliacao} />
-              </div>
-              <div className="relative h-1.5 overflow-hidden rounded-full bg-surface-2">
-                <div className="h-full bg-warn" style={{ width: `${(eu.avaliacao / 5) * 100}%` }} />
-              </div>
-            </div>
-          </div>
-
-        </aside>
-
+        </div>
       </div>
+
+      {/* MOBILE BOTTOM SHEET (Uber Style) */}
+      <div className="lg:hidden">
+        <Drawer.Root open={true} dismissible={false} modal={false} snapPoints={[0.33, 0.85]}>
+          <Drawer.Overlay className="fixed inset-0 z-10 bg-transparent pointer-events-none" />
+          <Drawer.Content className="fixed bottom-[64px] left-0 right-0 z-20 flex h-full max-h-[90vh] flex-col rounded-t-3xl bg-background/95 backdrop-blur-3xl shadow-[0_-15px_40px_rgba(0,0,0,0.15)] border border-border/50 outline-none">
+            <div className="mx-auto mt-3 h-1.5 w-12 flex-shrink-0 rounded-full bg-foreground/15" />
+            <div className="flex-1 overflow-y-auto p-5 custom-scrollbar pb-10">
+              <AppHomeContent prox={prox} motorista={motorista} />
+            </div>
+          </Drawer.Content>
+        </Drawer.Root>
+      </div>
+    </>
+  );
+}
+
+// CONTEÚDO REUTILIZÁVEL (Painel Desktop ou Gaveta Mobile)
+function AppHomeContent({ prox, motorista }: { prox: any, motorista: any }) {
+  return (
+    <div className="space-y-6">
+      
+      {/* Próxima Carona Hero */}
+      <section>
+        <div className="flex flex-col gap-1 mb-4">
+          <div className="flex items-center justify-between">
+            <span className="inline-flex items-center gap-1.5 rounded-full bg-primary/10 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-primary">
+              <span className="h-1.5 w-1.5 rounded-full bg-primary pulse-ring" />
+              Sua Carona
+            </span>
+            <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-warn">
+              <Clock size={12} /> {prox.minutosFaltando} min
+            </span>
+          </div>
+          <h2 className="text-xl font-bold text-foreground leading-tight mt-1">{prox.rota.nome}</h2>
+          <p className="text-xs text-muted-foreground">{prox.rota.origem.label.split('·')[0]} → {prox.rota.destino.label.split('·')[0]}</p>
+        </div>
+
+        {/* Info Motorista & Vagas */}
+        <div className="flex flex-col gap-4 rounded-2xl border border-border/60 bg-surface/50 p-4 shadow-sm">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <Avatar name={motorista.nome} color={motorista.cor} size={42} iniciais={motorista.iniciais} />
+              <div>
+                <div className="flex items-center gap-2">
+                  <span className="text-sm font-semibold text-foreground">{motorista.nome}</span>
+                  {motorista.cnhVerificada && <CnhBadge />}
+                </div>
+                <div className="mt-0.5 flex items-center gap-2 text-[11px] text-muted-foreground">
+                  <StarRating value={motorista.avaliacao} />
+                  <span>·</span>
+                  {motorista.carro && <span className="flex items-center gap-1 num"><Car size={12}/> {motorista.carro.placa}</span>}
+                </div>
+              </div>
+            </div>
+          </div>
+          
+          <div className="flex items-center justify-between border-t border-border/50 pt-3">
+            <div>
+              <p className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Vagas ocupadas</p>
+              <p className="num mt-0.5 text-base font-bold text-foreground">
+                {prox.ocupadas}<span className="text-muted-foreground text-sm font-medium">/{prox.rota.vagas}</span>
+              </p>
+            </div>
+            <div className="text-right">
+              <p className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Valor Fixo</p>
+              <p className="num mt-0.5 text-lg font-bold text-primary">{formatBRL(prox.valor)}</p>
+            </div>
+          </div>
+        </div>
+
+        {/* Ações Rápidas */}
+        <div className="mt-4 flex gap-3">
+          <Link
+            to="/app/viagem-ativa"
+            className="flex-1 flex items-center justify-center gap-2 rounded-xl bg-foreground py-3 text-sm font-bold text-background shadow-md hover:bg-foreground/90 transition-transform active:scale-95"
+          >
+            <Navigation size={18} /> Iniciar
+          </Link>
+          <Link
+            to="/app/chat/$rotaId"
+            params={{ rotaId: prox.rota.id }}
+            className="flex-1 flex items-center justify-center gap-2 rounded-xl border border-border bg-surface py-3 text-sm font-bold text-foreground shadow-sm hover:bg-surface-2 transition-transform active:scale-95"
+          >
+            <MessageCircle size={18} /> Chat <span className="num flex h-4 w-4 items-center justify-center rounded-full bg-primary text-[10px] text-primary-foreground">2</span>
+          </Link>
+        </div>
+      </section>
+
+      {/* Mini Resumo da Semana */}
+      <section className="pt-4 border-t border-border/50">
+        <div className="flex items-center justify-between mb-3">
+          <h3 className="text-[13px] font-bold text-foreground">Sua Semana</h3>
+          <Link to="/app/minhas-caronas" className="text-[11px] font-medium text-primary hover:underline">Ver todas</Link>
+        </div>
+        <div className="grid grid-cols-5 gap-2">
+          {semanaCaronas.map((c) => {
+            const isSub = c.status === "substituto";
+            const isFeita = c.status === "feita";
+            const tone = isFeita
+                ? "border-border/60 text-muted-foreground bg-transparent"
+                : isSub
+                ? "border-warn/40 bg-warn/10 text-warn"
+                : "border-primary/40 bg-primary/10 text-primary";
+            
+            return (
+              <div key={c.data} className={`flex flex-col items-center justify-center rounded-lg border py-2 ${tone}`}>
+                <span className="text-[9px] font-bold uppercase tracking-wide">{c.dia}</span>
+                <span className="num text-[10px] mt-0.5 opacity-80">{c.data}</span>
+              </div>
+            );
+          })}
+        </div>
+      </section>
+
+      {/* Mini Resumo Ganhos (se for motorista da rota, senão oculta ou mostra gasto) */}
+      <section className="pt-4 border-t border-border/50">
+        <div className="flex items-center justify-between rounded-xl border border-border/50 bg-surface/30 p-4">
+          <div>
+            <p className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Ganhos em Abril</p>
+            <p className="num mt-0.5 text-xl font-bold text-foreground">{formatBRL(ganhosMes.total)}</p>
+          </div>
+          <div className="text-right">
+             <span className="inline-flex items-center gap-1 rounded-full bg-success/15 px-2 py-1 text-[10px] font-bold text-success">
+              <TrendingUp size={12} /> +12%
+            </span>
+            <p className="text-[9px] text-muted-foreground mt-1 text-right">vs último mês</p>
+          </div>
+        </div>
+      </section>
+
     </div>
   );
 }

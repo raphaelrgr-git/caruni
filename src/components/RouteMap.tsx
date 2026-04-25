@@ -164,7 +164,17 @@ export function RouteMap({
       }
     };
     void run();
-  }, [ready, theme, path, origin, destination, stops, carPosition, fit]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [
+    ready,
+    theme,
+    fit,
+    JSON.stringify(path),
+    JSON.stringify(origin),
+    JSON.stringify(destination),
+    JSON.stringify(stops),
+    JSON.stringify(carPosition),
+  ]);
 
   return (
     <div
