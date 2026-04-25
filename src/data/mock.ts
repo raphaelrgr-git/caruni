@@ -226,21 +226,21 @@ export function calcDivisao(rota: Rota, ocupadas: number) {
 }
 
 // ---------- Carteira ----------
-export const saldoAtual = 87.4;
+export const saldoAtual = 42.80;
 
 export const transacoes: Transacao[] = [
-  { id: "t1", tipo: "carona", descricao: "Centro → UNICAMP · Lucas A.", valor: -6.30, data: hojeMenos(0, 8), rotaId: "r1" },
-  { id: "t2", tipo: "carona", descricao: "UNICAMP → Centro · Lucas A.", valor: -6.30, data: hojeMenos(0, 18), rotaId: "r1" },
-  { id: "t3", tipo: "recarga", descricao: "Recarga via Pix", valor: 50.00, data: hojeMenos(2, 12) },
-  { id: "t4", tipo: "carona", descricao: "Centro → UNICAMP · Lucas A.", valor: -6.30, data: hojeMenos(1, 8), rotaId: "r1" },
-  { id: "t5", tipo: "penalizacao", descricao: "Falta sem aviso · qua 17/04", valor: -3.00, data: hojeMenos(3, 9) },
-  { id: "t6", tipo: "repasse", descricao: "Repasse semanal · 4 caronas", valor: 28.40, data: hojeMenos(4, 20) },
-  { id: "t7", tipo: "carona", descricao: "Centro → UNICAMP · Lucas A.", valor: -6.30, data: hojeMenos(5, 8), rotaId: "r1" },
-  { id: "t8", tipo: "recarga", descricao: "Recarga via Pix", valor: 30.00, data: hojeMenos(7, 11) },
-  { id: "t9", tipo: "carona", descricao: "Pinheiros → USP · Marina C.", valor: -5.00, data: hojeMenos(8, 7), rotaId: "r2" },
-  { id: "t10", tipo: "carona", descricao: "Centro → UNICAMP · Lucas A.", valor: -6.30, data: hojeMenos(9, 8), rotaId: "r1" },
-  { id: "t11", tipo: "carona", descricao: "Centro → UNICAMP · Lucas A.", valor: -6.30, data: hojeMenos(10, 8), rotaId: "r1" },
-  { id: "t12", tipo: "carona", descricao: "Centro → UNICAMP · Lucas A.", valor: -6.30, data: hojeMenos(12, 8), rotaId: "r1" },
+  { id: "t1", tipo: "carona", descricao: "Centro → UDESC · Lucas A.", valor: -3.50, data: hojeMenos(0, 8), rotaId: "r1" },
+  { id: "t2", tipo: "carona", descricao: "UDESC → Centro · Lucas A.", valor: -3.50, data: hojeMenos(0, 18), rotaId: "r1" },
+  { id: "t3", tipo: "recarga", descricao: "Recarga via Pix", valor: 30.00, data: hojeMenos(2, 12) },
+  { id: "t4", tipo: "carona", descricao: "Centro → UDESC · Lucas A.", valor: -3.50, data: hojeMenos(1, 8), rotaId: "r1" },
+  { id: "t5", tipo: "penalizacao", descricao: "Falta sem aviso · qua 17/04", valor: -2.00, data: hojeMenos(3, 9) },
+  { id: "t6", tipo: "repasse", descricao: "Repasse semanal · 4 caronas", valor: 14.20, data: hojeMenos(4, 20) },
+  { id: "t7", tipo: "carona", descricao: "Centro → UDESC · Lucas A.", valor: -3.50, data: hojeMenos(5, 8), rotaId: "r1" },
+  { id: "t8", tipo: "recarga", descricao: "Recarga via Pix", valor: 20.00, data: hojeMenos(7, 11) },
+  { id: "t9", tipo: "carona", descricao: "América → UNIVILLE · Marina C.", valor: -3.85, data: hojeMenos(8, 7), rotaId: "r2" },
+  { id: "t10", tipo: "carona", descricao: "Centro → UDESC · Lucas A.", valor: -3.50, data: hojeMenos(9, 8), rotaId: "r1" },
+  { id: "t11", tipo: "carona", descricao: "Centro → UDESC · Lucas A.", valor: -3.50, data: hojeMenos(10, 8), rotaId: "r1" },
+  { id: "t12", tipo: "carona", descricao: "Centro → UDESC · Lucas A.", valor: -3.50, data: hojeMenos(12, 8), rotaId: "r1" },
 ];
 
 function hojeMenos(dias: number, hora: number) {
@@ -251,12 +251,13 @@ function hojeMenos(dias: number, hora: number) {
 }
 
 // ---------- Ganhos (motorista) ----------
+// Realista para Joinville: ~R$3,50/passageiro × 3 pass × 2 trechos × 22 dias úteis ≈ R$ 462
 export const ganhosMes = {
-  total: 612.40,
-  combustivelRecuperado: 287.00,
-  caronasFeitas: 38,
-  semanal: [128, 156, 142, 186],
-  vsUberComum: 412.0, // economia que passageiros tiveram total
+  total: 462.00,
+  combustivelRecuperado: 218.00,
+  caronasFeitas: 44,
+  semanal: [98, 124, 110, 130],
+  vsUberComum: 364.0, // economia total que passageiros tiveram no mês
 };
 
 // ---------- Próxima carona (sempre 23min no futuro) ----------
@@ -276,29 +277,29 @@ export function proximaCarona() {
 
 // ---------- Semana ----------
 export const semanaCaronas = [
-  { dia: "Seg", data: "21/04", rotaId: "r1", status: "feita" as const, valor: 6.30 },
-  { dia: "Ter", data: "22/04", rotaId: "r1", status: "feita" as const, valor: 6.30 },
-  { dia: "Qua", data: "23/04", rotaId: "r1", status: "substituto" as const, valor: 6.30 },
-  { dia: "Qui", data: "24/04", rotaId: "r1", status: "agendada" as const, valor: 6.30 },
-  { dia: "Sex", data: "25/04", rotaId: "r1", status: "agendada" as const, valor: 6.30 },
+  { dia: "Seg", data: "21/04", rotaId: "r1", status: "feita" as const, valor: 3.50 },
+  { dia: "Ter", data: "22/04", rotaId: "r1", status: "feita" as const, valor: 3.50 },
+  { dia: "Qua", data: "23/04", rotaId: "r1", status: "substituto" as const, valor: 3.50 },
+  { dia: "Qui", data: "24/04", rotaId: "r1", status: "agendada" as const, valor: 3.50 },
+  { dia: "Sex", data: "25/04", rotaId: "r1", status: "agendada" as const, valor: 3.50 },
 ];
 
 // ---------- Chat ----------
 export const mensagens: ChatMsg[] = [
-  { id: "m1", rotaId: "r1", autorId: "u2", texto: "Bom dia, galera. Saindo em 5 min do Cambuí.", ts: hojeMenos(0, 7) },
-  { id: "m2", rotaId: "r1", autorId: "u5", texto: "Tô descendo pra te encontrar.", ts: hojeMenos(0, 7) },
+  { id: "m1", rotaId: "r1", autorId: "u2", texto: "Bom dia, galera. Saindo em 5 min do Centro.", ts: hojeMenos(0, 7) },
+  { id: "m2", rotaId: "r1", autorId: "u5", texto: "Tô descendo pra te encontrar na Nereu Ramos.", ts: hojeMenos(0, 7) },
   { id: "m3", rotaId: "r1", autorId: "sistema", texto: "Carona iniciada · Lucas Andrade no comando", ts: hojeMenos(0, 7) },
-  { id: "m4", rotaId: "r1", autorId: "u6", texto: "Trânsito feio na Norte-Sul hj.", ts: hojeMenos(0, 7) },
-  { id: "m5", rotaId: "r1", autorId: "u2", texto: "Tô indo pelo D. Pedro, melhor.", ts: hojeMenos(0, 8) },
-  { id: "m6", rotaId: "r1", autorId: "sistema", texto: "Chegada confirmada na UNICAMP · 8h31", ts: hojeMenos(0, 8) },
+  { id: "m4", rotaId: "r1", autorId: "u6", texto: "Trânsito feio na Beira Rio hj.", ts: hojeMenos(0, 7) },
+  { id: "m5", rotaId: "r1", autorId: "u2", texto: "Vou pela Visconde de Taunay, melhor.", ts: hojeMenos(0, 8) },
+  { id: "m6", rotaId: "r1", autorId: "sistema", texto: "Chegada confirmada na UDESC · 7h54", ts: hojeMenos(0, 8) },
   { id: "m7", rotaId: "r1", autorId: "u1", texto: "Valeu, Lucas! Amanhã o mesmo horário?", ts: hojeMenos(0, 9) },
-  { id: "m8", rotaId: "r1", autorId: "u2", texto: "Mesma coisa. 7h42 na esquina.", ts: hojeMenos(0, 9) },
+  { id: "m8", rotaId: "r1", autorId: "u2", texto: "Mesma coisa. 7h30 na praça.", ts: hojeMenos(0, 9) },
 ];
 
 export const contatoEmergencia = {
   nome: "Maria Souza",
   relacao: "Mãe",
-  telefone: "(19) 9****-1234",
+  telefone: "(47) 9****-1234",
 };
 
 export const diasSemanaLabels = ["Dom", "Seg", "Ter", "Qua", "Qui", "Sex", "Sáb"];
