@@ -1,5 +1,6 @@
-import { createFileRoute, Outlet } from "@tanstack/react-router";
+import { createFileRoute, Outlet, redirect } from "@tanstack/react-router";
 import { AppShell } from "@/components/AppShell";
+import { getMe } from "@/lib/api";
 
 export const Route = createFileRoute("/app")({
   head: () => ({
@@ -8,6 +9,13 @@ export const Route = createFileRoute("/app")({
       { name: "description", content: "Painel CarUni: próximas caronas, busca de rotas, carteira e perfil." },
     ],
   }),
+  beforeLoad: async () => {
+    try {
+      await getMe();
+    } catch {
+      throw redirect({ to: "/login" });
+    }
+  },
   component: () => (
     <AppShell>
       <Outlet />
