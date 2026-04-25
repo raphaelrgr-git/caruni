@@ -1,228 +1,325 @@
 import * as React from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { ArrowRight, ShieldCheck, Repeat, Users, MessageCircle, Zap, Wallet, Car, Phone, BadgeCheck } from "lucide-react";
-import { BrandLogo, BrandMark, CnhBadge, Avatar, PresenceBar, StarRating } from "@/components/Brand";
+import {
+  ArrowRight,
+  Bus,
+  Car,
+  CheckCircle2,
+  Clock3,
+  MapPinned,
+  Moon,
+  ShieldCheck,
+  Sparkles,
+  Sun,
+  Users,
+  WalletCards,
+} from "lucide-react";
+import { BrandLogo } from "@/components/Brand";
+import { RouteMap } from "@/components/RouteMap";
 import { useTheme } from "@/lib/theme";
-import { Sun, Moon } from "lucide-react";
-import { ganhosMes, formatBRL, calcDivisao, rotas } from "@/data/mock";
+
+const plans = [
+  {
+    name: "Calouro",
+    price: "R$20/semana",
+    trips: "5 viagens",
+    unit: "R$4 por trajeto",
+    extra: "Extra: R$5",
+    emphasis: "Resolve a semana curta sem depender de ônibus lotado.",
+    recommended: false,
+  },
+  {
+    name: "Veterano",
+    price: "R$35/semana",
+    trips: "10 viagens",
+    unit: "R$3,50 por trajeto",
+    extra: "Extra: R$4",
+    emphasis: "Prioridade em rotas cheias e rotina garantida de segunda a sexta.",
+    recommended: true,
+  },
+] as const;
+
+const comparison = [
+  {
+    label: "Preço médio por trajeto",
+    caruni: "R$3,50 a R$4",
+    bus: "R$6,50",
+    uber: "R$18 a R$35",
+    own: "R$12 a R$20 + estacionamento",
+  },
+  {
+    label: "Previsibilidade",
+    caruni: "Alta",
+    bus: "Média",
+    uber: "Média",
+    own: "Alta",
+  },
+  {
+    label: "Rota fixa para universidade",
+    caruni: "Sim",
+    bus: "Parcial",
+    uber: "Não",
+    own: "Sim",
+  },
+  {
+    label: "Flexibilidade",
+    caruni: "Recorrente + avulso",
+    bus: "Baixa",
+    uber: "Alta",
+    own: "Alta",
+  },
+  {
+    label: "Emissão de carbono",
+    caruni: "Baixa por pessoa",
+    bus: "Média",
+    uber: "Alta",
+    own: "Alta",
+  },
+  {
+    label: "Socialização e networking",
+    caruni: "Alta",
+    bus: "Baixa",
+    uber: "Quase nula",
+    own: "Nula",
+  },
+  {
+    label: "Desvantagens",
+    caruni: "Precisa aderir à rotina",
+    bus: "Demora e lotação",
+    uber: "Preço instável",
+    own: "Custo total alto",
+  },
+] as const;
+
+const mapPath: [number, number][] = [
+  [-26.3045, -48.8487],
+  [-26.3026, -48.8533],
+  [-26.3008, -48.8579],
+  [-26.2985, -48.8636],
+  [-26.2958, -48.8704],
+  [-26.2906, -48.8793],
+];
 
 export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
-      { title: "CarUni — Carona recorrente pra quem faz a mesma rota todo dia" },
-      { name: "description", content: "Substitui o grupo de WhatsApp caótico: rotas fixas, débito automático, motorista verificado e substituição garantida." },
-      { property: "og:title", content: "CarUni — Carona recorrente confiável" },
-      { property: "og:description", content: "A carona universitária e de trabalho organizada de verdade." },
+      { title: "CarUni — Rotina universitária previsível sem pagar Uber todo dia" },
+      {
+        name: "description",
+        content:
+          "Planos semanais de carona universitária, rota real no mapa, economia contra ônibus e Uber/99 e uma rede confiável para quem chegou agora na cidade.",
+      },
     ],
   }),
   component: Landing,
 });
 
-function Counter({ to, prefix = "", suffix = "" }: { to: number; prefix?: string; suffix?: string }) {
-  const [v, setV] = React.useState(0);
-  React.useEffect(() => {
-    const start = performance.now();
-    const dur = 1400;
-    const tick = (t: number) => {
-      const p = Math.min(1, (t - start) / dur);
-      const eased = 1 - Math.pow(1 - p, 3);
-      setV(to * eased);
-      if (p < 1) requestAnimationFrame(tick);
-    };
-    requestAnimationFrame(tick);
-  }, [to]);
-  return <span>{prefix}{Math.round(v).toLocaleString("pt-BR")}{suffix}</span>;
-}
-
 function ThemeToggleLanding() {
   const { theme, toggle } = useTheme();
   return (
-    <button onClick={toggle} className="inline-flex h-9 w-9 items-center justify-center rounded-md border border-border bg-surface text-foreground hover:bg-surface-2" aria-label="Alternar tema">
+    <button
+      onClick={toggle}
+      className="inline-flex h-9 w-9 items-center justify-center rounded-md border border-border bg-surface text-foreground hover:bg-surface-2"
+      aria-label="Alternar tema"
+    >
       {theme === "dark" ? <Sun size={16} /> : <Moon size={16} />}
     </button>
   );
 }
 
 function Landing() {
-  const r = rotas[0];
-  const div = calcDivisao(r, 4);
-
   return (
     <div className="min-h-screen bg-background text-foreground">
-      {/* NAV */}
-      <header className="sticky top-0 z-30 border-b border-border bg-background/85 backdrop-blur">
+      <header className="sticky top-0 z-30 border-b border-border bg-background/90 backdrop-blur">
         <div className="mx-auto flex max-w-6xl items-center justify-between px-5 py-3">
-          <Link to="/" className="text-foreground"><BrandLogo /></Link>
-          <nav className="hidden items-center gap-7 text-sm text-muted-foreground md:flex">
-            <a href="#como" className="hover:text-foreground">Como funciona</a>
-            <a href="#motorista" className="hover:text-foreground">Pra motoristas</a>
-            <a href="#diferenciais" className="hover:text-foreground">Diferenciais</a>
-            <a href="#comparativo" className="hover:text-foreground">vs WhatsApp</a>
+          <Link to="/" className="text-foreground">
+            <BrandLogo />
+          </Link>
+          <nav className="hidden items-center gap-6 text-sm text-muted-foreground md:flex">
+            <a href="#planos" className="hover:text-foreground">
+              Planos
+            </a>
+            <a href="#comparativo" className="hover:text-foreground">
+              Comparativo
+            </a>
+            <a href="#impacto" className="hover:text-foreground">
+              Impacto
+            </a>
           </nav>
           <div className="flex items-center gap-2">
             <ThemeToggleLanding />
-            <Link to="/app" className="inline-flex items-center gap-1.5 rounded-md bg-primary px-3.5 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90">
-              Entrar no app <ArrowRight size={14} />
+            <Link
+              to="/app"
+              className="inline-flex items-center gap-1.5 rounded-md bg-primary px-3.5 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90"
+            >
+              Abrir app <ArrowRight size={14} />
             </Link>
           </div>
         </div>
       </header>
 
-      {/* HERO */}
-      <section className="relative overflow-hidden border-b border-border">
-        <BackgroundMap />
-        <div className="relative mx-auto grid max-w-6xl gap-10 px-5 py-16 md:py-24 lg:grid-cols-[1.1fr_1fr] lg:gap-12">
-          <div>
-            <div className="mb-4 inline-flex items-center gap-2 rounded-full border border-border bg-surface px-3 py-1 text-xs text-muted-foreground">
+      <section className="border-b border-border">
+        <div className="mx-auto grid max-w-6xl gap-10 px-5 py-14 md:py-18 lg:grid-cols-[1.1fr_0.9fr]">
+          <div className="py-2">
+            <div className="inline-flex items-center gap-2 rounded-full border border-border bg-surface px-3 py-1 text-xs text-muted-foreground">
               <span className="h-1.5 w-1.5 rounded-full bg-primary pulse-ring" />
-              87 rotas ativas agora em Joinville · SC
+              Joinville · rotas recorrentes para universidade
             </div>
-            <h1 className="text-balance text-4xl font-semibold leading-[1.05] tracking-tight md:text-6xl">
-              A carona que <span className="italic">já era sua</span>,<br />
-              agora <span className="text-primary">confiável</span>.
+            <h1 className="mt-5 max-w-3xl text-4xl font-semibold leading-[1.02] tracking-tight md:text-6xl">
+              Pare de perder tempo com grupo caótico, ônibus imprevisível e Uber caro todo dia.
             </h1>
-            <p className="mt-5 max-w-xl text-base leading-relaxed text-muted-foreground md:text-lg">
-              CarUni transforma o caos do grupo de WhatsApp em assinatura de deslocamento: rota fixa, débito automático, motorista verificado e substituição garantida quando alguém cancela.
+            <p className="mt-5 max-w-2xl text-base leading-relaxed text-muted-foreground md:text-lg">
+              O CarUni vende rotina previsível. Você escolhe um plano semanal, entra em uma rota
+              recorrente real, trava seus créditos e acompanha no mapa o trajeto que vai fazer de
+              fato até a universidade.
             </p>
             <div className="mt-8 flex flex-col gap-3 sm:flex-row">
-              <Link to="/app" className="group inline-flex items-center justify-center gap-2 rounded-md bg-primary px-5 py-3 text-sm font-semibold text-primary-foreground hover:bg-primary/90">
-                Quero pegar carona
-                <ArrowRight size={16} className="transition-transform group-hover:translate-x-0.5" />
+              <Link
+                to="/app"
+                className="inline-flex items-center justify-center gap-2 rounded-md bg-primary px-5 py-3 text-sm font-semibold text-primary-foreground hover:bg-primary/90"
+              >
+                Quero garantir meus trajetos
+                <ArrowRight size={16} />
               </Link>
-              <Link to="/app" className="inline-flex items-center justify-center gap-2 rounded-md border border-border bg-surface px-5 py-3 text-sm font-semibold text-foreground hover:bg-surface-2">
-                Quero oferecer carona
+              <Link
+                to="/app/criar-rota"
+                className="inline-flex items-center justify-center gap-2 rounded-md border border-border bg-surface px-5 py-3 text-sm font-semibold text-foreground hover:bg-surface-2"
+              >
+                Quero oferecer rota
               </Link>
             </div>
 
-            <dl className="mt-10 grid grid-cols-3 gap-3 border-t border-border pt-6 text-sm">
-              <div>
-                <dt className="label-cockpit">Universitários</dt>
-                <dd className="num mt-1 text-2xl font-semibold"><Counter to={1842} /></dd>
-              </div>
-              <div>
-                <dt className="label-cockpit">Rotas ativas</dt>
-                <dd className="num mt-1 text-2xl font-semibold"><Counter to={312} /></dd>
-              </div>
-              <div>
-                <dt className="label-cockpit">Presença média</dt>
-                <dd className="num mt-1 text-2xl font-semibold"><Counter to={94} suffix="%" /></dd>
-              </div>
-            </dl>
+            <div className="mt-8 grid gap-3 sm:grid-cols-3">
+              <Metric
+                icon={<WalletCards size={15} />}
+                label="Economia semanal"
+                value="até R$145"
+                sub="vs Uber/99 em 10 trajetos"
+              />
+              <Metric
+                icon={<Clock3 size={15} />}
+                label="Rotina"
+                value="2 cliques"
+                sub="para reservar a semana"
+              />
+              <Metric
+                icon={<ShieldCheck size={15} />}
+                label="Confiança"
+                value="Histórico real"
+                sub="avaliação, presença e cancelamentos"
+              />
+            </div>
           </div>
 
-          {/* App mockup card */}
-          <div className="relative">
-            <PhoneMockup />
-          </div>
-        </div>
-      </section>
-
-      {/* COMO FUNCIONA */}
-      <section id="como" className="border-b border-border">
-        <div className="mx-auto max-w-6xl px-5 py-20">
-          <div className="mb-12 max-w-2xl">
-            <div className="label-cockpit mb-2">Como funciona</div>
-            <h2 className="text-3xl font-semibold tracking-tight md:text-4xl">Três passos. Depois, ela acontece sozinha.</h2>
-          </div>
-          <div className="grid gap-px overflow-hidden rounded-xl border border-border bg-border md:grid-cols-3">
-            {[
-              { n: "01", t: "Cadastra a rota", d: "Motorista publica trajeto, dias e horário. Passageiro busca quem faz exatamente o caminho dele.", icon: Repeat },
-              { n: "02", t: "Entra na vaga fixa", d: "Você se inscreve na rota recorrente. Vira sua assinatura de deslocamento, igual academia.", icon: BadgeCheck },
-              { n: "03", t: "Débito automático", d: "Ao final de cada viagem, o valor é debitado do seu saldo. Sem combinar dinheiro toda vez.", icon: Wallet },
-            ].map(({ n, t, d, icon: Icon }) => (
-              <div key={n} className="bg-background p-7">
-                <div className="flex items-baseline justify-between">
-                  <span className="num text-xs text-muted-foreground">{n}</span>
-                  <Icon size={18} className="text-primary" />
+          <div className="grid gap-4">
+            <div className="overflow-hidden rounded-xl border border-border bg-surface">
+              <RouteMap
+                path={mapPath}
+                origin={mapPath[0]}
+                destination={mapPath[mapPath.length - 1]}
+                height={280}
+                interactive={false}
+              />
+              <div className="grid gap-4 border-t border-border p-5 sm:grid-cols-2">
+                <div>
+                  <p className="label-cockpit text-[10px] text-muted-foreground">Plano ativo</p>
+                  <p className="mt-1 text-lg font-semibold text-foreground">Veterano</p>
+                  <p className="mt-1 text-sm text-muted-foreground">
+                    10 viagens garantidas, prioridade em rota cheia e extra a R$4.
+                  </p>
                 </div>
-                <h3 className="mt-6 text-lg font-semibold">{t}</h3>
-                <p className="mt-2 text-sm leading-relaxed text-muted-foreground">{d}</p>
+                <div>
+                  <p className="label-cockpit text-[10px] text-muted-foreground">
+                    Economia acumulada
+                  </p>
+                  <p className="mt-1 text-lg font-semibold text-primary">R$98 vs ônibus</p>
+                  <p className="mt-1 text-sm text-muted-foreground">R$214 vs Uber/99 no mês</p>
+                </div>
               </div>
-            ))}
+            </div>
+
+            <div className="grid gap-3 sm:grid-cols-2">
+              <FeatureTile
+                icon={<MapPinned size={16} />}
+                title="Rota real"
+                body="Nada de linha sintética. O trajeto é calculado por API de navegação e salvo com distância e duração reais."
+              />
+              <FeatureTile
+                icon={<Users size={16} />}
+                title="Rede da universidade"
+                body="Você entra numa rotina com gente do mesmo campus e reduz o isolamento de quem acabou de chegar na cidade."
+              />
+            </div>
           </div>
         </div>
       </section>
 
-      {/* MOTORISTA */}
-      <section id="motorista" className="border-b border-border bg-surface">
-        <div className="mx-auto grid max-w-6xl gap-10 px-5 py-20 lg:grid-cols-[1fr_1.1fr]">
-          <div>
-            <div className="label-cockpit mb-2">Pra motoristas</div>
+      <section id="planos" className="border-b border-border bg-surface">
+        <div className="mx-auto max-w-6xl px-5 py-18">
+          <div className="max-w-2xl">
+            <div className="label-cockpit mb-2">Planos semanais</div>
             <h2 className="text-3xl font-semibold tracking-tight md:text-4xl">
-              Recupere até<br />
-              <span className="num text-primary text-6xl md:text-7xl"><Counter prefix="R$ " to={462} /></span>/mês<br />
-              em combustível.
+              O produto não vende viagem solta. Vende semana organizada.
             </h2>
-            <p className="mt-5 max-w-md text-muted-foreground">
-              Você ia fazer essa rota de qualquer jeito. CarUni divide o custo do tanque entre quem vai com você. Quanto mais cheio o carro, mais você ganha.
-            </p>
-            <div className="mt-8 flex flex-wrap gap-3 text-xs">
-              <span className="rounded-md border border-border bg-background px-2.5 py-1.5">Sem assinar app</span>
-              <span className="rounded-md border border-border bg-background px-2.5 py-1.5">Repasse semanal via Pix</span>
-              <span className="rounded-md border border-border bg-background px-2.5 py-1.5">Você define o trajeto</span>
-            </div>
           </div>
-          <CalculadoraDivisao base={r.precoBase} vagas={r.vagas} />
-        </div>
-      </section>
-
-      {/* DIFERENCIAIS */}
-      <section id="diferenciais" className="border-b border-border">
-        <div className="mx-auto max-w-6xl px-5 py-20">
-          <div className="mb-10 flex items-end justify-between">
-            <div>
-              <div className="label-cockpit mb-2">Diferenciais</div>
-              <h2 className="text-3xl font-semibold tracking-tight md:text-4xl">O que não tem em lugar nenhum.</h2>
-            </div>
-          </div>
-          <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-3">
-            {[
-              { i: ShieldCheck, t: "CNH verificada", d: "Documento validado manualmente. Selo aparece em todo motorista. Você sabe com quem está entrando." },
-              { i: Zap, t: "Substituição automática", d: "Motorista cancelou? O app já busca outro na mesma rota e horário e te avisa quando achar." },
-              { i: Users, t: "Divisão por vagas", d: "Quanto mais passageiros, menor o valor por pessoa e maior o ganho do motorista. Calculado em tempo real." },
-              { i: BadgeCheck, t: "Reputação de presença", d: "Porcentagem de presença separada da nota de qualidade. Pressão social positiva, sem punir." },
-              { i: MessageCircle, t: "Chat por rota", d: "Mini grupo só com quem faz seu trajeto. Texto, simples, sem ruído." },
-              { i: Phone, t: "SOS durante viagem", d: "Botão discreto. Segura por 1.5s e seu contato de emergência recebe sua localização no WhatsApp." },
-            ].map(({ i: Icon, t, d }) => (
-              <article key={t} className="rounded-xl border border-border bg-surface p-5 transition-colors hover:bg-surface-2">
-                <Icon size={18} className="text-primary" />
-                <h3 className="mt-4 text-base font-semibold">{t}</h3>
-                <p className="mt-1.5 text-sm leading-relaxed text-muted-foreground">{d}</p>
+          <div className="mt-8 grid gap-4 lg:grid-cols-2">
+            {plans.map((plan) => (
+              <article
+                key={plan.name}
+                className={`rounded-xl border p-6 ${
+                  plan.recommended ? "border-primary bg-primary/5" : "border-border bg-background"
+                }`}
+              >
+                <div className="flex items-start justify-between gap-4">
+                  <div>
+                    <h3 className="text-xl font-semibold text-foreground">{plan.name}</h3>
+                    <p className="mt-1 text-sm text-muted-foreground">{plan.emphasis}</p>
+                  </div>
+                  {plan.recommended ? (
+                    <span className="inline-flex items-center gap-1 rounded-md bg-primary px-2 py-1 text-[11px] font-medium text-primary-foreground">
+                      <Sparkles size={12} /> recomendado
+                    </span>
+                  ) : null}
+                </div>
+                <div className="mt-6 grid gap-3 sm:grid-cols-2">
+                  <PlanStat label="Preço" value={plan.price} />
+                  <PlanStat label="Inclui" value={plan.trips} />
+                  <PlanStat label="Custo unitário" value={plan.unit} />
+                  <PlanStat label="Viagem extra" value={plan.extra} />
+                </div>
               </article>
             ))}
           </div>
         </div>
       </section>
 
-      {/* COMPARATIVO */}
-      <section id="comparativo" className="border-b border-border bg-surface">
-        <div className="mx-auto max-w-5xl px-5 py-20">
-          <div className="mb-10 max-w-2xl">
-            <div className="label-cockpit mb-2">Comparativo honesto</div>
-            <h2 className="text-3xl font-semibold tracking-tight md:text-4xl">WhatsApp vs CarUni</h2>
+      <section id="comparativo" className="border-b border-border">
+        <div className="mx-auto max-w-6xl px-5 py-18">
+          <div className="max-w-2xl">
+            <div className="label-cockpit mb-2">Comparativo</div>
+            <h2 className="text-3xl font-semibold tracking-tight md:text-4xl">
+              O que você compra em cada modal de transporte
+            </h2>
           </div>
-          <div className="overflow-hidden rounded-xl border border-border bg-background">
-            <table className="w-full text-sm">
+          <div className="mt-8 overflow-hidden rounded-xl border border-border bg-surface">
+            <table className="w-full min-w-[760px] text-sm">
               <thead>
-                <tr className="border-b border-border bg-surface-2">
-                  <th className="px-5 py-3 text-left font-medium text-muted-foreground"></th>
-                  <th className="px-5 py-3 text-left font-medium">Grupo de WhatsApp</th>
-                  <th className="px-5 py-3 text-left font-medium text-primary">CarUni</th>
+                <tr className="border-b border-border bg-surface-2 text-left">
+                  <th className="px-5 py-4 font-medium text-muted-foreground">Critério</th>
+                  <th className="px-5 py-4 font-medium text-primary">CarUni</th>
+                  <th className="px-5 py-4 font-medium">Ônibus</th>
+                  <th className="px-5 py-4 font-medium">Uber/99</th>
+                  <th className="px-5 py-4 font-medium">Carro sozinho</th>
                 </tr>
               </thead>
               <tbody>
-                {[
-                  ["Confirmar quem vai", "Mensagem perdida", "Inscrição fixa na rota"],
-                  ["Pagamento", "Pix toda hora, calote", "Débito automático"],
-                  ["Motorista cancelou", "Você se vira", "Substituto automático"],
-                  ["Saber se a pessoa é confiável", "Boato no grupo", "CNH verificada + presença %"],
-                  ["Histórico de viagens", "Some no chat", "Extrato mensal"],
-                  ["Falta sem avisar", "Brigada no grupo", "Penalização proporcional"],
-                ].map(([k, w, c]) => (
-                  <tr key={k} className="border-b border-border last:border-0">
-                    <td className="px-5 py-3.5 text-muted-foreground">{k}</td>
-                    <td className="px-5 py-3.5">{w}</td>
-                    <td className="px-5 py-3.5 font-medium text-foreground">{c}</td>
+                {comparison.map((row) => (
+                  <tr key={row.label} className="border-b border-border last:border-0">
+                    <td className="px-5 py-4 text-muted-foreground">{row.label}</td>
+                    <td className="px-5 py-4 font-medium text-foreground">{row.caruni}</td>
+                    <td className="px-5 py-4">{row.bus}</td>
+                    <td className="px-5 py-4">{row.uber}</td>
+                    <td className="px-5 py-4">{row.own}</td>
                   </tr>
                 ))}
               </tbody>
@@ -231,154 +328,176 @@ function Landing() {
         </div>
       </section>
 
-      {/* CTA */}
-      <section className="border-b border-border">
-        <div className="mx-auto max-w-4xl px-5 py-20 text-center">
-          <h2 className="text-balance text-3xl font-semibold tracking-tight md:text-5xl">
-            Sua rota de amanhã <br className="hidden md:inline" />já tem alguém indo no mesmo horário.
-          </h2>
-          <p className="mx-auto mt-4 max-w-xl text-muted-foreground">
-            Entre no app demo e veja como fica organizado. Tudo navegável, sem cadastro.
-          </p>
-          <div className="mt-7 flex flex-col items-center justify-center gap-3 sm:flex-row">
-            <Link to="/app" className="inline-flex items-center justify-center gap-2 rounded-md bg-primary px-5 py-3 text-sm font-semibold text-primary-foreground">
-              Abrir CarUni <ArrowRight size={16} />
-            </Link>
+      <section className="border-b border-border bg-surface">
+        <div className="mx-auto grid max-w-6xl gap-8 px-5 py-18 lg:grid-cols-2">
+          <div>
+            <div className="label-cockpit mb-2">Integração social</div>
+            <h2 className="text-3xl font-semibold tracking-tight md:text-4xl">
+              Para quem não é da cidade, transporte também é porta de entrada.
+            </h2>
+            <p className="mt-4 max-w-xl text-base leading-relaxed text-muted-foreground">
+              O aluno que chega em Joinville normalmente depende de ônibus, favor improvisado ou
+              corrida cara. O CarUni coloca essa pessoa numa rotina com veteranos, gente do mesmo
+              campus e contatos reais antes mesmo da primeira aula.
+            </p>
+          </div>
+          <div className="grid gap-3">
+            <FeatureTile
+              icon={<Users size={16} />}
+              title="Fazer amigos na prática"
+              body="A carona recorrente vira convívio. Você encontra as mesmas pessoas durante a semana, não um motorista aleatório diferente por dia."
+            />
+            <FeatureTile
+              icon={<CheckCircle2 size={16} />}
+              title="Histórico e reputação"
+              body="Presença, avaliações e cancelamentos aparecem no perfil. Isso aumenta confiança e corta ruído antes de trocar contato pessoal."
+            />
+            <FeatureTile
+              icon={<Bus size={16} />}
+              title="Saída do ônibus por necessidade, não por luxo"
+              body="O ganho aqui é custo controlado, previsibilidade e menos tempo perdido, não uma promessa vazia de conveniência premium."
+            />
           </div>
         </div>
       </section>
 
-      <footer className="bg-background">
-        <div className="mx-auto flex max-w-6xl flex-col items-start justify-between gap-4 px-5 py-8 text-xs text-muted-foreground md:flex-row md:items-center">
-          <div className="flex items-center gap-3">
-            <BrandMark />
-            <span>· Caronas recorrentes urbanas</span>
+      <section id="impacto" className="border-b border-border">
+        <div className="mx-auto grid max-w-6xl gap-8 px-5 py-18 lg:grid-cols-[0.95fr_1.05fr]">
+          <div>
+            <div className="label-cockpit mb-2">Impacto ambiental</div>
+            <h2 className="text-3xl font-semibold tracking-tight md:text-4xl">
+              Ocupação melhor do carro reduz custo e emissão por pessoa.
+            </h2>
+            <p className="mt-4 max-w-xl text-base leading-relaxed text-muted-foreground">
+              Um carro já vai sair de casa para a universidade. O ganho ambiental do CarUni vem de
+              usar melhor esse deslocamento inevitável, reduzindo trajetos vazios e a pressão por
+              mais carros individuais no mesmo corredor urbano.
+            </p>
           </div>
-          <div className="flex items-center gap-5">
-            <span>Feito em Joinville · SC</span>
-            <span className="num">v0.1 demo</span>
+          <div className="grid gap-3 sm:grid-cols-2">
+            <ImpactTile
+              icon={<Car size={16} />}
+              title="CarUni"
+              value="Baixa emissão por aluno"
+              body="Quando o mesmo carro leva 3 ou 4 pessoas, o carbono por passageiro cai de forma relevante."
+            />
+            <ImpactTile
+              icon={<Bus size={16} />}
+              title="Ônibus"
+              value="Bom quando eficiente"
+              body="Continua importante, mas perde valor quando a linha é lotada, lenta ou incompatível com a rotina do campus."
+            />
+            <ImpactTile
+              icon={<WalletCards size={16} />}
+              title="Uber/99"
+              value="Alto custo + alta emissão"
+              body="Confortável no curto prazo, mas ruim para rotina diária e pouco eficiente por pessoa."
+            />
+            <ImpactTile
+              icon={<Car size={16} />}
+              title="Carro sozinho"
+              value="Pior ocupação"
+              body="É o cenário menos eficiente economicamente e ambientalmente quando a rota já poderia ser compartilhada."
+            />
           </div>
         </div>
-      </footer>
+      </section>
+
+      <section className="px-5 py-18">
+        <div className="mx-auto max-w-4xl rounded-xl border border-border bg-surface px-6 py-10 text-center">
+          <h2 className="text-3xl font-semibold tracking-tight md:text-4xl">
+            Menos improviso. Mais rotina. Menos gasto por trajeto.
+          </h2>
+          <p className="mx-auto mt-4 max-w-2xl text-muted-foreground">
+            Se o seu deslocamento se repete toda semana, tratar isso como produto recorrente faz
+            mais sentido do que depender de tentativa diária.
+          </p>
+          <div className="mt-7 flex flex-col items-center justify-center gap-3 sm:flex-row">
+            <Link
+              to="/app"
+              className="inline-flex items-center justify-center gap-2 rounded-md bg-primary px-5 py-3 text-sm font-semibold text-primary-foreground hover:bg-primary/90"
+            >
+              Ver dashboard
+              <ArrowRight size={16} />
+            </Link>
+            <Link
+              to="/app/criar-rota"
+              className="inline-flex items-center justify-center gap-2 rounded-md border border-border bg-background px-5 py-3 text-sm font-semibold text-foreground hover:bg-surface-2"
+            >
+              Publicar rota
+            </Link>
+          </div>
+        </div>
+      </section>
     </div>
   );
 }
 
-function CalculadoraDivisao({ base, vagas }: { base: number; vagas: number }) {
-  const [n, setN] = React.useState(vagas);
-  const r = { precoBase: base, vagas } as any;
-  const d = calcDivisao(r, n);
+function Metric({
+  icon,
+  label,
+  value,
+  sub,
+}: {
+  icon: React.ReactNode;
+  label: string;
+  value: string;
+  sub: string;
+}) {
   return (
-    <div className="rounded-xl border border-border bg-background p-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <div className="label-cockpit">Cálculo ao vivo</div>
-          <div className="mt-0.5 text-sm text-muted-foreground">Quantos passageiros no carro</div>
-        </div>
-        <span className="num text-2xl font-semibold">{n}/{vagas}</span>
-      </div>
-      <input
-        type="range"
-        min={1}
-        max={vagas}
-        value={n}
-        onChange={(e) => setN(Number(e.target.value))}
-        className="mt-4 h-2 w-full cursor-pointer appearance-none rounded-full bg-surface-2 accent-primary"
-      />
-      <div className="mt-7 grid grid-cols-2 gap-3">
-        <div className="rounded-lg border border-border p-4">
-          <div className="label-cockpit">Por passageiro</div>
-          <div className="num mt-1 text-3xl font-semibold">{formatBRL(d.porPassageiro)}</div>
-          <div className="mt-1 text-xs text-muted-foreground">por viagem</div>
-        </div>
-        <div className="rounded-lg border border-primary/30 bg-primary/5 p-4">
-          <div className="label-cockpit text-primary">Motorista ganha</div>
-          <div className="num mt-1 text-3xl font-semibold text-primary">{formatBRL(d.ganhoMotorista)}</div>
-          <div className="mt-1 text-xs text-muted-foreground">por viagem</div>
-        </div>
-      </div>
-      <div className="mt-3 text-[11px] text-muted-foreground">
-        Quanto mais cheio o carro, melhor pra todo mundo.
-      </div>
+    <div className="rounded-xl border border-border bg-surface p-4">
+      <div className="text-primary">{icon}</div>
+      <p className="mt-4 text-xs text-muted-foreground">{label}</p>
+      <p className="mt-1 text-lg font-semibold text-foreground">{value}</p>
+      <p className="mt-1 text-xs text-muted-foreground">{sub}</p>
     </div>
   );
 }
 
-function BackgroundMap() {
+function PlanStat({ label, value }: { label: string; value: string }) {
   return (
-    <svg
-      className="pointer-events-none absolute inset-0 h-full w-full opacity-[0.18]"
-      viewBox="0 0 1200 600"
-      fill="none"
-      aria-hidden
-    >
-      <defs>
-        <pattern id="grid" width="48" height="48" patternUnits="userSpaceOnUse">
-          <path d="M48 0H0V48" stroke="currentColor" strokeWidth="0.5" className="text-foreground" />
-        </pattern>
-      </defs>
-      <rect width="1200" height="600" fill="url(#grid)" />
-      <path d="M50 480 C 250 380, 400 420, 550 320 S 850 180, 1150 120" stroke="oklch(var(--primary))" strokeWidth="2" fill="none" strokeDasharray="6 4" />
-      <circle cx="50" cy="480" r="6" fill="oklch(var(--primary))" />
-      <circle cx="1150" cy="120" r="6" fill="oklch(var(--accent))" />
-    </svg>
+    <div className="rounded-lg border border-border bg-surface px-4 py-3">
+      <p className="text-xs text-muted-foreground">{label}</p>
+      <p className="mt-1 text-base font-semibold text-foreground">{value}</p>
+    </div>
   );
 }
 
-function PhoneMockup() {
+function FeatureTile({
+  icon,
+  title,
+  body,
+}: {
+  icon: React.ReactNode;
+  title: string;
+  body: string;
+}) {
   return (
-    <div className="relative mx-auto w-full max-w-[360px]">
-      <div className="absolute -inset-6 -z-10 rounded-[3rem] bg-primary/10 blur-3xl" />
-      <div className="overflow-hidden rounded-[2rem] border border-border bg-surface shadow-2xl">
-        {/* Header phone */}
-        <div className="flex items-center justify-between border-b border-border px-5 py-3">
-          <BrandMark className="text-sm" />
-          <span className="num text-[10px] text-muted-foreground">07:19</span>
-        </div>
-        {/* Mini "mapa" */}
-        <div className="relative h-44 bg-surface-2">
-          <svg viewBox="0 0 360 180" className="absolute inset-0 h-full w-full">
-            <defs>
-              <pattern id="pgrid" width="20" height="20" patternUnits="userSpaceOnUse">
-                <path d="M20 0H0V20" stroke="currentColor" strokeWidth="0.4" className="text-foreground/20" />
-              </pattern>
-            </defs>
-            <rect width="360" height="180" fill="url(#pgrid)" />
-            <path d="M30 150 C 90 110, 150 130, 210 80 S 300 30, 340 25" stroke="oklch(var(--primary))" strokeWidth="3" fill="none" strokeLinecap="round" className="route-anim" />
-            <circle cx="30" cy="150" r="6" fill="oklch(var(--primary))" stroke="oklch(var(--background))" strokeWidth="2" />
-            <circle cx="340" cy="25" r="6" fill="oklch(var(--accent))" stroke="oklch(var(--background))" strokeWidth="2" />
-          </svg>
-          <div className="absolute right-3 top-3 inline-flex items-center gap-1.5 rounded-md bg-background/85 px-2 py-1 text-[10px] backdrop-blur">
-            <span className="h-1.5 w-1.5 rounded-full bg-primary pulse-ring" />
-            <span className="num font-medium">12,4 km</span>
-          </div>
-        </div>
-        {/* Card próxima */}
-        <div className="space-y-3 p-5">
-          <div className="flex items-center justify-between">
-            <div>
-              <div className="label-cockpit">Próxima carona</div>
-              <div className="num mt-0.5 text-3xl font-semibold leading-none">07:42</div>
-              <div className="mt-1 text-xs text-muted-foreground">em 23 min · Centro → UNICAMP</div>
-            </div>
-            <CnhBadge />
-          </div>
-          <div className="flex items-center gap-3 rounded-lg border border-border bg-background p-3">
-            <Avatar name="Lucas Andrade" iniciais="LA" color="oklch(0.78 0.16 65)" size={36} />
-            <div className="flex-1">
-              <div className="flex items-center gap-2 text-sm font-medium">Lucas A. <StarRating value={4.9} /></div>
-              <div className="mt-0.5 flex items-center gap-2 text-[11px] text-muted-foreground">
-                <Car size={11} /> VW Polo · Prata · <span className="num">FXG-2A47</span>
-              </div>
-            </div>
-            <span className="num rounded-md bg-primary/15 px-2 py-1 text-xs font-semibold text-primary">3/4</span>
-          </div>
-          <div className="flex items-center justify-between rounded-lg bg-surface-2 px-3 py-2.5">
-            <span className="label-cockpit">Você paga</span>
-            <span className="num text-base font-semibold">R$ 6,30</span>
-          </div>
-        </div>
-      </div>
-    </div>
+    <article className="rounded-xl border border-border bg-background p-5">
+      <div className="text-primary">{icon}</div>
+      <h3 className="mt-4 text-base font-semibold text-foreground">{title}</h3>
+      <p className="mt-2 text-sm leading-relaxed text-muted-foreground">{body}</p>
+    </article>
+  );
+}
+
+function ImpactTile({
+  icon,
+  title,
+  value,
+  body,
+}: {
+  icon: React.ReactNode;
+  title: string;
+  value: string;
+  body: string;
+}) {
+  return (
+    <article className="rounded-xl border border-border bg-surface p-5">
+      <div className="text-primary">{icon}</div>
+      <h3 className="mt-4 text-base font-semibold text-foreground">{title}</h3>
+      <p className="mt-1 text-sm font-medium text-primary">{value}</p>
+      <p className="mt-2 text-sm leading-relaxed text-muted-foreground">{body}</p>
+    </article>
   );
 }
