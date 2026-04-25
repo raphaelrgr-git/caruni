@@ -16,6 +16,7 @@ import { Route as AppPerfilRouteImport } from './routes/app.perfil'
 import { Route as AppMinhasCaronasRouteImport } from './routes/app.minhas-caronas'
 import { Route as AppCarteiraRouteImport } from './routes/app.carteira'
 import { Route as AppBuscarRouteImport } from './routes/app.buscar'
+import { Route as AppRotaIdRouteImport } from './routes/app.rota.$id'
 
 const AppRoute = AppRouteImport.update({
   id: '/app',
@@ -52,6 +53,11 @@ const AppBuscarRoute = AppBuscarRouteImport.update({
   path: '/buscar',
   getParentRoute: () => AppRoute,
 } as any)
+const AppRotaIdRoute = AppRotaIdRouteImport.update({
+  id: '/rota/$id',
+  path: '/rota/$id',
+  getParentRoute: () => AppRoute,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -61,6 +67,7 @@ export interface FileRoutesByFullPath {
   '/app/minhas-caronas': typeof AppMinhasCaronasRoute
   '/app/perfil': typeof AppPerfilRoute
   '/app/': typeof AppIndexRoute
+  '/app/rota/$id': typeof AppRotaIdRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -69,6 +76,7 @@ export interface FileRoutesByTo {
   '/app/minhas-caronas': typeof AppMinhasCaronasRoute
   '/app/perfil': typeof AppPerfilRoute
   '/app': typeof AppIndexRoute
+  '/app/rota/$id': typeof AppRotaIdRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -79,6 +87,7 @@ export interface FileRoutesById {
   '/app/minhas-caronas': typeof AppMinhasCaronasRoute
   '/app/perfil': typeof AppPerfilRoute
   '/app/': typeof AppIndexRoute
+  '/app/rota/$id': typeof AppRotaIdRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -90,6 +99,7 @@ export interface FileRouteTypes {
     | '/app/minhas-caronas'
     | '/app/perfil'
     | '/app/'
+    | '/app/rota/$id'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -98,6 +108,7 @@ export interface FileRouteTypes {
     | '/app/minhas-caronas'
     | '/app/perfil'
     | '/app'
+    | '/app/rota/$id'
   id:
     | '__root__'
     | '/'
@@ -107,6 +118,7 @@ export interface FileRouteTypes {
     | '/app/minhas-caronas'
     | '/app/perfil'
     | '/app/'
+    | '/app/rota/$id'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -165,6 +177,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppBuscarRouteImport
       parentRoute: typeof AppRoute
     }
+    '/app/rota/$id': {
+      id: '/app/rota/$id'
+      path: '/rota/$id'
+      fullPath: '/app/rota/$id'
+      preLoaderRoute: typeof AppRotaIdRouteImport
+      parentRoute: typeof AppRoute
+    }
   }
 }
 
@@ -174,6 +193,7 @@ interface AppRouteChildren {
   AppMinhasCaronasRoute: typeof AppMinhasCaronasRoute
   AppPerfilRoute: typeof AppPerfilRoute
   AppIndexRoute: typeof AppIndexRoute
+  AppRotaIdRoute: typeof AppRotaIdRoute
 }
 
 const AppRouteChildren: AppRouteChildren = {
@@ -182,6 +202,7 @@ const AppRouteChildren: AppRouteChildren = {
   AppMinhasCaronasRoute: AppMinhasCaronasRoute,
   AppPerfilRoute: AppPerfilRoute,
   AppIndexRoute: AppIndexRoute,
+  AppRotaIdRoute: AppRotaIdRoute,
 }
 
 const AppRouteWithChildren = AppRoute._addFileChildren(AppRouteChildren)
