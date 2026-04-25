@@ -26,7 +26,11 @@ export const Route = createFileRoute("/app/")({
 });
 
 function AppHome() {
-  const prox = React.useMemo(() => proximaCarona(), []);
+  // proximaCarona() depends on Date.now() — compute on client to avoid SSR/CSR mismatch
+  const [prox, setProx] = React.useState(() => proximaCarona());
+  React.useEffect(() => {
+    setProx(proximaCarona());
+  }, []);
   const motorista = prox.motorista;
   const inscritos = prox.rota.inscritos.map(getPessoa).filter((p) => p.id !== eu.id);
 
