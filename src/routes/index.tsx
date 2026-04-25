@@ -75,7 +75,7 @@ function Landing() {
           <div>
             <div className="mb-4 inline-flex items-center gap-2 rounded-full border border-border bg-surface px-3 py-1 text-xs text-muted-foreground">
               <span className="h-1.5 w-1.5 rounded-full bg-primary pulse-ring" />
-              312 rotas ativas agora · SP · Campinas · BH
+              87 rotas ativas agora em Joinville · SC
             </div>
             <h1 className="text-balance text-4xl font-semibold leading-[1.05] tracking-tight md:text-6xl">
               A carona que <span className="italic">já era sua</span>,<br />
@@ -150,7 +150,7 @@ function Landing() {
             <div className="label-cockpit mb-2">Pra motoristas</div>
             <h2 className="text-3xl font-semibold tracking-tight md:text-4xl">
               Recupere até<br />
-              <span className="num text-primary text-6xl md:text-7xl"><Counter prefix="R$ " to={612} /></span>/mês<br />
+              <span className="num text-primary text-6xl md:text-7xl"><Counter prefix="R$ " to={462} /></span>/mês<br />
               em combustível.
             </h2>
             <p className="mt-5 max-w-md text-muted-foreground">
@@ -255,7 +255,7 @@ function Landing() {
             <span>· Caronas recorrentes urbanas</span>
           </div>
           <div className="flex items-center gap-5">
-            <span>São Paulo · Campinas · Belo Horizonte</span>
+            <span>Feito em Joinville · SC</span>
             <span className="num">v0.1 demo</span>
           </div>
         </div>
