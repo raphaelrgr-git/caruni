@@ -1,9 +1,19 @@
 import * as React from "react";
 import { Link, Outlet, useLocation } from "@tanstack/react-router";
-import { Home, Search, CalendarClock, User, Wallet, MessageCircle, Sun, Moon } from "lucide-react";
+import {
+  Home,
+  Search,
+  CalendarClock,
+  User,
+  Wallet,
+  MessageCircle,
+  Sun,
+  Moon,
+  PlusCircle,
+} from "lucide-react";
 import { useTheme } from "@/lib/theme";
 import { BrandLogo } from "./Brand";
-import { saldoAtual, formatBRL } from "@/data/mock";
+import { useCaruniStore } from "@/data/store";
 
 const tabs = [
   { to: "/app", label: "Início", icon: Home, exact: true },
@@ -27,26 +37,41 @@ function ThemeToggle() {
 
 export function AppShell({ children }: { children?: React.ReactNode }) {
   const loc = useLocation();
-  const isActive = (to: string, exact: boolean) => (exact ? loc.pathname === to : loc.pathname.startsWith(to));
+  const { creditSummary, activePlan } = useCaruniStore();
+  const isActive = (to: string, exact: boolean) =>
+    exact ? loc.pathname === to : loc.pathname.startsWith(to);
 
   return (
     <div className="min-h-screen w-full bg-background text-foreground">
       {/* Sidebar desktop */}
       <aside className="fixed inset-y-0 left-0 z-30 hidden w-60 flex-col border-r border-border bg-sidebar lg:flex">
         <div className="flex items-center gap-2 px-5 py-5">
-          <Link to="/" className="text-foreground"><BrandLogo /></Link>
+          <Link to="/" className="text-foreground">
+            <BrandLogo />
+          </Link>
         </div>
         <div className="px-3 pb-2">
           <div className="rounded-lg border border-border bg-surface px-3 py-2.5">
-            <div className="label-cockpit">Saldo</div>
-            <div className="num text-lg font-semibold text-foreground">{formatBRL(saldoAtual)}</div>
+            <div className="label-cockpit">Plano {activePlan.nome}</div>
+            <div className="num text-lg font-semibold text-foreground">
+              {creditSummary.disponivel}/{creditSummary.total} créditos
+            </div>
+            <div className="num mt-0.5 text-[10px] text-muted-foreground">
+              {creditSummary.reservado} reservado · reset semanal
+            </div>
           </div>
         </div>
         <nav className="flex-1 px-2 py-2">
           {[
             { to: "/app", label: "Início", icon: Home, exact: true },
             { to: "/app/buscar", label: "Buscar carona", icon: Search, exact: false },
-            { to: "/app/minhas-caronas", label: "Minhas caronas", icon: CalendarClock, exact: false },
+            {
+              to: "/app/minhas-caronas",
+              label: "Minhas caronas",
+              icon: CalendarClock,
+              exact: false,
+            },
+            { to: "/app/criar-rota", label: "Criar rota", icon: PlusCircle, exact: false },
             { to: "/app/carteira", label: "Carteira", icon: Wallet, exact: false },
             { to: "/app/chat/r1", label: "Chat de rota", icon: MessageCircle, exact: false },
             { to: "/app/perfil", label: "Perfil", icon: User, exact: false },
@@ -57,12 +82,16 @@ export function AppShell({ children }: { children?: React.ReactNode }) {
                 key={to}
                 to={to}
                 className={`mb-0.5 flex items-center gap-3 rounded-md px-3 py-2 text-sm transition-colors ${
-                  active ? "bg-surface-2 text-foreground" : "text-muted-foreground hover:bg-surface hover:text-foreground"
+                  active
+                    ? "bg-surface-2 text-foreground"
+                    : "text-muted-foreground hover:bg-surface hover:text-foreground"
                 }`}
               >
                 <Icon size={16} className={active ? "text-primary" : ""} />
                 {label}
-                {active && <span className="ml-auto h-1.5 w-1.5 rounded-full bg-primary pulse-ring" />}
+                {active && (
+                  <span className="ml-auto h-1.5 w-1.5 rounded-full bg-primary pulse-ring" />
+                )}
               </Link>
             );
           })}
@@ -80,14 +109,18 @@ export function AppShell({ children }: { children?: React.ReactNode }) {
 
       {/* Mobile header */}
       <header className="sticky top-0 z-20 flex items-center justify-between gap-3 border-b border-border bg-background/85 px-4 py-3 backdrop-blur lg:hidden">
-        <Link to="/" className="text-foreground"><BrandLogo /></Link>
+        <Link to="/" className="text-foreground">
+          <BrandLogo />
+        </Link>
         <div className="flex items-center gap-2">
           <Link
             to="/app/carteira"
             className="inline-flex items-center gap-2 rounded-md border border-border bg-surface px-2.5 py-1.5"
           >
             <Wallet size={14} className="text-muted-foreground" />
-            <span className="num text-xs font-semibold">{formatBRL(saldoAtual)}</span>
+            <span className="num text-xs font-semibold">
+              {creditSummary.disponivel}/{creditSummary.total}
+            </span>
           </Link>
           <ThemeToggle />
         </div>

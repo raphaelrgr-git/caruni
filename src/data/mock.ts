@@ -35,7 +35,16 @@ export interface Rota {
 
 export interface Transacao {
   id: string;
-  tipo: "carona" | "recarga" | "penalizacao" | "repasse";
+  tipo:
+    | "carona"
+    | "recarga"
+    | "penalizacao"
+    | "repasse"
+    | "assinatura"
+    | "credito_reservado"
+    | "credito_consumido"
+    | "credito_devolvido"
+    | "credito_perdido";
   descricao: string;
   valor: number; // negativo = saída
   data: string; // ISO
@@ -66,15 +75,94 @@ export const eu: Person = {
 
 export const pessoas: Person[] = [
   eu,
-  { id: "u2", nome: "Lucas Andrade", iniciais: "LA", presenca: 98, avaliacao: 4.9, cnhVerificada: true, uni: "UDESC · CCT", desde: "Jan 2024", carro: { modelo: "Honda Fit 2019", cor: "Branco", placa: "MJG-9H12" }, cor: "oklch(0.78 0.16 65)" },
-  { id: "u3", nome: "Marina Costa", iniciais: "MC", presenca: 92, avaliacao: 4.7, cnhVerificada: true, uni: "UNIVILLE · Direito", carro: { modelo: "Hyundai HB20 2021", cor: "Cinza", placa: "PSK-3M88" }, cor: "oklch(0.65 0.18 320)" },
-  { id: "u4", nome: "Rafael Tanaka", iniciais: "RT", presenca: 88, avaliacao: 4.6, cnhVerificada: true, uni: "IFSC Joinville · Mecatrônica", carro: { modelo: "Renault Kwid 2022", cor: "Vermelho", placa: "RJB-7Z21" }, cor: "oklch(0.7 0.15 200)" },
-  { id: "u5", nome: "Beatriz Lima", iniciais: "BL", presenca: 94, avaliacao: 4.8, uni: "UNIVILLE · Letras", cor: "oklch(0.62 0.18 45)" },
-  { id: "u6", nome: "Pedro Henrique", iniciais: "PH", presenca: 90, avaliacao: 4.5, uni: "UDESC · Eng. Civil", cor: "oklch(0.55 0.14 165)" },
-  { id: "u7", nome: "Júlia Mendes", iniciais: "JM", presenca: 99, avaliacao: 5.0, uni: "UNIVILLE · Medicina", cor: "oklch(0.86 0.21 130)" },
-  { id: "u8", nome: "Gabriel Souza", iniciais: "GS", presenca: 76, avaliacao: 4.2, uni: "UDESC · CCT", cor: "oklch(0.72 0.17 70)" },
-  { id: "u9", nome: "Camila Rocha", iniciais: "CR", presenca: 95, avaliacao: 4.9, uni: "UNISOCIESC · Psicologia", cor: "oklch(0.42 0.09 180)" },
-  { id: "u10", nome: "Thiago Almeida", iniciais: "TA", presenca: 87, avaliacao: 4.4, uni: "IFSC · Eletrotécnica", cor: "oklch(0.65 0.18 320)" },
+  {
+    id: "u2",
+    nome: "Lucas Andrade",
+    iniciais: "LA",
+    presenca: 98,
+    avaliacao: 4.9,
+    cnhVerificada: true,
+    uni: "UDESC · CCT",
+    desde: "Jan 2024",
+    carro: { modelo: "Honda Fit 2019", cor: "Branco", placa: "MJG-9H12" },
+    cor: "oklch(0.78 0.16 65)",
+  },
+  {
+    id: "u3",
+    nome: "Marina Costa",
+    iniciais: "MC",
+    presenca: 92,
+    avaliacao: 4.7,
+    cnhVerificada: true,
+    uni: "UNIVILLE · Direito",
+    carro: { modelo: "Hyundai HB20 2021", cor: "Cinza", placa: "PSK-3M88" },
+    cor: "oklch(0.65 0.18 320)",
+  },
+  {
+    id: "u4",
+    nome: "Rafael Tanaka",
+    iniciais: "RT",
+    presenca: 88,
+    avaliacao: 4.6,
+    cnhVerificada: true,
+    uni: "IFSC Joinville · Mecatrônica",
+    carro: { modelo: "Renault Kwid 2022", cor: "Vermelho", placa: "RJB-7Z21" },
+    cor: "oklch(0.7 0.15 200)",
+  },
+  {
+    id: "u5",
+    nome: "Beatriz Lima",
+    iniciais: "BL",
+    presenca: 94,
+    avaliacao: 4.8,
+    uni: "UNIVILLE · Letras",
+    cor: "oklch(0.62 0.18 45)",
+  },
+  {
+    id: "u6",
+    nome: "Pedro Henrique",
+    iniciais: "PH",
+    presenca: 90,
+    avaliacao: 4.5,
+    uni: "UDESC · Eng. Civil",
+    cor: "oklch(0.55 0.14 165)",
+  },
+  {
+    id: "u7",
+    nome: "Júlia Mendes",
+    iniciais: "JM",
+    presenca: 99,
+    avaliacao: 5.0,
+    uni: "UNIVILLE · Medicina",
+    cor: "oklch(0.86 0.21 130)",
+  },
+  {
+    id: "u8",
+    nome: "Gabriel Souza",
+    iniciais: "GS",
+    presenca: 76,
+    avaliacao: 4.2,
+    uni: "UDESC · CCT",
+    cor: "oklch(0.72 0.17 70)",
+  },
+  {
+    id: "u9",
+    nome: "Camila Rocha",
+    iniciais: "CR",
+    presenca: 95,
+    avaliacao: 4.9,
+    uni: "UNISOCIESC · Psicologia",
+    cor: "oklch(0.42 0.09 180)",
+  },
+  {
+    id: "u10",
+    nome: "Thiago Almeida",
+    iniciais: "TA",
+    presenca: 87,
+    avaliacao: 4.4,
+    uni: "IFSC · Eletrotécnica",
+    cor: "oklch(0.65 0.18 320)",
+  },
 ];
 
 export const getPessoa = (id: string) => pessoas.find((p) => p.id === id) ?? eu;
@@ -91,10 +179,10 @@ export const rotas: Rota[] = [
     destino: { label: "UDESC · CCT Bom Retiro", coord: [-26.2906, -48.8793] },
     caminho: [
       [-26.3045, -48.8487],
-      [-26.3010, -48.8560],
-      [-26.2980, -48.8640],
-      [-26.2955, -48.8710],
-      [-26.2930, -48.8760],
+      [-26.301, -48.856],
+      [-26.298, -48.864],
+      [-26.2955, -48.871],
+      [-26.293, -48.876],
       [-26.2906, -48.8793],
     ],
     motoristaId: "u2",
@@ -109,14 +197,14 @@ export const rotas: Rota[] = [
     id: "r2",
     nome: "América → UNIVILLE (Bom Retiro)",
     cidade: "Joinville",
-    origem: { label: "América · Rua Blumenau", coord: [-26.2955, -48.8420] },
-    destino: { label: "UNIVILLE · Bloco A", coord: [-26.2625, -48.8710] },
+    origem: { label: "América · Rua Blumenau", coord: [-26.2955, -48.842] },
+    destino: { label: "UNIVILLE · Bloco A", coord: [-26.2625, -48.871] },
     caminho: [
-      [-26.2955, -48.8420],
-      [-26.2880, -48.8500],
-      [-26.2800, -48.8580],
-      [-26.2720, -48.8650],
-      [-26.2625, -48.8710],
+      [-26.2955, -48.842],
+      [-26.288, -48.85],
+      [-26.28, -48.858],
+      [-26.272, -48.865],
+      [-26.2625, -48.871],
     ],
     motoristaId: "u3",
     diasSemana: [1, 2, 3, 4, 5],
@@ -130,13 +218,13 @@ export const rotas: Rota[] = [
     id: "r3",
     nome: "Glória → IFSC Joinville",
     cidade: "Joinville",
-    origem: { label: "Glória · Av. Santos Dumont", coord: [-26.2740, -48.8390] },
+    origem: { label: "Glória · Av. Santos Dumont", coord: [-26.274, -48.839] },
     destino: { label: "IFSC · Câmpus Joinville", coord: [-26.2417, -48.8635] },
     caminho: [
-      [-26.2740, -48.8390],
-      [-26.2680, -48.8460],
-      [-26.2600, -48.8520],
-      [-26.2510, -48.8580],
+      [-26.274, -48.839],
+      [-26.268, -48.846],
+      [-26.26, -48.852],
+      [-26.251, -48.858],
       [-26.2417, -48.8635],
     ],
     motoristaId: "u4",
@@ -151,13 +239,13 @@ export const rotas: Rota[] = [
     id: "r4",
     nome: "Costa e Silva → UNIVILLE",
     cidade: "Joinville",
-    origem: { label: "Costa e Silva · Av. Iririú", coord: [-26.2650, -48.8120] },
+    origem: { label: "Costa e Silva · Av. Iririú", coord: [-26.265, -48.812] },
     destino: { label: "UNIVILLE · Portaria Norte", coord: [-26.2618, -48.8702] },
     caminho: [
-      [-26.2650, -48.8120],
-      [-26.2640, -48.8260],
-      [-26.2630, -48.8400],
-      [-26.2625, -48.8540],
+      [-26.265, -48.812],
+      [-26.264, -48.826],
+      [-26.263, -48.84],
+      [-26.2625, -48.854],
       [-26.2618, -48.8702],
     ],
     motoristaId: "u4",
@@ -172,13 +260,13 @@ export const rotas: Rota[] = [
     id: "r5",
     nome: "Saguaçu → Distrito Industrial (Perini)",
     cidade: "Joinville",
-    origem: { label: "Saguaçu · Av. Beira Rio", coord: [-26.2810, -48.8230] },
+    origem: { label: "Saguaçu · Av. Beira Rio", coord: [-26.281, -48.823] },
     destino: { label: "Perini Business Park", coord: [-26.2358, -48.8598] },
     caminho: [
-      [-26.2810, -48.8230],
-      [-26.2700, -48.8330],
-      [-26.2580, -48.8430],
-      [-26.2470, -48.8520],
+      [-26.281, -48.823],
+      [-26.27, -48.833],
+      [-26.258, -48.843],
+      [-26.247, -48.852],
       [-26.2358, -48.8598],
     ],
     motoristaId: "u2",
@@ -194,14 +282,14 @@ export const rotas: Rota[] = [
     nome: "Pirabeiraba → Centro",
     cidade: "Joinville",
     origem: { label: "Pirabeiraba · Centro", coord: [-26.2017, -48.9131] },
-    destino: { label: "Centro · Rua do Príncipe", coord: [-26.3050, -48.8462] },
+    destino: { label: "Centro · Rua do Príncipe", coord: [-26.305, -48.8462] },
     caminho: [
       [-26.2017, -48.9131],
-      [-26.2200, -48.9000],
-      [-26.2450, -48.8850],
-      [-26.2700, -48.8700],
-      [-26.2900, -48.8580],
-      [-26.3050, -48.8462],
+      [-26.22, -48.9],
+      [-26.245, -48.885],
+      [-26.27, -48.87],
+      [-26.29, -48.858],
+      [-26.305, -48.8462],
     ],
     motoristaId: "u3",
     diasSemana: [1, 2, 3, 4, 5],
@@ -226,21 +314,89 @@ export function calcDivisao(rota: Rota, ocupadas: number) {
 }
 
 // ---------- Carteira ----------
-export const saldoAtual = 42.80;
+export const saldoAtual = 42.8;
 
 export const transacoes: Transacao[] = [
-  { id: "t1", tipo: "carona", descricao: "Centro → UDESC · Lucas A.", valor: -3.50, data: hojeMenos(0, 8), rotaId: "r1" },
-  { id: "t2", tipo: "carona", descricao: "UDESC → Centro · Lucas A.", valor: -3.50, data: hojeMenos(0, 18), rotaId: "r1" },
-  { id: "t3", tipo: "recarga", descricao: "Recarga via Pix", valor: 30.00, data: hojeMenos(2, 12) },
-  { id: "t4", tipo: "carona", descricao: "Centro → UDESC · Lucas A.", valor: -3.50, data: hojeMenos(1, 8), rotaId: "r1" },
-  { id: "t5", tipo: "penalizacao", descricao: "Falta sem aviso · qua 17/04", valor: -2.00, data: hojeMenos(3, 9) },
-  { id: "t6", tipo: "repasse", descricao: "Repasse semanal · 4 caronas", valor: 14.20, data: hojeMenos(4, 20) },
-  { id: "t7", tipo: "carona", descricao: "Centro → UDESC · Lucas A.", valor: -3.50, data: hojeMenos(5, 8), rotaId: "r1" },
-  { id: "t8", tipo: "recarga", descricao: "Recarga via Pix", valor: 20.00, data: hojeMenos(7, 11) },
-  { id: "t9", tipo: "carona", descricao: "América → UNIVILLE · Marina C.", valor: -3.85, data: hojeMenos(8, 7), rotaId: "r2" },
-  { id: "t10", tipo: "carona", descricao: "Centro → UDESC · Lucas A.", valor: -3.50, data: hojeMenos(9, 8), rotaId: "r1" },
-  { id: "t11", tipo: "carona", descricao: "Centro → UDESC · Lucas A.", valor: -3.50, data: hojeMenos(10, 8), rotaId: "r1" },
-  { id: "t12", tipo: "carona", descricao: "Centro → UDESC · Lucas A.", valor: -3.50, data: hojeMenos(12, 8), rotaId: "r1" },
+  {
+    id: "t1",
+    tipo: "carona",
+    descricao: "Centro → UDESC · Lucas A.",
+    valor: -3.5,
+    data: hojeMenos(0, 8),
+    rotaId: "r1",
+  },
+  {
+    id: "t2",
+    tipo: "carona",
+    descricao: "UDESC → Centro · Lucas A.",
+    valor: -3.5,
+    data: hojeMenos(0, 18),
+    rotaId: "r1",
+  },
+  { id: "t3", tipo: "recarga", descricao: "Recarga via Pix", valor: 30.0, data: hojeMenos(2, 12) },
+  {
+    id: "t4",
+    tipo: "carona",
+    descricao: "Centro → UDESC · Lucas A.",
+    valor: -3.5,
+    data: hojeMenos(1, 8),
+    rotaId: "r1",
+  },
+  {
+    id: "t5",
+    tipo: "penalizacao",
+    descricao: "Falta sem aviso · qua 17/04",
+    valor: -2.0,
+    data: hojeMenos(3, 9),
+  },
+  {
+    id: "t6",
+    tipo: "repasse",
+    descricao: "Repasse semanal · 4 caronas",
+    valor: 14.2,
+    data: hojeMenos(4, 20),
+  },
+  {
+    id: "t7",
+    tipo: "carona",
+    descricao: "Centro → UDESC · Lucas A.",
+    valor: -3.5,
+    data: hojeMenos(5, 8),
+    rotaId: "r1",
+  },
+  { id: "t8", tipo: "recarga", descricao: "Recarga via Pix", valor: 20.0, data: hojeMenos(7, 11) },
+  {
+    id: "t9",
+    tipo: "carona",
+    descricao: "América → UNIVILLE · Marina C.",
+    valor: -3.85,
+    data: hojeMenos(8, 7),
+    rotaId: "r2",
+  },
+  {
+    id: "t10",
+    tipo: "carona",
+    descricao: "Centro → UDESC · Lucas A.",
+    valor: -3.5,
+    data: hojeMenos(9, 8),
+    rotaId: "r1",
+  },
+  {
+    id: "t11",
+    tipo: "carona",
+    descricao: "Centro → UDESC · Lucas A.",
+    valor: -3.5,
+    data: hojeMenos(10, 8),
+    rotaId: "r1",
+  },
+  {
+    id: "t12",
+    tipo: "carona",
+    descricao: "Centro → UDESC · Lucas A.",
+    valor: -3.5,
+    data: hojeMenos(12, 8),
+    rotaId: "r1",
+  },
 ];
 
 function hojeMenos(dias: number, hora: number) {
@@ -253,8 +409,8 @@ function hojeMenos(dias: number, hora: number) {
 // ---------- Ganhos (motorista) ----------
 // Realista para Joinville: ~R$3,50/passageiro × 3 pass × 2 trechos × 22 dias úteis ≈ R$ 462
 export const ganhosMes = {
-  total: 462.00,
-  combustivelRecuperado: 218.00,
+  total: 462.0,
+  combustivelRecuperado: 218.0,
   caronasFeitas: 44,
   semanal: [98, 124, 110, 130],
   vsUberComum: 364.0, // economia total que passageiros tiveram no mês
@@ -277,23 +433,71 @@ export function proximaCarona() {
 
 // ---------- Semana ----------
 export const semanaCaronas = [
-  { dia: "Seg", data: "21/04", rotaId: "r1", status: "feita" as const, valor: 3.50 },
-  { dia: "Ter", data: "22/04", rotaId: "r1", status: "feita" as const, valor: 3.50 },
-  { dia: "Qua", data: "23/04", rotaId: "r1", status: "substituto" as const, valor: 3.50 },
-  { dia: "Qui", data: "24/04", rotaId: "r1", status: "agendada" as const, valor: 3.50 },
-  { dia: "Sex", data: "25/04", rotaId: "r1", status: "agendada" as const, valor: 3.50 },
+  { dia: "Seg", data: "21/04", rotaId: "r1", status: "feita" as const, valor: 3.5 },
+  { dia: "Ter", data: "22/04", rotaId: "r1", status: "feita" as const, valor: 3.5 },
+  { dia: "Qua", data: "23/04", rotaId: "r1", status: "substituto" as const, valor: 3.5 },
+  { dia: "Qui", data: "24/04", rotaId: "r1", status: "agendada" as const, valor: 3.5 },
+  { dia: "Sex", data: "25/04", rotaId: "r1", status: "agendada" as const, valor: 3.5 },
 ];
 
 // ---------- Chat ----------
 export const mensagens: ChatMsg[] = [
-  { id: "m1", rotaId: "r1", autorId: "u2", texto: "Bom dia, galera. Saindo em 5 min do Centro.", ts: hojeMenos(0, 7) },
-  { id: "m2", rotaId: "r1", autorId: "u5", texto: "Tô descendo pra te encontrar na Nereu Ramos.", ts: hojeMenos(0, 7) },
-  { id: "m3", rotaId: "r1", autorId: "sistema", texto: "Carona iniciada · Lucas Andrade no comando", ts: hojeMenos(0, 7) },
-  { id: "m4", rotaId: "r1", autorId: "u6", texto: "Trânsito feio na Beira Rio hj.", ts: hojeMenos(0, 7) },
-  { id: "m5", rotaId: "r1", autorId: "u2", texto: "Vou pela Visconde de Taunay, melhor.", ts: hojeMenos(0, 8) },
-  { id: "m6", rotaId: "r1", autorId: "sistema", texto: "Chegada confirmada na UDESC · 7h54", ts: hojeMenos(0, 8) },
-  { id: "m7", rotaId: "r1", autorId: "u1", texto: "Valeu, Lucas! Amanhã o mesmo horário?", ts: hojeMenos(0, 9) },
-  { id: "m8", rotaId: "r1", autorId: "u2", texto: "Mesma coisa. 7h30 na praça.", ts: hojeMenos(0, 9) },
+  {
+    id: "m1",
+    rotaId: "r1",
+    autorId: "u2",
+    texto: "Bom dia, galera. Saindo em 5 min do Centro.",
+    ts: hojeMenos(0, 7),
+  },
+  {
+    id: "m2",
+    rotaId: "r1",
+    autorId: "u5",
+    texto: "Tô descendo pra te encontrar na Nereu Ramos.",
+    ts: hojeMenos(0, 7),
+  },
+  {
+    id: "m3",
+    rotaId: "r1",
+    autorId: "sistema",
+    texto: "Carona iniciada · Lucas Andrade no comando",
+    ts: hojeMenos(0, 7),
+  },
+  {
+    id: "m4",
+    rotaId: "r1",
+    autorId: "u6",
+    texto: "Trânsito feio na Beira Rio hj.",
+    ts: hojeMenos(0, 7),
+  },
+  {
+    id: "m5",
+    rotaId: "r1",
+    autorId: "u2",
+    texto: "Vou pela Visconde de Taunay, melhor.",
+    ts: hojeMenos(0, 8),
+  },
+  {
+    id: "m6",
+    rotaId: "r1",
+    autorId: "sistema",
+    texto: "Chegada confirmada na UDESC · 7h54",
+    ts: hojeMenos(0, 8),
+  },
+  {
+    id: "m7",
+    rotaId: "r1",
+    autorId: "u1",
+    texto: "Valeu, Lucas! Amanhã o mesmo horário?",
+    ts: hojeMenos(0, 9),
+  },
+  {
+    id: "m8",
+    rotaId: "r1",
+    autorId: "u2",
+    texto: "Mesma coisa. 7h30 na praça.",
+    ts: hojeMenos(0, 9),
+  },
 ];
 
 export const contatoEmergencia = {

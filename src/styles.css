@@ -11,7 +11,7 @@
  * Tipografia: Geist Sans (UI) + Geist Mono (números).
  */
 
-@import url('https://fonts.googleapis.com/css2?family=Geist:wght@300;400;500;600;700&family=Geist+Mono:wght@400;500;600&display=swap');
+@import url("https://fonts.googleapis.com/css2?family=Geist:wght@300;400;500;600;700&family=Geist+Mono:wght@400;500;600&display=swap");
 
 @theme inline {
   --radius-sm: calc(var(--radius) - 4px);
@@ -61,32 +61,32 @@
   --color-success-foreground: var(--success-foreground);
   --color-warn: var(--warn);
   --color-warn-foreground: var(--warn-foreground);
-  --font-sans: 'Geist', ui-sans-serif, system-ui, sans-serif;
-  --font-mono: 'Geist Mono', ui-monospace, SFMono-Regular, monospace;
+  --font-sans: "Geist", ui-sans-serif, system-ui, sans-serif;
+  --font-mono: "Geist Mono", ui-monospace, SFMono-Regular, monospace;
 }
 
 :root {
   /* Modo claro — fintech BR moderna */
   --radius: 0.625rem;
-  --background: oklch(0.985 0.006 80);          /* off-white quente */
+  --background: oklch(0.985 0.006 80); /* off-white quente */
   --foreground: oklch(0.18 0.02 200);
-  --surface: oklch(1 0 0);                       /* card branco puro */
-  --surface-2: oklch(0.965 0.008 80);            /* card secundário */
+  --surface: oklch(1 0 0); /* card branco puro */
+  --surface-2: oklch(0.965 0.008 80); /* card secundário */
   --card: oklch(1 0 0);
   --card-foreground: oklch(0.18 0.02 200);
   --popover: oklch(1 0 0);
   --popover-foreground: oklch(0.18 0.02 200);
-  --primary: oklch(0.42 0.09 180);               /* verde-petróleo profundo */
+  --primary: oklch(0.42 0.09 180); /* verde-petróleo profundo */
   --primary-foreground: oklch(0.985 0.006 80);
   --secondary: oklch(0.95 0.01 80);
   --secondary-foreground: oklch(0.22 0.03 200);
   --muted: oklch(0.95 0.008 80);
   --muted-foreground: oklch(0.48 0.02 200);
-  --accent: oklch(0.62 0.18 45);                 /* terracota / laranja queimado */
+  --accent: oklch(0.62 0.18 45); /* terracota / laranja queimado */
   --accent-foreground: oklch(0.985 0.006 80);
-  --success: oklch(0.55 0.14 165);               /* verde de presença/saldo */
+  --success: oklch(0.55 0.14 165); /* verde de presença/saldo */
   --success-foreground: oklch(0.985 0.006 80);
-  --warn: oklch(0.72 0.17 70);                   /* âmbar de alerta */
+  --warn: oklch(0.72 0.17 70); /* âmbar de alerta */
   --warn-foreground: oklch(0.18 0.02 200);
   --destructive: oklch(0.55 0.22 27);
   --destructive-foreground: oklch(0.985 0.006 80);
@@ -111,21 +111,21 @@
 
 .dark {
   /* Modo escuro — cockpit Uber Driver */
-  --background: oklch(0.16 0.012 240);           /* grafite quase preto, sutil azul */
+  --background: oklch(0.16 0.012 240); /* grafite quase preto, sutil azul */
   --foreground: oklch(0.97 0.005 240);
-  --surface: oklch(0.205 0.014 240);             /* painel principal */
-  --surface-2: oklch(0.245 0.016 240);           /* painel secundário/hover */
+  --surface: oklch(0.205 0.014 240); /* painel principal */
+  --surface-2: oklch(0.245 0.016 240); /* painel secundário/hover */
   --card: oklch(0.205 0.014 240);
   --card-foreground: oklch(0.97 0.005 240);
   --popover: oklch(0.205 0.014 240);
   --popover-foreground: oklch(0.97 0.005 240);
-  --primary: oklch(0.86 0.21 130);               /* verde-lima elétrico */
+  --primary: oklch(0.86 0.21 130); /* verde-lima elétrico */
   --primary-foreground: oklch(0.16 0.012 240);
   --secondary: oklch(0.27 0.016 240);
   --secondary-foreground: oklch(0.97 0.005 240);
   --muted: oklch(0.27 0.016 240);
   --muted-foreground: oklch(0.66 0.015 240);
-  --accent: oklch(0.78 0.16 65);                 /* âmbar quente */
+  --accent: oklch(0.78 0.16 65); /* âmbar quente */
   --accent-foreground: oklch(0.16 0.012 240);
   --success: oklch(0.86 0.21 130);
   --success-foreground: oklch(0.16 0.012 240);
@@ -165,9 +165,12 @@
   }
 
   /* Tipografia utilitária — números sempre em mono */
-  .font-mono, .num {
+  .font-mono,
+  .num {
     font-family: var(--font-mono);
-    font-feature-settings: 'tnum' 1, 'cv11' 1;
+    font-feature-settings:
+      "tnum" 1,
+      "cv11" 1;
   }
 
   /* Label "painel de bordo" */
@@ -183,6 +186,22 @@
   .hairline {
     background-color: var(--color-hairline);
   }
+
+  .field-input {
+    width: 100%;
+    border-radius: 0.5rem;
+    border: 1px solid var(--color-border);
+    background: var(--color-surface-2);
+    padding: 0.625rem 0.75rem;
+    font-size: 0.875rem;
+    color: var(--color-foreground);
+    outline: none;
+  }
+
+  .field-input:focus {
+    border-color: var(--color-primary);
+    box-shadow: 0 0 0 3px color-mix(in oklab, var(--color-primary) 18%, transparent);
+  }
 }
 
 /* Leaflet sane defaults dentro do tema */
@@ -195,25 +214,48 @@
   color: var(--color-muted-foreground) !important;
   font-size: 9px !important;
 }
-.leaflet-control-attribution a { color: var(--color-muted-foreground) !important; }
+.leaflet-control-attribution a {
+  color: var(--color-muted-foreground) !important;
+}
 
 /* Pulso para badges live */
 @keyframes pulse-ring {
-  0%   { box-shadow: 0 0 0 0 color-mix(in oklab, var(--color-primary) 50%, transparent); }
-  70%  { box-shadow: 0 0 0 8px color-mix(in oklab, var(--color-primary) 0%, transparent); }
-  100% { box-shadow: 0 0 0 0 color-mix(in oklab, var(--color-primary) 0%, transparent); }
+  0% {
+    box-shadow: 0 0 0 0 color-mix(in oklab, var(--color-primary) 50%, transparent);
+  }
+  70% {
+    box-shadow: 0 0 0 8px color-mix(in oklab, var(--color-primary) 0%, transparent);
+  }
+  100% {
+    box-shadow: 0 0 0 0 color-mix(in oklab, var(--color-primary) 0%, transparent);
+  }
 }
-.pulse-ring { animation: pulse-ring 1.8s ease-out infinite; }
+.pulse-ring {
+  animation: pulse-ring 1.8s ease-out infinite;
+}
 
 @keyframes pulse-warn {
-  0%   { box-shadow: 0 0 0 0 color-mix(in oklab, var(--color-warn) 55%, transparent); }
-  70%  { box-shadow: 0 0 0 10px color-mix(in oklab, var(--color-warn) 0%, transparent); }
-  100% { box-shadow: 0 0 0 0 color-mix(in oklab, var(--color-warn) 0%, transparent); }
+  0% {
+    box-shadow: 0 0 0 0 color-mix(in oklab, var(--color-warn) 55%, transparent);
+  }
+  70% {
+    box-shadow: 0 0 0 10px color-mix(in oklab, var(--color-warn) 0%, transparent);
+  }
+  100% {
+    box-shadow: 0 0 0 0 color-mix(in oklab, var(--color-warn) 0%, transparent);
+  }
 }
-.pulse-warn { animation: pulse-warn 1.6s ease-out infinite; }
+.pulse-warn {
+  animation: pulse-warn 1.6s ease-out infinite;
+}
 
 /* Route line draw animation */
 @keyframes dash {
-  to { stroke-dashoffset: -200; }
+  to {
+    stroke-dashoffset: -200;
+  }
 }
-.route-anim { stroke-dasharray: 8 6; animation: dash 6s linear infinite; }
+.route-anim {
+  stroke-dasharray: 8 6;
+  animation: dash 6s linear infinite;
+}
