@@ -26,10 +26,12 @@ export const Route = createFileRoute("/app/")({
 });
 
 function AppHome() {
-  // proximaCarona() depends on Date.now() — compute on client to avoid SSR/CSR mismatch
+  // proximaCarona() depends on Date.now() — defer to client to avoid SSR/CSR mismatch
+  const [mounted, setMounted] = React.useState(false);
   const [prox, setProx] = React.useState(() => proximaCarona());
   React.useEffect(() => {
     setProx(proximaCarona());
+    setMounted(true);
   }, []);
   const motorista = prox.motorista;
   const inscritos = prox.rota.inscritos.map(getPessoa).filter((p) => p.id !== eu.id);
@@ -46,7 +48,9 @@ function AppHome() {
         </div>
         <div className="hidden items-center gap-3 lg:flex">
           <span className="label-cockpit text-[10px] text-muted-foreground">Hoje</span>
-          <span className="num text-sm text-foreground">{new Date().toLocaleDateString("pt-BR", { weekday: "short", day: "2-digit", month: "short" })}</span>
+          <span className="num text-sm text-foreground" suppressHydrationWarning>
+            {mounted ? new Date().toLocaleDateString("pt-BR", { weekday: "short", day: "2-digit", month: "short" }) : ""}
+          </span>
         </div>
       </div>
 
@@ -70,11 +74,11 @@ function AppHome() {
                   </p>
                 </div>
                 <div className="text-right">
-                  <p className="num text-3xl font-semibold leading-none text-foreground lg:text-4xl">
-                    {formatHora(prox.horario)}
+                  <p className="num text-3xl font-semibold leading-none text-foreground lg:text-4xl" suppressHydrationWarning>
+                    {mounted ? formatHora(prox.horario) : "--:--"}
                   </p>
-                  <p className="mt-1 inline-flex items-center gap-1 rounded-md bg-primary/15 px-2 py-0.5 text-[11px] font-medium text-primary">
-                    <Clock size={11} /> em {prox.minutosFaltando} min
+                  <p className="mt-1 inline-flex items-center gap-1 rounded-md bg-primary/15 px-2 py-0.5 text-[11px] font-medium text-primary" suppressHydrationWarning>
+                    <Clock size={11} /> em {mounted ? prox.minutosFaltando : 23} min
                   </p>
                 </div>
               </div>
