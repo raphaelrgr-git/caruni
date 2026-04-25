@@ -33,11 +33,15 @@ export const Route = createRootRoute({
       { title: "CarUni — Carona recorrente pra quem faz a mesma rota todo dia" },
       { name: "description", content: "A carona universitária e de trabalho organizada de verdade: rotas fixas, débito automático, motoristas verificados e substituição garantida." },
       { name: "author", content: "CarUni" },
-      { property: "og:title", content: "CarUni — Carona recorrente confiável" },
-      { property: "og:description", content: "Carona fixa, pagamento automático e substituição garantida pra quem faz a mesma rota todo dia." },
+      { property: "og:title", content: "CarUni — Carona recorrente pra quem faz a mesma rota todo dia" },
+      { property: "og:description", content: "A carona universitária e de trabalho organizada de verdade: rotas fixas, débito automático, motoristas verificados e substituição garantida." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
       { name: "theme-color", content: "#0e1116" },
+      { name: "twitter:title", content: "CarUni — Carona recorrente pra quem faz a mesma rota todo dia" },
+      { name: "twitter:description", content: "A carona universitária e de trabalho organizada de verdade: rotas fixas, débito automático, motoristas verificados e substituição garantida." },
+      { property: "og:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/05f2443a-b6e5-4bc8-a55f-9dffa3e78e79/id-preview-c98f9217--91ca25d4-3ba6-45f9-bc35-9db1e5cb439f.lovable.app-1777127350600.png" },
+      { name: "twitter:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/05f2443a-b6e5-4bc8-a55f-9dffa3e78e79/id-preview-c98f9217--91ca25d4-3ba6-45f9-bc35-9db1e5cb439f.lovable.app-1777127350600.png" },
     ],
     links: [
       {
