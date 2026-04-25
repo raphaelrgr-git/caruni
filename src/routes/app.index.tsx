@@ -1,13 +1,11 @@
 import * as React from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { Clock, Users, ShieldCheck, ArrowRight, MessageCircle, Fuel, TrendingUp, CalendarCheck, AlertCircle, MapPin, ChevronUp, Navigation, Search } from "lucide-react";
+import { Clock, Users, ShieldCheck, ArrowRight, MessageCircle, Fuel, TrendingUp, CalendarCheck, AlertCircle, MapPin, Navigation, Search, Car, Info } from "lucide-react";
 import { RouteMap } from "@/components/RouteMap";
 import { Avatar, CnhBadge, PresenceBar, StarRating } from "@/components/Brand";
-import { Drawer } from "vaul";
 import {
   proximaCarona,
   semanaCaronas,
-  getRota,
   getPessoa,
   ganhosMes,
   eu,
@@ -36,145 +34,220 @@ function AppHome() {
   }, []);
   
   const motorista = prox.motorista;
-  const inscritos = prox.rota.inscritos.map(getPessoa).filter((p) => p.id !== eu.id);
 
   return (
-    <div className="fixed inset-x-0 bottom-[64px] top-[54px] lg:bottom-0 lg:left-60 lg:top-0 overflow-hidden bg-background">
-      {/* MAPA FULL SCREEN */}
-      <div className="absolute inset-0 z-0">
-        <RouteMap
-          path={prox.rota.caminho}
-          origin={prox.rota.origem.coord}
-          destination={prox.rota.destino.coord}
-          height="100%"
-          className="h-full w-full"
-        />
-        
-        {/* Overlay gradient top for better text visibility */}
-        <div className="absolute inset-x-0 top-0 z-10 h-32 bg-gradient-to-b from-background/80 to-transparent pointer-events-none" />
-      </div>
-
-      {/* ELEMENTOS FLUTUANTES (HUD) */}
-      <div className="absolute inset-x-0 top-0 z-20 flex flex-col gap-4 p-4 lg:p-6 pointer-events-none">
-        
-        {/* Saudação (Glassmorphism) */}
-        <div className="self-start rounded-full border border-border/50 bg-background/60 px-4 py-2 backdrop-blur-md shadow-sm pointer-events-auto">
-          <p className="label-cockpit text-[10px] text-muted-foreground">Bom dia</p>
-          <h1 className="text-sm font-semibold tracking-tight text-foreground">
-            Pronto pra rodar, {eu.nome.split(" ")[0]}?
+    <div className="mx-auto max-w-6xl p-5 md:p-8 space-y-8 pb-24 lg:pb-12">
+      {/* HEADER */}
+      <header className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+        <div>
+          <h1 className="text-2xl font-semibold tracking-tight text-foreground">
+            Bom dia, {eu.nome.split(" ")[0]}
           </h1>
+          <p className="mt-1 text-sm text-muted-foreground">
+            Aqui está o resumo das suas caronas e ganhos.
+          </p>
         </div>
-      </div>
-
-      <div className="absolute right-4 top-4 z-20 flex flex-col gap-2 pointer-events-auto">
-        {/* Quick Actions laterais */}
         <Link
           to="/app/buscar"
-          className="flex h-10 w-10 items-center justify-center rounded-full border border-border/50 bg-background/80 text-foreground backdrop-blur-md shadow-lg transition-transform hover:scale-105"
-          aria-label="Buscar Carona"
+          className="inline-flex items-center gap-2 rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground shadow-sm hover:bg-primary/90 transition-colors"
         >
-          <Search size={18} />
+          <Search size={16} /> Buscar Carona
         </Link>
-      </div>
+      </header>
 
-      {/* BOTTOM SHEET (GAVETA) COM DETALHES DA CARONA */}
-      <Drawer.Root snapPoints={[0.3, 0.8]} activeSnapPoint={0.3} open={true} dismissible={false} modal={false}>
-        <Drawer.Portal>
-          <Drawer.Content className="fixed bottom-[64px] lg:bottom-0 left-0 lg:left-60 right-0 z-30 flex flex-col rounded-t-[20px] border-t border-border bg-surface shadow-[0_-8px_30px_rgba(0,0,0,0.12)]">
-            <div className="mx-auto mt-3 h-1.5 w-12 flex-shrink-0 rounded-full bg-muted-foreground/30" />
-            
-            <div className="flex-1 overflow-y-auto px-4 py-5 lg:px-8">
-              <div className="mx-auto max-w-3xl">
-                
-                {/* Cabeçalho da Gaveta */}
-                <div className="flex items-start justify-between gap-4">
-                  <div>
-                    <p className="label-cockpit text-[10px] text-primary pulse-ring px-2 py-0.5 rounded-full bg-primary/10 inline-flex mb-2">Próxima Carona</p>
-                    <h2 className="text-xl font-semibold text-foreground leading-tight">{prox.rota.nome}</h2>
-                    <div className="mt-1 flex items-center gap-1.5 text-xs text-muted-foreground">
-                      <MapPin size={12} />
-                      {prox.rota.origem.label.split('·')[0]} → {prox.rota.destino.label.split('·')[0]}
-                    </div>
-                  </div>
-                  <div className="text-right">
-                    <p className="num text-3xl font-semibold leading-none text-foreground" suppressHydrationWarning>
-                      {mounted ? formatHora(prox.horario) : "--:--"}
-                    </p>
-                    <p className="mt-1 inline-flex items-center gap-1 rounded-md bg-warn/15 px-2 py-0.5 text-[11px] font-medium text-warn" suppressHydrationWarning>
-                      <Clock size={11} /> em {mounted ? prox.minutosFaltando : 23} min
-                    </p>
-                  </div>
+      {/* MAIN GRID */}
+      <div className="grid gap-6 lg:grid-cols-3">
+        
+        {/* LEFT COLUMN: Próxima Carona & Semana */}
+        <div className="lg:col-span-2 flex flex-col gap-6">
+          
+          {/* Card: Próxima Carona */}
+          <section className="rounded-xl border border-border bg-surface p-5 sm:p-7 shadow-sm">
+            <div className="flex items-start justify-between mb-6">
+              <div>
+                <h2 className="text-lg font-semibold text-foreground">Próxima Carona</h2>
+                <div className="mt-1.5 flex items-center gap-1.5 text-sm text-muted-foreground">
+                  <MapPin size={14} className="text-primary" />
+                  {prox.rota.origem.label.split('·')[0]} → {prox.rota.destino.label.split('·')[0]}
                 </div>
-
-                {/* Motorista e Vagas */}
-                <div className="mt-6 flex items-center justify-between gap-3 rounded-xl border border-border bg-surface-2/50 p-4">
-                  <div className="flex items-center gap-3">
-                    <Avatar name={motorista.nome} color={motorista.cor} size={46} iniciais={motorista.iniciais} />
-                    <div>
-                      <div className="flex items-center gap-2">
-                        <span className="text-sm font-medium text-foreground">{motorista.nome}</span>
-                        {motorista.cnhVerificada && <CnhBadge />}
-                      </div>
-                      <div className="mt-0.5 flex items-center gap-3 text-[11px] text-muted-foreground">
-                        <StarRating value={motorista.avaliacao} />
-                        <span className="num hidden sm:inline">{motorista.carro?.placa}</span>
-                      </div>
-                    </div>
-                  </div>
-                  
-                  <div className="text-right">
-                     <p className="label-cockpit text-[9px] text-muted-foreground">Vagas</p>
-                     <p className="num mt-0.5 text-lg font-semibold text-foreground">
-                        {prox.ocupadas}<span className="text-muted-foreground text-sm">/{prox.rota.vagas}</span>
-                     </p>
-                  </div>
-                </div>
-
-                {/* Botões de Ação Principais */}
-                <div className="mt-4 grid grid-cols-2 gap-3">
-                  <Link
-                    to="/app/viagem-ativa"
-                    className="flex items-center justify-center gap-2 rounded-lg bg-primary py-3.5 text-sm font-semibold text-primary-foreground shadow-md transition-transform hover:scale-[1.02]"
-                  >
-                    <Navigation size={16} /> Ver no Mapa
-                  </Link>
-                  <Link
-                    to="/app/chat/$rotaId"
-                    params={{ rotaId: prox.rota.id }}
-                    className="flex items-center justify-center gap-2 rounded-lg border border-border bg-surface py-3.5 text-sm font-medium text-foreground transition-colors hover:bg-surface-2"
-                  >
-                    <MessageCircle size={16} /> Chat da Rota
-                  </Link>
-                </div>
-                
-                {/* Área Expansível (Visível no SnapPoint 0.8) */}
-                <div className="mt-8 space-y-6 border-t border-border pt-6">
-                   <h3 className="text-sm font-semibold text-foreground">Resumo da Semana</h3>
-                   <div className="grid grid-cols-2 gap-3 sm:grid-cols-5">
-                      {semanaCaronas.map((c) => {
-                        const tone = c.status === "feita" ? "border-border text-muted-foreground"
-                                   : c.status === "substituto" ? "border-warn/40 bg-warn/5 text-warn"
-                                   : "border-primary/40 bg-primary/5 text-foreground";
-                        return (
-                          <div key={c.data} className={`rounded-lg border p-3 ${tone}`}>
-                            <div className="flex items-baseline justify-between">
-                              <span className="label-cockpit text-[10px]">{c.dia}</span>
-                              <span className="num text-[10px] opacity-80">{c.data}</span>
-                            </div>
-                            <div className="mt-2 text-[10px] capitalize">
-                                {c.status}
-                            </div>
-                          </div>
-                        );
-                      })}
-                   </div>
-                </div>
-
+              </div>
+              <div className="text-right">
+                <p className="num text-2xl font-bold text-foreground sm:text-3xl" suppressHydrationWarning>
+                  {mounted ? formatHora(prox.horario) : "--:--"}
+                </p>
+                <span className="mt-1 inline-flex items-center gap-1 rounded-full bg-warn/15 px-2 py-0.5 text-[11px] font-medium text-warn" suppressHydrationWarning>
+                  <Clock size={11} /> em {mounted ? prox.minutosFaltando : 23} min
+                </span>
               </div>
             </div>
-          </Drawer.Content>
-        </Drawer.Portal>
-      </Drawer.Root>
+
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-5 rounded-lg border border-border bg-background p-4 mb-6">
+              <div className="flex items-center gap-3">
+                <Avatar name={motorista.nome} color={motorista.cor} size={42} iniciais={motorista.iniciais} />
+                <div>
+                  <div className="flex items-center gap-2">
+                    <span className="text-sm font-medium text-foreground">{motorista.nome}</span>
+                    {motorista.cnhVerificada && <CnhBadge />}
+                  </div>
+                  <div className="mt-1 flex items-center gap-3 text-xs text-muted-foreground">
+                    <StarRating value={motorista.avaliacao} />
+                    {motorista.carro && <span className="flex items-center gap-1 num"><Car size={12}/> {motorista.carro.placa}</span>}
+                  </div>
+                </div>
+              </div>
+              
+              <div className="flex items-center gap-6 sm:justify-end border-t border-border pt-4 sm:pt-0 sm:border-0">
+                <div>
+                  <p className="text-[10px] uppercase tracking-wider text-muted-foreground font-semibold">Vagas</p>
+                  <p className="num mt-0.5 text-base font-semibold text-foreground">
+                    {prox.ocupadas}<span className="text-muted-foreground text-sm font-normal">/{prox.rota.vagas}</span>
+                  </p>
+                </div>
+                <div className="h-8 w-px bg-border hidden sm:block"></div>
+                <div>
+                  <p className="text-[10px] uppercase tracking-wider text-muted-foreground font-semibold">Valor Fixo</p>
+                  <p className="num mt-0.5 text-base font-semibold text-primary">{formatBRL(prox.valor)}</p>
+                </div>
+              </div>
+            </div>
+
+            <div className="flex gap-3">
+              <Link
+                to="/app/viagem-ativa"
+                className="flex-1 inline-flex items-center justify-center gap-2 rounded-md bg-primary py-2.5 text-sm font-medium text-primary-foreground hover:bg-primary/90 transition-colors"
+              >
+                <Navigation size={16} /> Iniciar
+              </Link>
+              <Link
+                to="/app/chat/$rotaId"
+                params={{ rotaId: prox.rota.id }}
+                className="flex-1 inline-flex items-center justify-center gap-2 rounded-md border border-border bg-surface py-2.5 text-sm font-medium text-foreground hover:bg-surface-2 transition-colors"
+              >
+                <MessageCircle size={16} /> Chat da Rota
+                <span className="num flex h-4 w-4 items-center justify-center rounded-full bg-primary text-[10px] font-bold text-primary-foreground">2</span>
+              </Link>
+            </div>
+          </section>
+
+          {/* Card: Esta semana */}
+          <section className="rounded-xl border border-border bg-surface p-5 sm:p-7 shadow-sm">
+            <div className="flex items-center justify-between mb-5">
+              <h3 className="text-base font-semibold text-foreground">Sua Semana</h3>
+              <Link to="/app/minhas-caronas" className="text-xs text-primary hover:underline">
+                Ver todas
+              </Link>
+            </div>
+            <div className="grid grid-cols-2 gap-3 sm:grid-cols-5">
+              {semanaCaronas.map((c) => {
+                const isSub = c.status === "substituto";
+                const isFeita = c.status === "feita";
+                const tone = isFeita
+                    ? "border-border text-muted-foreground bg-background"
+                    : isSub
+                    ? "border-warn/30 bg-warn/5 text-warn"
+                    : "border-primary/30 bg-primary/5 text-primary";
+                
+                return (
+                  <div key={c.data} className={`rounded-lg border p-3 ${tone}`}>
+                    <div className="flex items-baseline justify-between mb-2">
+                      <span className="text-[10px] font-medium uppercase">{c.dia}</span>
+                      <span className="num text-[10px] opacity-70">{c.data}</span>
+                    </div>
+                    <div className="flex items-center text-[10px] font-medium">
+                      {isSub ? (
+                        <span className="inline-flex items-center gap-1"><AlertCircle size={12} /> Substituto</span>
+                      ) : isFeita ? (
+                        <span className="inline-flex items-center gap-1"><CalendarCheck size={12} /> Concluída</span>
+                      ) : (
+                        <span className="inline-flex items-center gap-1"><Clock size={12} /> Agendada</span>
+                      )}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </section>
+
+        </div>
+
+        {/* RIGHT COLUMN: Map, Reputação, Ganhos */}
+        <aside className="flex flex-col gap-6">
+          
+          {/* Card: Mapa Contido */}
+          <div className="rounded-xl border border-border bg-surface shadow-sm overflow-hidden flex flex-col h-[280px]">
+            <div className="px-4 py-3 border-b border-border bg-surface flex items-center justify-between">
+              <span className="text-sm font-semibold text-foreground">Trajeto Ao Vivo</span>
+              <span className="text-xs text-muted-foreground num">{prox.rota.km} km</span>
+            </div>
+            <div className="flex-1 relative bg-surface-2">
+              <RouteMap
+                path={prox.rota.caminho}
+                origin={prox.rota.origem.coord}
+                destination={prox.rota.destino.coord}
+                height="100%"
+                className="w-full h-full"
+              />
+            </div>
+          </div>
+
+          {/* Card: Ganhos */}
+          <div className="rounded-xl border border-border bg-surface p-5 shadow-sm">
+            <div className="flex items-start justify-between">
+              <div>
+                <p className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">Ganhos no Mês</p>
+                <p className="num mt-1 text-2xl font-bold text-foreground">{formatBRL(ganhosMes.total)}</p>
+              </div>
+              <span className="inline-flex items-center gap-1 rounded-full bg-success/10 px-2 py-1 text-[11px] font-medium text-success">
+                <TrendingUp size={12} /> +12%
+              </span>
+            </div>
+            
+            {/* Mini gráfico */}
+            <div className="mt-5 flex items-end gap-2 h-14">
+              {ganhosMes.semanal.map((v, i) => {
+                const max = Math.max(...ganhosMes.semanal);
+                const h = (v / max) * 100;
+                return (
+                  <div key={i} className="flex h-full flex-1 flex-col justify-end gap-1">
+                    <div className="w-full rounded-sm bg-primary/40 transition-all hover:bg-primary" style={{ height: `${h}%` }} />
+                  </div>
+                );
+              })}
+            </div>
+            
+            <div className="mt-4 flex items-center justify-between border-t border-border pt-4">
+              <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                <Fuel size={14} className="text-primary" />
+                Gasolina poupada
+              </div>
+              <span className="num text-sm font-semibold text-foreground">{formatBRL(ganhosMes.combustivelRecuperado)}</span>
+            </div>
+          </div>
+
+          {/* Card: Reputação */}
+          <div className="rounded-xl border border-border bg-surface p-5 shadow-sm flex flex-col gap-4">
+            <div>
+              <div className="flex items-center justify-between mb-1.5">
+                <span className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">Presença</span>
+                <span className="num text-xs font-bold text-foreground">{eu.presenca}%</span>
+              </div>
+              <PresenceBar value={eu.presenca} label={false} />
+            </div>
+            
+            <div>
+              <div className="flex items-center justify-between mb-1.5">
+                <span className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">Avaliação</span>
+                <StarRating value={eu.avaliacao} />
+              </div>
+              <div className="relative h-1.5 overflow-hidden rounded-full bg-surface-2">
+                <div className="h-full bg-warn" style={{ width: `${(eu.avaliacao / 5) * 100}%` }} />
+              </div>
+            </div>
+          </div>
+
+        </aside>
+
+      </div>
     </div>
   );
 }

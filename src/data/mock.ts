@@ -215,14 +215,13 @@ export const rotas: Rota[] = [
 
 export const getRota = (id: string) => rotas.find((r) => r.id === id);
 
-// Quanto cada passageiro paga conforme vagas ocupadas. Motorista mantém 92% (taxa app 8%).
+// Preço fixo de R$ 3,50 por passageiro. Motorista mantém 90% (taxa app 10%).
 export function calcDivisao(rota: Rota, ocupadas: number) {
   const o = Math.max(1, Math.min(ocupadas, rota.vagas));
-  // O preço da rota cheia é precoBase * vagas / 1.6  (gera economia evidente)
-  const totalRota = rota.precoBase * 1.4;
-  const porPassageiro = +(totalRota / o).toFixed(2);
-  const ganhoMotorista = +(porPassageiro * o * 0.92).toFixed(2);
-  return { porPassageiro, ganhoMotorista, totalRota: +totalRota.toFixed(2) };
+  const porPassageiro = 3.50; // Fixo
+  const ganhoMotorista = +(porPassageiro * o * 0.90).toFixed(2);
+  const totalRota = +(porPassageiro * o).toFixed(2);
+  return { porPassageiro, ganhoMotorista, totalRota };
 }
 
 // ---------- Carteira ----------

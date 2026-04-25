@@ -38,7 +38,6 @@ export function RouteMap({
     if (typeof window === "undefined") return;
     (async () => {
       const L = (await import("leaflet")).default;
-      await import("leaflet/dist/leaflet.css");
       if (cancelled || !ref.current) return;
 
       const map = L.map(ref.current, {
@@ -53,6 +52,9 @@ export function RouteMap({
       });
       mapRef.current = map;
       setReady(true);
+      setTimeout(() => {
+        if (mapRef.current) mapRef.current.invalidateSize();
+      }, 200);
     })();
     return () => {
       cancelled = true;
@@ -75,7 +77,7 @@ export function RouteMap({
       const url =
         theme === "dark"
           ? "https://{s}.basemaps.cartocdn.com/dark_nolabels/{z}/{x}/{y}{r}.png"
-          : "https://{s}.basemaps.cartocdn.com/voyager_nolabels/{z}/{x}/{y}{r}.png";
+          : "https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png";
       tileRef.current = L.tileLayer(url, {
         subdomains: "abcd",
         maxZoom: 19,
@@ -167,8 +169,8 @@ export function RouteMap({
   return (
     <div
       ref={ref}
-      className={`relative overflow-hidden bg-surface ${className}`}
-      style={{ height: typeof height === "number" ? `${height}px` : height }}
+      className={`relative overflow-hidden w-full bg-surface ${className}`}
+      style={{ height: typeof height === "number" ? `${height}px` : height, zIndex: 0 }}
       aria-label="Mapa da rota"
     />
   );

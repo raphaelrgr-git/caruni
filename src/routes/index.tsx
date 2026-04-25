@@ -146,23 +146,22 @@ function Landing() {
       {/* MOTORISTA */}
       <section id="motorista" className="border-b border-border bg-surface">
         <div className="mx-auto grid max-w-6xl gap-10 px-5 py-20 lg:grid-cols-[1fr_1.1fr]">
-          <div>
-            <div className="label-cockpit mb-2">Pra motoristas</div>
-            <h2 className="text-3xl font-semibold tracking-tight md:text-4xl">
-              Recupere até<br />
-              <span className="num text-primary text-6xl md:text-7xl"><Counter prefix="R$ " to={462} /></span>/mês<br />
-              em combustível.
+          <div className="flex flex-col justify-center">
+            <div className="label-cockpit mb-2 text-primary">Pra motoristas</div>
+            <h2 className="text-3xl font-semibold tracking-tight md:text-5xl">
+              Cancele o custo<br />
+              do seu combustível.
             </h2>
-            <p className="mt-5 max-w-md text-muted-foreground">
-              Você ia fazer essa rota de qualquer jeito. CarUni divide o custo do tanque entre quem vai com você. Quanto mais cheio o carro, mais você ganha.
+            <p className="mt-5 max-w-md text-lg text-muted-foreground">
+              Um carro com lugares vazios todo dia é dinheiro jogado fora. O passageiro paga um valor fixo e justo. Quanto mais cheio seu carro, mais seu lucro multiplica.
             </p>
-            <div className="mt-8 flex flex-wrap gap-3 text-xs">
-              <span className="rounded-md border border-border bg-background px-2.5 py-1.5">Sem assinar app</span>
-              <span className="rounded-md border border-border bg-background px-2.5 py-1.5">Repasse semanal via Pix</span>
-              <span className="rounded-md border border-border bg-background px-2.5 py-1.5">Você define o trajeto</span>
+            <div className="mt-8 flex flex-wrap gap-3 text-sm">
+              <span className="inline-flex items-center gap-1.5 rounded-full border border-border bg-background px-3 py-1.5"><ShieldCheck size={14} className="text-primary"/> CNH Verificada</span>
+              <span className="inline-flex items-center gap-1.5 rounded-full border border-border bg-background px-3 py-1.5"><Wallet size={14} className="text-primary"/> Sem inadimplência</span>
+              <span className="inline-flex items-center gap-1.5 rounded-full border border-border bg-background px-3 py-1.5"><Repeat size={14} className="text-primary"/> Assinatura mensal</span>
             </div>
           </div>
-          <CalculadoraDivisao base={r.precoBase} vagas={r.vagas} />
+          <CalculadoraDivisao vagas={r.vagas} />
         </div>
       </section>
 
@@ -177,17 +176,17 @@ function Landing() {
           </div>
           <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-3">
             {[
-              { i: ShieldCheck, t: "CNH verificada", d: "Documento validado manualmente. Selo aparece em todo motorista. Você sabe com quem está entrando." },
-              { i: Zap, t: "Substituição automática", d: "Motorista cancelou? O app já busca outro na mesma rota e horário e te avisa quando achar." },
-              { i: Users, t: "Divisão por vagas", d: "Quanto mais passageiros, menor o valor por pessoa e maior o ganho do motorista. Calculado em tempo real." },
-              { i: BadgeCheck, t: "Reputação de presença", d: "Porcentagem de presença separada da nota de qualidade. Pressão social positiva, sem punir." },
+              { i: ShieldCheck, t: "CNH e Identidade verificada", d: "Documentos validados para motoristas e passageiros (como e-mail universitário). Você sabe com quem está entrando no carro." },
+              { i: Zap, t: "Substituição automática", d: "Motorista cancelou? O app devolve o dinheiro na hora e avisa o passageiro. Faltas sem aviso geram penalidades." },
+              { i: Wallet, t: "Preço fixo. Ganho escalável.", d: "O passageiro paga sempre os mesmos R$ 3,50 da passagem. O motorista ganha cumulativamente por cada vaga ocupada." },
+              { i: BadgeCheck, t: "Reputação de presença", d: "Porcentagem de presença separada da nota de qualidade. A carona rotineira exige pontualidade e previsibilidade." },
               { i: MessageCircle, t: "Chat por rota", d: "Mini grupo só com quem faz seu trajeto. Texto, simples, sem ruído." },
               { i: Phone, t: "SOS durante viagem", d: "Botão discreto. Segura por 1.5s e seu contato de emergência recebe sua localização no WhatsApp." },
             ].map(({ i: Icon, t, d }) => (
-              <article key={t} className="rounded-xl border border-border bg-surface p-5 transition-colors hover:bg-surface-2">
-                <Icon size={18} className="text-primary" />
-                <h3 className="mt-4 text-base font-semibold">{t}</h3>
-                <p className="mt-1.5 text-sm leading-relaxed text-muted-foreground">{d}</p>
+              <article key={t} className="rounded-xl border border-border bg-surface p-6 shadow-sm transition-transform hover:-translate-y-1">
+                <Icon size={24} className="text-primary mb-2" />
+                <h3 className="mt-4 text-lg font-semibold">{t}</h3>
+                <p className="mt-2 text-sm leading-relaxed text-muted-foreground">{d}</p>
               </article>
             ))}
           </div>
@@ -264,41 +263,50 @@ function Landing() {
   );
 }
 
-function CalculadoraDivisao({ base, vagas }: { base: number; vagas: number }) {
+function CalculadoraDivisao({ vagas }: { vagas: number }) {
   const [n, setN] = React.useState(vagas);
-  const r = { precoBase: base, vagas } as any;
+  const r = { vagas } as any;
   const d = calcDivisao(r, n);
+  
+  // Simulando ida e volta, 22 dias uteis por mês
+  const ganhoMensal = d.ganhoMotorista * 2 * 22;
+
   return (
-    <div className="rounded-xl border border-border bg-background p-6">
-      <div className="flex items-center justify-between">
+    <div className="rounded-2xl border border-border bg-surface shadow-2xl p-6 md:p-8">
+      <div className="flex items-center justify-between mb-2">
         <div>
-          <div className="label-cockpit">Cálculo ao vivo</div>
-          <div className="mt-0.5 text-sm text-muted-foreground">Quantos passageiros no carro</div>
+          <div className="label-cockpit text-primary">Calculadora de Ganhos</div>
+          <div className="mt-1 text-base font-medium text-foreground">Assentos ocupados</div>
         </div>
-        <span className="num text-2xl font-semibold">{n}/{vagas}</span>
+        <div className="flex items-baseline gap-1 text-primary">
+          <span className="num text-4xl font-bold">{n}</span>
+          <span className="text-sm font-medium text-muted-foreground">/{vagas}</span>
+        </div>
       </div>
+      
       <input
         type="range"
         min={1}
         max={vagas}
         value={n}
         onChange={(e) => setN(Number(e.target.value))}
-        className="mt-4 h-2 w-full cursor-pointer appearance-none rounded-full bg-surface-2 accent-primary"
+        className="mt-6 mb-8 h-3 w-full cursor-pointer appearance-none rounded-full bg-surface-2 accent-primary outline-none focus:ring-4 focus:ring-primary/20 transition-all"
       />
-      <div className="mt-7 grid grid-cols-2 gap-3">
-        <div className="rounded-lg border border-border p-4">
-          <div className="label-cockpit">Por passageiro</div>
-          <div className="num mt-1 text-3xl font-semibold">{formatBRL(d.porPassageiro)}</div>
-          <div className="mt-1 text-xs text-muted-foreground">por viagem</div>
+      
+      <div className="grid grid-cols-2 gap-4">
+        <div className="rounded-xl border border-border bg-background p-4 flex flex-col justify-center">
+          <div className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">Passageiro paga</div>
+          <div className="num mt-2 text-2xl font-semibold text-foreground">{formatBRL(d.porPassageiro)}</div>
+          <div className="mt-1 text-[10px] text-muted-foreground">Fixo. Mais barato que ônibus.</div>
         </div>
-        <div className="rounded-lg border border-primary/30 bg-primary/5 p-4">
-          <div className="label-cockpit text-primary">Motorista ganha</div>
-          <div className="num mt-1 text-3xl font-semibold text-primary">{formatBRL(d.ganhoMotorista)}</div>
-          <div className="mt-1 text-xs text-muted-foreground">por viagem</div>
+        <div className="rounded-xl bg-primary text-primary-foreground p-4 flex flex-col justify-center shadow-lg transform transition-transform duration-300 hover:scale-105">
+          <div className="text-[11px] font-semibold uppercase tracking-wider opacity-90">Motorista ganha</div>
+          <div className="num mt-2 text-3xl font-bold">{formatBRL(ganhoMensal)}</div>
+          <div className="mt-1 text-[10px] opacity-80">Por mês (Ida e Volta)</div>
         </div>
       </div>
-      <div className="mt-3 text-[11px] text-muted-foreground">
-        Quanto mais cheio o carro, melhor pra todo mundo.
+      <div className="mt-6 text-center text-xs text-muted-foreground bg-surface-2/50 py-2 rounded-lg border border-border/50">
+        Simulação baseada em 2 viagens por dia útil (22 dias/mês).
       </div>
     </div>
   );
