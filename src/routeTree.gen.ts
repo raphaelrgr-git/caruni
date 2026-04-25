@@ -12,6 +12,7 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as AppRouteImport } from './routes/app'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AppIndexRouteImport } from './routes/app.index'
+import { Route as AppViagemAtivaRouteImport } from './routes/app.viagem-ativa'
 import { Route as AppPerfilRouteImport } from './routes/app.perfil'
 import { Route as AppMinhasCaronasRouteImport } from './routes/app.minhas-caronas'
 import { Route as AppCarteiraRouteImport } from './routes/app.carteira'
@@ -32,6 +33,11 @@ const IndexRoute = IndexRouteImport.update({
 const AppIndexRoute = AppIndexRouteImport.update({
   id: '/',
   path: '/',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppViagemAtivaRoute = AppViagemAtivaRouteImport.update({
+  id: '/viagem-ativa',
+  path: '/viagem-ativa',
   getParentRoute: () => AppRoute,
 } as any)
 const AppPerfilRoute = AppPerfilRouteImport.update({
@@ -72,6 +78,7 @@ export interface FileRoutesByFullPath {
   '/app/carteira': typeof AppCarteiraRoute
   '/app/minhas-caronas': typeof AppMinhasCaronasRoute
   '/app/perfil': typeof AppPerfilRoute
+  '/app/viagem-ativa': typeof AppViagemAtivaRoute
   '/app/': typeof AppIndexRoute
   '/app/chat/$rotaId': typeof AppChatRotaIdRoute
   '/app/rota/$id': typeof AppRotaIdRoute
@@ -82,6 +89,7 @@ export interface FileRoutesByTo {
   '/app/carteira': typeof AppCarteiraRoute
   '/app/minhas-caronas': typeof AppMinhasCaronasRoute
   '/app/perfil': typeof AppPerfilRoute
+  '/app/viagem-ativa': typeof AppViagemAtivaRoute
   '/app': typeof AppIndexRoute
   '/app/chat/$rotaId': typeof AppChatRotaIdRoute
   '/app/rota/$id': typeof AppRotaIdRoute
@@ -94,6 +102,7 @@ export interface FileRoutesById {
   '/app/carteira': typeof AppCarteiraRoute
   '/app/minhas-caronas': typeof AppMinhasCaronasRoute
   '/app/perfil': typeof AppPerfilRoute
+  '/app/viagem-ativa': typeof AppViagemAtivaRoute
   '/app/': typeof AppIndexRoute
   '/app/chat/$rotaId': typeof AppChatRotaIdRoute
   '/app/rota/$id': typeof AppRotaIdRoute
@@ -107,6 +116,7 @@ export interface FileRouteTypes {
     | '/app/carteira'
     | '/app/minhas-caronas'
     | '/app/perfil'
+    | '/app/viagem-ativa'
     | '/app/'
     | '/app/chat/$rotaId'
     | '/app/rota/$id'
@@ -117,6 +127,7 @@ export interface FileRouteTypes {
     | '/app/carteira'
     | '/app/minhas-caronas'
     | '/app/perfil'
+    | '/app/viagem-ativa'
     | '/app'
     | '/app/chat/$rotaId'
     | '/app/rota/$id'
@@ -128,6 +139,7 @@ export interface FileRouteTypes {
     | '/app/carteira'
     | '/app/minhas-caronas'
     | '/app/perfil'
+    | '/app/viagem-ativa'
     | '/app/'
     | '/app/chat/$rotaId'
     | '/app/rota/$id'
@@ -159,6 +171,13 @@ declare module '@tanstack/react-router' {
       path: '/'
       fullPath: '/app/'
       preLoaderRoute: typeof AppIndexRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/app/viagem-ativa': {
+      id: '/app/viagem-ativa'
+      path: '/viagem-ativa'
+      fullPath: '/app/viagem-ativa'
+      preLoaderRoute: typeof AppViagemAtivaRouteImport
       parentRoute: typeof AppRoute
     }
     '/app/perfil': {
@@ -211,6 +230,7 @@ interface AppRouteChildren {
   AppCarteiraRoute: typeof AppCarteiraRoute
   AppMinhasCaronasRoute: typeof AppMinhasCaronasRoute
   AppPerfilRoute: typeof AppPerfilRoute
+  AppViagemAtivaRoute: typeof AppViagemAtivaRoute
   AppIndexRoute: typeof AppIndexRoute
   AppChatRotaIdRoute: typeof AppChatRotaIdRoute
   AppRotaIdRoute: typeof AppRotaIdRoute
@@ -221,6 +241,7 @@ const AppRouteChildren: AppRouteChildren = {
   AppCarteiraRoute: AppCarteiraRoute,
   AppMinhasCaronasRoute: AppMinhasCaronasRoute,
   AppPerfilRoute: AppPerfilRoute,
+  AppViagemAtivaRoute: AppViagemAtivaRoute,
   AppIndexRoute: AppIndexRoute,
   AppChatRotaIdRoute: AppChatRotaIdRoute,
   AppRotaIdRoute: AppRotaIdRoute,
