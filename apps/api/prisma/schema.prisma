@@ -1,0 +1,243 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum SubscriptionPlanKey {
+  CALOURO
+  VETERANO
+}
+
+enum SubscriptionStatus {
+  ACTIVE
+  CANCELLED
+  EXPIRED
+}
+
+enum CreditStatus {
+  DISPONIVEL
+  RESERVADO
+  CONSUMIDO
+  EXPIRADO
+  PERDIDO
+}
+
+enum BookingType {
+  RECORRENTE
+  AVULSO
+}
+
+enum BookingStatus {
+  ACTIVE
+  CANCELLED
+}
+
+enum RideStatus {
+  SCHEDULED
+  CONFIRMED
+  DISPUTE
+  CANCELLED
+}
+
+enum WalletTransactionType {
+  ASSINATURA
+  CREDITO_RESERVADO
+  CREDITO_CONSUMIDO
+  CREDITO_DEVOLVIDO
+  CREDITO_PERDIDO
+  REPASSE
+  EXTRA_CREDIT_PURCHASE
+}
+
+model University {
+  id        String   @id @default(cuid())
+  name      String   @unique
+  city      String
+  createdAt DateTime @default(now())
+  users     User[]
+}
+
+model User {
+  id                   String                   @id @default(cuid())
+  email                String                   @unique
+  passwordHash         String
+  name                 String
+  course               String?
+  photoUrl             String?
+  isEmailVerified      Boolean                  @default(false)
+  createdAt            DateTime                 @default(now())
+  updatedAt            DateTime                 @updatedAt
+  universityId         String?
+  university           University?              @relation(fields: [universityId], references: [id])
+  vehicle              Vehicle?
+  drivenRoutes         Route[]                  @relation("DriverRoutes")
+  bookings             Booking[]
+  subscriptions        UserSubscription[]
+  creditEntries        CreditLedgerEntry[]
+  walletTransactions   WalletTransaction[]
+  reviewsAuthored      Review[]                 @relation("ReviewAuthor")
+  reviewsReceived      Review[]                 @relation("ReviewTarget")
+  emailVerifications   EmailVerificationToken[]
+}
+
+model Vehicle {
+  id        String   @id @default(cuid())
+  userId    String   @unique
+  model     String
+  color     String
+  plate     String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  user      User     @relation(fields: [userId], references: [id])
+}
+
+model SubscriptionPlan {
+  id                   String               @id @default(cuid())
+  key                  SubscriptionPlanKey  @unique
+  name                 String
+  weeklyPrice          Decimal              @db.Decimal(10, 2)
+  creditsIncluded      Int
+  costPerTrip          Decimal              @db.Decimal(10, 2)
+  extraTripPrice       Decimal              @db.Decimal(10, 2)
+  driverPayoutPerCredit Decimal             @db.Decimal(10, 2)
+  priority             Boolean              @default(false)
+  createdAt            DateTime             @default(now())
+  updatedAt            DateTime             @updatedAt
+  subscriptions        UserSubscription[]
+  creditEntries        CreditLedgerEntry[]
+}
+
+model UserSubscription {
+  id         String              @id @default(cuid())
+  userId     String
+  planId     String
+  status     SubscriptionStatus  @default(ACTIVE)
+  autoRenew  Boolean             @default(false)
+  cycleStart DateTime
+  cycleEnd   DateTime
+  createdAt  DateTime            @default(now())
+  updatedAt  DateTime            @updatedAt
+  user       User                @relation(fields: [userId], references: [id])
+  plan       SubscriptionPlan    @relation(fields: [planId], references: [id])
+  creditEntries CreditLedgerEntry[]
+}
+
+model Route {
+  id                String        @id @default(cuid())
+  driverId          String
+  name              String
+  city              String
+  originLabel       String
+  originLat         Float
+  originLng         Float
+  destinationLabel  String
+  destinationLat    Float
+  destinationLng    Float
+  distanceMeters    Int
+  durationSeconds   Int
+  geometry          Json
+  weekdays          Json
+  departureTime     String
+  seats             Int
+  createdAt         DateTime      @default(now())
+  updatedAt         DateTime      @updatedAt
+  driver            User          @relation("DriverRoutes", fields: [driverId], references: [id])
+  rideInstances     RideInstance[]
+  bookings          Booking[]
+  reviews           Review[]
+}
+
+model RideInstance {
+  id                 String       @id @default(cuid())
+  routeId            String
+  scheduledAt        DateTime
+  status             RideStatus   @default(SCHEDULED)
+  driverConfirmedAt  DateTime?
+  passengerConfirmedAt DateTime?
+  passengerBoarded   Boolean?
+  createdAt          DateTime     @default(now())
+  updatedAt          DateTime     @updatedAt
+  route              Route        @relation(fields: [routeId], references: [id])
+  bookings           Booking[]
+  creditEntries      CreditLedgerEntry[]
+  walletTransactions WalletTransaction[]
+}
+
+model Booking {
+  id             String        @id @default(cuid())
+  userId         String
+  routeId        String
+  rideInstanceId String?
+  type           BookingType
+  status         BookingStatus @default(ACTIVE)
+  weekdays       Json
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
+  cancelledAt    DateTime?
+  user           User          @relation(fields: [userId], references: [id])
+  route          Route         @relation(fields: [routeId], references: [id])
+  rideInstance   RideInstance? @relation(fields: [rideInstanceId], references: [id])
+  creditEntries  CreditLedgerEntry[]
+  walletTransactions WalletTransaction[]
+}
+
+model CreditLedgerEntry {
+  id             String        @id @default(cuid())
+  userId         String
+  subscriptionId String?
+  planId         String
+  bookingId      String?
+  rideInstanceId String?
+  status         CreditStatus
+  monetaryValue  Decimal       @db.Decimal(10, 2)
+  description    String
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
+  expiresAt      DateTime?
+  user           User          @relation(fields: [userId], references: [id])
+  subscription   UserSubscription? @relation(fields: [subscriptionId], references: [id])
+  plan           SubscriptionPlan @relation(fields: [planId], references: [id])
+  booking        Booking?      @relation(fields: [bookingId], references: [id])
+  rideInstance   RideInstance? @relation(fields: [rideInstanceId], references: [id])
+}
+
+model WalletTransaction {
+  id             String                 @id @default(cuid())
+  userId         String
+  bookingId      String?
+  rideInstanceId String?
+  type           WalletTransactionType
+  description    String
+  amount         Decimal                @db.Decimal(10, 2)
+  createdAt      DateTime               @default(now())
+  user           User                   @relation(fields: [userId], references: [id])
+  booking        Booking?               @relation(fields: [bookingId], references: [id])
+  rideInstance   RideInstance?          @relation(fields: [rideInstanceId], references: [id])
+}
+
+model Review {
+  id        String   @id @default(cuid())
+  routeId    String
+  fromId    String
+  toId      String
+  rating    Int
+  body      String
+  createdAt DateTime @default(now())
+  route     Route    @relation(fields: [routeId], references: [id])
+  from      User     @relation("ReviewAuthor", fields: [fromId], references: [id])
+  to        User     @relation("ReviewTarget", fields: [toId], references: [id])
+}
+
+model EmailVerificationToken {
+  id        String   @id @default(cuid())
+  userId    String
+  token     String   @unique
+  expiresAt DateTime
+  usedAt    DateTime?
+  createdAt DateTime @default(now())
+  user      User     @relation(fields: [userId], references: [id])
+}

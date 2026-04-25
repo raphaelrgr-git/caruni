@@ -1,0 +1,16 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: caruni-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: caruni
+      POSTGRES_USER: caruni
+      POSTGRES_PASSWORD: caruni
+    ports:
+      - "5433:5432"
+    volumes:
+      - caruni-postgres-data:/var/lib/postgresql/data
+
+volumes:
+  caruni-postgres-data:
