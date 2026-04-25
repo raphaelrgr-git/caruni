@@ -50,7 +50,6 @@ export function RouteMap({
         touchZoom: interactive,
         boxZoom: interactive,
         keyboard: interactive,
-        tap: interactive,
       });
       mapRef.current = map;
       setReady(true);
