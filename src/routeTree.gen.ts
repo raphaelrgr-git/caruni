@@ -11,6 +11,14 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as AppRouteImport } from './routes/app'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as AppIndexRouteImport } from './routes/app.index'
+import { Route as AppViagemAtivaRouteImport } from './routes/app.viagem-ativa'
+import { Route as AppPerfilRouteImport } from './routes/app.perfil'
+import { Route as AppMinhasCaronasRouteImport } from './routes/app.minhas-caronas'
+import { Route as AppCarteiraRouteImport } from './routes/app.carteira'
+import { Route as AppBuscarRouteImport } from './routes/app.buscar'
+import { Route as AppRotaIdRouteImport } from './routes/app.rota.$id'
+import { Route as AppChatRotaIdRouteImport } from './routes/app.chat.$rotaId'
 
 const AppRoute = AppRouteImport.update({
   id: '/app',
@@ -22,31 +30,124 @@ const IndexRoute = IndexRouteImport.update({
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AppIndexRoute = AppIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppViagemAtivaRoute = AppViagemAtivaRouteImport.update({
+  id: '/viagem-ativa',
+  path: '/viagem-ativa',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppPerfilRoute = AppPerfilRouteImport.update({
+  id: '/perfil',
+  path: '/perfil',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppMinhasCaronasRoute = AppMinhasCaronasRouteImport.update({
+  id: '/minhas-caronas',
+  path: '/minhas-caronas',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppCarteiraRoute = AppCarteiraRouteImport.update({
+  id: '/carteira',
+  path: '/carteira',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppBuscarRoute = AppBuscarRouteImport.update({
+  id: '/buscar',
+  path: '/buscar',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppRotaIdRoute = AppRotaIdRouteImport.update({
+  id: '/rota/$id',
+  path: '/rota/$id',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppChatRotaIdRoute = AppChatRotaIdRouteImport.update({
+  id: '/chat/$rotaId',
+  path: '/chat/$rotaId',
+  getParentRoute: () => AppRoute,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
-  '/app': typeof AppRoute
+  '/app': typeof AppRouteWithChildren
+  '/app/buscar': typeof AppBuscarRoute
+  '/app/carteira': typeof AppCarteiraRoute
+  '/app/minhas-caronas': typeof AppMinhasCaronasRoute
+  '/app/perfil': typeof AppPerfilRoute
+  '/app/viagem-ativa': typeof AppViagemAtivaRoute
+  '/app/': typeof AppIndexRoute
+  '/app/chat/$rotaId': typeof AppChatRotaIdRoute
+  '/app/rota/$id': typeof AppRotaIdRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
-  '/app': typeof AppRoute
+  '/app/buscar': typeof AppBuscarRoute
+  '/app/carteira': typeof AppCarteiraRoute
+  '/app/minhas-caronas': typeof AppMinhasCaronasRoute
+  '/app/perfil': typeof AppPerfilRoute
+  '/app/viagem-ativa': typeof AppViagemAtivaRoute
+  '/app': typeof AppIndexRoute
+  '/app/chat/$rotaId': typeof AppChatRotaIdRoute
+  '/app/rota/$id': typeof AppRotaIdRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
-  '/app': typeof AppRoute
+  '/app': typeof AppRouteWithChildren
+  '/app/buscar': typeof AppBuscarRoute
+  '/app/carteira': typeof AppCarteiraRoute
+  '/app/minhas-caronas': typeof AppMinhasCaronasRoute
+  '/app/perfil': typeof AppPerfilRoute
+  '/app/viagem-ativa': typeof AppViagemAtivaRoute
+  '/app/': typeof AppIndexRoute
+  '/app/chat/$rotaId': typeof AppChatRotaIdRoute
+  '/app/rota/$id': typeof AppRotaIdRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/app'
+  fullPaths:
+    | '/'
+    | '/app'
+    | '/app/buscar'
+    | '/app/carteira'
+    | '/app/minhas-caronas'
+    | '/app/perfil'
+    | '/app/viagem-ativa'
+    | '/app/'
+    | '/app/chat/$rotaId'
+    | '/app/rota/$id'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/app'
-  id: '__root__' | '/' | '/app'
+  to:
+    | '/'
+    | '/app/buscar'
+    | '/app/carteira'
+    | '/app/minhas-caronas'
+    | '/app/perfil'
+    | '/app/viagem-ativa'
+    | '/app'
+    | '/app/chat/$rotaId'
+    | '/app/rota/$id'
+  id:
+    | '__root__'
+    | '/'
+    | '/app'
+    | '/app/buscar'
+    | '/app/carteira'
+    | '/app/minhas-caronas'
+    | '/app/perfil'
+    | '/app/viagem-ativa'
+    | '/app/'
+    | '/app/chat/$rotaId'
+    | '/app/rota/$id'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
-  AppRoute: typeof AppRoute
+  AppRoute: typeof AppRouteWithChildren
 }
 
 declare module '@tanstack/react-router' {
@@ -65,12 +166,92 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/app/': {
+      id: '/app/'
+      path: '/'
+      fullPath: '/app/'
+      preLoaderRoute: typeof AppIndexRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/app/viagem-ativa': {
+      id: '/app/viagem-ativa'
+      path: '/viagem-ativa'
+      fullPath: '/app/viagem-ativa'
+      preLoaderRoute: typeof AppViagemAtivaRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/app/perfil': {
+      id: '/app/perfil'
+      path: '/perfil'
+      fullPath: '/app/perfil'
+      preLoaderRoute: typeof AppPerfilRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/app/minhas-caronas': {
+      id: '/app/minhas-caronas'
+      path: '/minhas-caronas'
+      fullPath: '/app/minhas-caronas'
+      preLoaderRoute: typeof AppMinhasCaronasRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/app/carteira': {
+      id: '/app/carteira'
+      path: '/carteira'
+      fullPath: '/app/carteira'
+      preLoaderRoute: typeof AppCarteiraRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/app/buscar': {
+      id: '/app/buscar'
+      path: '/buscar'
+      fullPath: '/app/buscar'
+      preLoaderRoute: typeof AppBuscarRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/app/rota/$id': {
+      id: '/app/rota/$id'
+      path: '/rota/$id'
+      fullPath: '/app/rota/$id'
+      preLoaderRoute: typeof AppRotaIdRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/app/chat/$rotaId': {
+      id: '/app/chat/$rotaId'
+      path: '/chat/$rotaId'
+      fullPath: '/app/chat/$rotaId'
+      preLoaderRoute: typeof AppChatRotaIdRouteImport
+      parentRoute: typeof AppRoute
+    }
   }
 }
 
+interface AppRouteChildren {
+  AppBuscarRoute: typeof AppBuscarRoute
+  AppCarteiraRoute: typeof AppCarteiraRoute
+  AppMinhasCaronasRoute: typeof AppMinhasCaronasRoute
+  AppPerfilRoute: typeof AppPerfilRoute
+  AppViagemAtivaRoute: typeof AppViagemAtivaRoute
+  AppIndexRoute: typeof AppIndexRoute
+  AppChatRotaIdRoute: typeof AppChatRotaIdRoute
+  AppRotaIdRoute: typeof AppRotaIdRoute
+}
+
+const AppRouteChildren: AppRouteChildren = {
+  AppBuscarRoute: AppBuscarRoute,
+  AppCarteiraRoute: AppCarteiraRoute,
+  AppMinhasCaronasRoute: AppMinhasCaronasRoute,
+  AppPerfilRoute: AppPerfilRoute,
+  AppViagemAtivaRoute: AppViagemAtivaRoute,
+  AppIndexRoute: AppIndexRoute,
+  AppChatRotaIdRoute: AppChatRotaIdRoute,
+  AppRotaIdRoute: AppRotaIdRoute,
+}
+
+const AppRouteWithChildren = AppRoute._addFileChildren(AppRouteChildren)
+
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
-  AppRoute: AppRoute,
+  AppRoute: AppRouteWithChildren,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
