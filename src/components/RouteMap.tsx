@@ -95,6 +95,7 @@ export function RouteMap({
       layersRef.current = [];
 
       const styles = getComputedStyle(document.documentElement);
+      // Variáveis já vêm com oklch(...) embutido
       const primary = styles.getPropertyValue("--primary").trim() || "#a3e635";
       const accent = styles.getPropertyValue("--accent").trim() || "#fb923c";
       const fg = styles.getPropertyValue("--foreground").trim() || "#fff";
@@ -102,14 +103,14 @@ export function RouteMap({
 
       // Glow line (mais larga, opaca)
       const glow = L.polyline(path, {
-        color: `oklch(${primary})`,
+        color: primary,
         weight: 9,
         opacity: 0.18,
         lineCap: "round",
         lineJoin: "round",
       }).addTo(mapRef.current);
       const line = L.polyline(path, {
-        color: `oklch(${primary})`,
+        color: primary,
         weight: 4,
         opacity: 0.95,
         lineCap: "round",
@@ -122,21 +123,21 @@ export function RouteMap({
           className: "",
           iconSize: [size, size],
           iconAnchor: [size / 2, size / 2],
-          html: `<div style="width:${size}px;height:${size}px;border-radius:9999px;background:${color};border:2px solid ${ring};box-shadow:0 0 0 3px oklch(${bg} / .9), 0 4px 12px oklch(0 0 0 / .35);"></div>`,
+          html: `<div style="width:${size}px;height:${size}px;border-radius:9999px;background:${color};border:2px solid ${ring};box-shadow:0 0 0 3px ${bg}, 0 4px 12px rgba(0,0,0,.35);"></div>`,
         });
 
       const o = origin ?? path[0];
       const d = destination ?? path[path.length - 1];
       if (o) {
-        const m = L.marker(o, { icon: dotIcon(`oklch(${primary})`, `oklch(${fg})`, 14) }).addTo(mapRef.current);
+        const m = L.marker(o, { icon: dotIcon(primary, fg, 14) }).addTo(mapRef.current);
         layersRef.current.push(m);
       }
       if (d) {
-        const m = L.marker(d, { icon: dotIcon(`oklch(${accent})`, `oklch(${fg})`, 14) }).addTo(mapRef.current);
+        const m = L.marker(d, { icon: dotIcon(accent, fg, 14) }).addTo(mapRef.current);
         layersRef.current.push(m);
       }
       stops?.forEach((s) => {
-        const m = L.marker(s, { icon: dotIcon(`oklch(${fg})`, `oklch(${bg})`, 8) }).addTo(mapRef.current);
+        const m = L.marker(s, { icon: dotIcon(fg, bg, 8) }).addTo(mapRef.current);
         layersRef.current.push(m);
       });
 
@@ -145,8 +146,8 @@ export function RouteMap({
           className: "",
           iconSize: [36, 36],
           iconAnchor: [18, 18],
-          html: `<div style="width:36px;height:36px;border-radius:9999px;background:oklch(${primary});display:flex;align-items:center;justify-content:center;box-shadow:0 0 0 4px oklch(${bg} / .85), 0 0 0 8px oklch(${primary} / .25), 0 8px 24px oklch(0 0 0 / .4);">
-            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="oklch(${bg})" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M14 16H9m10 0h3v-3.15a1 1 0 0 0-.84-.99L16 11l-2.7-3.6a1 1 0 0 0-.8-.4H5.24a2 2 0 0 0-1.8 1.1l-.8 1.63A6 6 0 0 0 2 12.42V16h2"/><circle cx="6.5" cy="16.5" r="2.5"/><circle cx="16.5" cy="16.5" r="2.5"/></svg>
+          html: `<div style="width:36px;height:36px;border-radius:9999px;background:${primary};display:flex;align-items:center;justify-content:center;box-shadow:0 0 0 4px ${bg}, 0 0 0 8px color-mix(in oklab, ${primary} 25%, transparent), 0 8px 24px rgba(0,0,0,.4);">
+            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="${bg}" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M14 16H9m10 0h3v-3.15a1 1 0 0 0-.84-.99L16 11l-2.7-3.6a1 1 0 0 0-.8-.4H5.24a2 2 0 0 0-1.8 1.1l-.8 1.63A6 6 0 0 0 2 12.42V16h2"/><circle cx="6.5" cy="16.5" r="2.5"/><circle cx="16.5" cy="16.5" r="2.5"/></svg>
           </div>`,
         });
         const m = L.marker(carPosition, { icon: carIcon }).addTo(mapRef.current);
