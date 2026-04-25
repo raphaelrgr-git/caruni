@@ -1,4 +1,5 @@
 import * as React from "react";
+import type { Layer, Map as LeafletMap, TileLayer } from "leaflet";
 import { useTheme } from "@/lib/theme";
 import type { LatLng } from "@/data/mock";
 
@@ -27,9 +28,9 @@ export function RouteMap({
 }: RouteMapProps) {
   const { theme } = useTheme();
   const ref = React.useRef<HTMLDivElement | null>(null);
-  const mapRef = React.useRef<any>(null);
-  const tileRef = React.useRef<any>(null);
-  const layersRef = React.useRef<any[]>([]);
+  const mapRef = React.useRef<LeafletMap | null>(null);
+  const tileRef = React.useRef<TileLayer | null>(null);
+  const layersRef = React.useRef<Layer[]>([]);
   const [ready, setReady] = React.useState(false);
 
   // Init mapa client-side
@@ -74,13 +75,14 @@ export function RouteMap({
       }
       const url =
         theme === "dark"
-          ? "https://{s}.basemaps.cartocdn.com/dark_nolabels/{z}/{x}/{y}{r}.png"
-          : "https://{s}.basemaps.cartocdn.com/voyager_nolabels/{z}/{x}/{y}{r}.png";
+          ? "https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png"
+          : "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png";
       tileRef.current = L.tileLayer(url, {
-        subdomains: "abcd",
+        subdomains: theme === "dark" ? "abcd" : "abc",
         maxZoom: 19,
-        attribution: '© OSM · CARTO',
+        attribution: theme === "dark" ? "© OSM · CARTO" : "© OpenStreetMap",
       }).addTo(mapRef.current);
+      mapRef.current.invalidateSize();
     };
     void run();
   }, [theme, ready]);
@@ -93,19 +95,22 @@ export function RouteMap({
       // limpar
       layersRef.current.forEach((lyr) => mapRef.current.removeLayer(lyr));
       layersRef.current = [];
+      if (!path.length) {
+        mapRef.current.setView([-26.3045, -48.8487], 12);
+        return;
+      }
 
-      const styles = getComputedStyle(document.documentElement);
-      // Variáveis já vêm com oklch(...) embutido
-      const primary = styles.getPropertyValue("--primary").trim() || "#a3e635";
-      const accent = styles.getPropertyValue("--accent").trim() || "#fb923c";
-      const fg = styles.getPropertyValue("--foreground").trim() || "#fff";
-      const bg = styles.getPropertyValue("--background").trim() || "#000";
+      const primary = theme === "dark" ? "#bef264" : "#0f766e";
+      const accent = theme === "dark" ? "#fbbf24" : "#f97316";
+      const fg = theme === "dark" ? "#f8fafc" : "#0f172a";
+      const bg = theme === "dark" ? "#111827" : "#ffffff";
+      const stopColor = theme === "dark" ? "#f8fafc" : "#1f2937";
 
       // Glow line (mais larga, opaca)
       const glow = L.polyline(path, {
         color: primary,
         weight: 9,
-        opacity: 0.18,
+        opacity: theme === "dark" ? 0.2 : 0.14,
         lineCap: "round",
         lineJoin: "round",
       }).addTo(mapRef.current);
@@ -137,7 +142,7 @@ export function RouteMap({
         layersRef.current.push(m);
       }
       stops?.forEach((s) => {
-        const m = L.marker(s, { icon: dotIcon(fg, bg, 8) }).addTo(mapRef.current);
+        const m = L.marker(s, { icon: dotIcon(stopColor, bg, 8) }).addTo(mapRef.current);
         layersRef.current.push(m);
       });
 
@@ -167,7 +172,7 @@ export function RouteMap({
   return (
     <div
       ref={ref}
-      className={`relative overflow-hidden bg-surface ${className}`}
+      className={`relative overflow-hidden rounded-lg border border-border bg-surface ${className}`}
       style={{ height: typeof height === "number" ? `${height}px` : height }}
       aria-label="Mapa da rota"
     />

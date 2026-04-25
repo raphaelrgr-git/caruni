@@ -9,17 +9,30 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as LoginRouteImport } from './routes/login'
+import { Route as CadastroRouteImport } from './routes/cadastro'
 import { Route as AppRouteImport } from './routes/app'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AppIndexRouteImport } from './routes/app.index'
 import { Route as AppViagemAtivaRouteImport } from './routes/app.viagem-ativa'
 import { Route as AppPerfilRouteImport } from './routes/app.perfil'
 import { Route as AppMinhasCaronasRouteImport } from './routes/app.minhas-caronas'
+import { Route as AppCriarRotaRouteImport } from './routes/app.criar-rota'
 import { Route as AppCarteiraRouteImport } from './routes/app.carteira'
 import { Route as AppBuscarRouteImport } from './routes/app.buscar'
 import { Route as AppRotaIdRouteImport } from './routes/app.rota.$id'
 import { Route as AppChatRotaIdRouteImport } from './routes/app.chat.$rotaId'
 
+const LoginRoute = LoginRouteImport.update({
+  id: '/login',
+  path: '/login',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const CadastroRoute = CadastroRouteImport.update({
+  id: '/cadastro',
+  path: '/cadastro',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AppRoute = AppRouteImport.update({
   id: '/app',
   path: '/app',
@@ -50,6 +63,11 @@ const AppMinhasCaronasRoute = AppMinhasCaronasRouteImport.update({
   path: '/minhas-caronas',
   getParentRoute: () => AppRoute,
 } as any)
+const AppCriarRotaRoute = AppCriarRotaRouteImport.update({
+  id: '/criar-rota',
+  path: '/criar-rota',
+  getParentRoute: () => AppRoute,
+} as any)
 const AppCarteiraRoute = AppCarteiraRouteImport.update({
   id: '/carteira',
   path: '/carteira',
@@ -74,8 +92,11 @@ const AppChatRotaIdRoute = AppChatRotaIdRouteImport.update({
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/app': typeof AppRouteWithChildren
+  '/cadastro': typeof CadastroRoute
+  '/login': typeof LoginRoute
   '/app/buscar': typeof AppBuscarRoute
   '/app/carteira': typeof AppCarteiraRoute
+  '/app/criar-rota': typeof AppCriarRotaRoute
   '/app/minhas-caronas': typeof AppMinhasCaronasRoute
   '/app/perfil': typeof AppPerfilRoute
   '/app/viagem-ativa': typeof AppViagemAtivaRoute
@@ -85,8 +106,11 @@ export interface FileRoutesByFullPath {
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/cadastro': typeof CadastroRoute
+  '/login': typeof LoginRoute
   '/app/buscar': typeof AppBuscarRoute
   '/app/carteira': typeof AppCarteiraRoute
+  '/app/criar-rota': typeof AppCriarRotaRoute
   '/app/minhas-caronas': typeof AppMinhasCaronasRoute
   '/app/perfil': typeof AppPerfilRoute
   '/app/viagem-ativa': typeof AppViagemAtivaRoute
@@ -98,8 +122,11 @@ export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/app': typeof AppRouteWithChildren
+  '/cadastro': typeof CadastroRoute
+  '/login': typeof LoginRoute
   '/app/buscar': typeof AppBuscarRoute
   '/app/carteira': typeof AppCarteiraRoute
+  '/app/criar-rota': typeof AppCriarRotaRoute
   '/app/minhas-caronas': typeof AppMinhasCaronasRoute
   '/app/perfil': typeof AppPerfilRoute
   '/app/viagem-ativa': typeof AppViagemAtivaRoute
@@ -112,8 +139,11 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/app'
+    | '/cadastro'
+    | '/login'
     | '/app/buscar'
     | '/app/carteira'
+    | '/app/criar-rota'
     | '/app/minhas-caronas'
     | '/app/perfil'
     | '/app/viagem-ativa'
@@ -123,8 +153,11 @@ export interface FileRouteTypes {
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
+    | '/cadastro'
+    | '/login'
     | '/app/buscar'
     | '/app/carteira'
+    | '/app/criar-rota'
     | '/app/minhas-caronas'
     | '/app/perfil'
     | '/app/viagem-ativa'
@@ -135,8 +168,11 @@ export interface FileRouteTypes {
     | '__root__'
     | '/'
     | '/app'
+    | '/cadastro'
+    | '/login'
     | '/app/buscar'
     | '/app/carteira'
+    | '/app/criar-rota'
     | '/app/minhas-caronas'
     | '/app/perfil'
     | '/app/viagem-ativa'
@@ -148,10 +184,26 @@ export interface FileRouteTypes {
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AppRoute: typeof AppRouteWithChildren
+  CadastroRoute: typeof CadastroRoute
+  LoginRoute: typeof LoginRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/login': {
+      id: '/login'
+      path: '/login'
+      fullPath: '/login'
+      preLoaderRoute: typeof LoginRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/cadastro': {
+      id: '/cadastro'
+      path: '/cadastro'
+      fullPath: '/cadastro'
+      preLoaderRoute: typeof CadastroRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/app': {
       id: '/app'
       path: '/app'
@@ -194,6 +246,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppMinhasCaronasRouteImport
       parentRoute: typeof AppRoute
     }
+    '/app/criar-rota': {
+      id: '/app/criar-rota'
+      path: '/criar-rota'
+      fullPath: '/app/criar-rota'
+      preLoaderRoute: typeof AppCriarRotaRouteImport
+      parentRoute: typeof AppRoute
+    }
     '/app/carteira': {
       id: '/app/carteira'
       path: '/carteira'
@@ -228,6 +287,7 @@ declare module '@tanstack/react-router' {
 interface AppRouteChildren {
   AppBuscarRoute: typeof AppBuscarRoute
   AppCarteiraRoute: typeof AppCarteiraRoute
+  AppCriarRotaRoute: typeof AppCriarRotaRoute
   AppMinhasCaronasRoute: typeof AppMinhasCaronasRoute
   AppPerfilRoute: typeof AppPerfilRoute
   AppViagemAtivaRoute: typeof AppViagemAtivaRoute
@@ -239,6 +299,7 @@ interface AppRouteChildren {
 const AppRouteChildren: AppRouteChildren = {
   AppBuscarRoute: AppBuscarRoute,
   AppCarteiraRoute: AppCarteiraRoute,
+  AppCriarRotaRoute: AppCriarRotaRoute,
   AppMinhasCaronasRoute: AppMinhasCaronasRoute,
   AppPerfilRoute: AppPerfilRoute,
   AppViagemAtivaRoute: AppViagemAtivaRoute,
@@ -252,7 +313,18 @@ const AppRouteWithChildren = AppRoute._addFileChildren(AppRouteChildren)
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AppRoute: AppRouteWithChildren,
+  CadastroRoute: CadastroRoute,
+  LoginRoute: LoginRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { createStart } from '@tanstack/react-start'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+  }
+}
