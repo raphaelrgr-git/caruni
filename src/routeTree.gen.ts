@@ -12,6 +12,7 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as AppRouteImport } from './routes/app'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AppIndexRouteImport } from './routes/app.index'
+import { Route as AppMinhasCaronasRouteImport } from './routes/app.minhas-caronas'
 import { Route as AppBuscarRouteImport } from './routes/app.buscar'
 
 const AppRoute = AppRouteImport.update({
@@ -29,6 +30,11 @@ const AppIndexRoute = AppIndexRouteImport.update({
   path: '/',
   getParentRoute: () => AppRoute,
 } as any)
+const AppMinhasCaronasRoute = AppMinhasCaronasRouteImport.update({
+  id: '/minhas-caronas',
+  path: '/minhas-caronas',
+  getParentRoute: () => AppRoute,
+} as any)
 const AppBuscarRoute = AppBuscarRouteImport.update({
   id: '/buscar',
   path: '/buscar',
@@ -39,11 +45,13 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/app': typeof AppRouteWithChildren
   '/app/buscar': typeof AppBuscarRoute
+  '/app/minhas-caronas': typeof AppMinhasCaronasRoute
   '/app/': typeof AppIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/app/buscar': typeof AppBuscarRoute
+  '/app/minhas-caronas': typeof AppMinhasCaronasRoute
   '/app': typeof AppIndexRoute
 }
 export interface FileRoutesById {
@@ -51,14 +59,21 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/app': typeof AppRouteWithChildren
   '/app/buscar': typeof AppBuscarRoute
+  '/app/minhas-caronas': typeof AppMinhasCaronasRoute
   '/app/': typeof AppIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/app' | '/app/buscar' | '/app/'
+  fullPaths: '/' | '/app' | '/app/buscar' | '/app/minhas-caronas' | '/app/'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/app/buscar' | '/app'
-  id: '__root__' | '/' | '/app' | '/app/buscar' | '/app/'
+  to: '/' | '/app/buscar' | '/app/minhas-caronas' | '/app'
+  id:
+    | '__root__'
+    | '/'
+    | '/app'
+    | '/app/buscar'
+    | '/app/minhas-caronas'
+    | '/app/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -89,6 +104,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppIndexRouteImport
       parentRoute: typeof AppRoute
     }
+    '/app/minhas-caronas': {
+      id: '/app/minhas-caronas'
+      path: '/minhas-caronas'
+      fullPath: '/app/minhas-caronas'
+      preLoaderRoute: typeof AppMinhasCaronasRouteImport
+      parentRoute: typeof AppRoute
+    }
     '/app/buscar': {
       id: '/app/buscar'
       path: '/buscar'
@@ -101,11 +123,13 @@ declare module '@tanstack/react-router' {
 
 interface AppRouteChildren {
   AppBuscarRoute: typeof AppBuscarRoute
+  AppMinhasCaronasRoute: typeof AppMinhasCaronasRoute
   AppIndexRoute: typeof AppIndexRoute
 }
 
 const AppRouteChildren: AppRouteChildren = {
   AppBuscarRoute: AppBuscarRoute,
+  AppMinhasCaronasRoute: AppMinhasCaronasRoute,
   AppIndexRoute: AppIndexRoute,
 }
 
