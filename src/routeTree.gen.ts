@@ -12,6 +12,7 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as AppRouteImport } from './routes/app'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AppIndexRouteImport } from './routes/app.index'
+import { Route as AppPerfilRouteImport } from './routes/app.perfil'
 import { Route as AppMinhasCaronasRouteImport } from './routes/app.minhas-caronas'
 import { Route as AppBuscarRouteImport } from './routes/app.buscar'
 
@@ -30,6 +31,11 @@ const AppIndexRoute = AppIndexRouteImport.update({
   path: '/',
   getParentRoute: () => AppRoute,
 } as any)
+const AppPerfilRoute = AppPerfilRouteImport.update({
+  id: '/perfil',
+  path: '/perfil',
+  getParentRoute: () => AppRoute,
+} as any)
 const AppMinhasCaronasRoute = AppMinhasCaronasRouteImport.update({
   id: '/minhas-caronas',
   path: '/minhas-caronas',
@@ -46,12 +52,14 @@ export interface FileRoutesByFullPath {
   '/app': typeof AppRouteWithChildren
   '/app/buscar': typeof AppBuscarRoute
   '/app/minhas-caronas': typeof AppMinhasCaronasRoute
+  '/app/perfil': typeof AppPerfilRoute
   '/app/': typeof AppIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/app/buscar': typeof AppBuscarRoute
   '/app/minhas-caronas': typeof AppMinhasCaronasRoute
+  '/app/perfil': typeof AppPerfilRoute
   '/app': typeof AppIndexRoute
 }
 export interface FileRoutesById {
@@ -60,19 +68,27 @@ export interface FileRoutesById {
   '/app': typeof AppRouteWithChildren
   '/app/buscar': typeof AppBuscarRoute
   '/app/minhas-caronas': typeof AppMinhasCaronasRoute
+  '/app/perfil': typeof AppPerfilRoute
   '/app/': typeof AppIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/app' | '/app/buscar' | '/app/minhas-caronas' | '/app/'
+  fullPaths:
+    | '/'
+    | '/app'
+    | '/app/buscar'
+    | '/app/minhas-caronas'
+    | '/app/perfil'
+    | '/app/'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/app/buscar' | '/app/minhas-caronas' | '/app'
+  to: '/' | '/app/buscar' | '/app/minhas-caronas' | '/app/perfil' | '/app'
   id:
     | '__root__'
     | '/'
     | '/app'
     | '/app/buscar'
     | '/app/minhas-caronas'
+    | '/app/perfil'
     | '/app/'
   fileRoutesById: FileRoutesById
 }
@@ -104,6 +120,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppIndexRouteImport
       parentRoute: typeof AppRoute
     }
+    '/app/perfil': {
+      id: '/app/perfil'
+      path: '/perfil'
+      fullPath: '/app/perfil'
+      preLoaderRoute: typeof AppPerfilRouteImport
+      parentRoute: typeof AppRoute
+    }
     '/app/minhas-caronas': {
       id: '/app/minhas-caronas'
       path: '/minhas-caronas'
@@ -124,12 +147,14 @@ declare module '@tanstack/react-router' {
 interface AppRouteChildren {
   AppBuscarRoute: typeof AppBuscarRoute
   AppMinhasCaronasRoute: typeof AppMinhasCaronasRoute
+  AppPerfilRoute: typeof AppPerfilRoute
   AppIndexRoute: typeof AppIndexRoute
 }
 
 const AppRouteChildren: AppRouteChildren = {
   AppBuscarRoute: AppBuscarRoute,
   AppMinhasCaronasRoute: AppMinhasCaronasRoute,
+  AppPerfilRoute: AppPerfilRoute,
   AppIndexRoute: AppIndexRoute,
 }
 
