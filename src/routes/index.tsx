@@ -1,6 +1,6 @@
 import * as React from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { ArrowRight, ShieldCheck, Repeat, Users, MessageCircle, Zap, Wallet, Car, Phone, BadgeCheck } from "lucide-react";
+import { ArrowRight, ShieldCheck, Repeat, Users, MessageCircle, Zap, Wallet, Car, Phone, BadgeCheck, Leaf, CheckCircle2, XCircle } from "lucide-react";
 import { BrandLogo, BrandMark, CnhBadge, Avatar, PresenceBar, StarRating } from "@/components/Brand";
 import { useTheme } from "@/lib/theme";
 import { Sun, Moon } from "lucide-react";
@@ -200,13 +200,16 @@ function Landing() {
             <div className="label-cockpit mb-2">Comparativo honesto</div>
             <h2 className="text-3xl font-semibold tracking-tight md:text-4xl">WhatsApp vs CarUni</h2>
           </div>
-          <div className="overflow-hidden rounded-xl border border-border bg-background">
-            <table className="w-full text-sm">
+          <div className="overflow-hidden rounded-2xl border border-border bg-background shadow-xl">
+            <table className="w-full text-sm md:text-base">
               <thead>
-                <tr className="border-b border-border bg-surface-2">
-                  <th className="px-5 py-3 text-left font-medium text-muted-foreground"></th>
-                  <th className="px-5 py-3 text-left font-medium">Grupo de WhatsApp</th>
-                  <th className="px-5 py-3 text-left font-medium text-primary">CarUni</th>
+                <tr className="border-b border-border bg-surface">
+                  <th className="px-4 py-4 text-left font-medium text-muted-foreground md:px-6 w-1/3"></th>
+                  <th className="px-4 py-4 text-left font-semibold text-foreground md:px-6 w-1/3">Grupo de WhatsApp</th>
+                  <th className="px-4 py-4 text-left font-bold text-primary bg-primary/5 border-l border-primary/10 md:px-6 w-1/3 relative overflow-hidden">
+                    <span className="relative z-10">CarUni</span>
+                    <div className="absolute inset-0 bg-gradient-to-r from-primary/0 to-primary/10 pointer-events-none" />
+                  </th>
                 </tr>
               </thead>
               <tbody>
@@ -218,10 +221,20 @@ function Landing() {
                   ["Histórico de viagens", "Some no chat", "Extrato mensal"],
                   ["Falta sem avisar", "Brigada no grupo", "Penalização proporcional"],
                 ].map(([k, w, c]) => (
-                  <tr key={k} className="border-b border-border last:border-0">
-                    <td className="px-5 py-3.5 text-muted-foreground">{k}</td>
-                    <td className="px-5 py-3.5">{w}</td>
-                    <td className="px-5 py-3.5 font-medium text-foreground">{c}</td>
+                  <tr key={k} className="border-b border-border last:border-0 group transition-colors hover:bg-surface/50">
+                    <td className="px-4 py-5 font-medium text-muted-foreground md:px-6">{k}</td>
+                    <td className="px-4 py-5 text-muted-foreground md:px-6">
+                      <div className="flex items-center gap-2">
+                        <XCircle size={18} className="text-red-500/70 shrink-0" />
+                        <span>{w}</span>
+                      </div>
+                    </td>
+                    <td className="px-4 py-5 font-semibold text-foreground bg-primary/5 border-l border-primary/10 transition-colors group-hover:bg-primary/10 md:px-6">
+                      <div className="flex items-center gap-2">
+                        <CheckCircle2 size={18} className="text-primary shrink-0" />
+                        <span>{c}</span>
+                      </div>
+                    </td>
                   </tr>
                 ))}
               </tbody>
@@ -239,24 +252,7 @@ function Landing() {
           <p className="mx-auto mt-4 max-w-xl text-muted-foreground">
             Entre na nossa lista de espera e seja o primeiro a saber quando o CarUni estiver disponível na sua região.
           </p>
-          <div className="mt-10 grid gap-8 sm:grid-cols-2">
-            <div className="rounded-2xl border border-border bg-surface p-6 text-left shadow-sm transition-all hover:border-primary/50">
-              <h3 className="text-lg font-semibold flex items-center gap-2"><Car size={18} className="text-primary"/> Quero ser Motorista</h3>
-              <p className="mt-2 text-sm text-muted-foreground">Transforme seus assentos vazios em dinheiro todo mês.</p>
-              <form className="mt-6 flex flex-col gap-3" onSubmit={(e) => { e.preventDefault(); alert("Email cadastrado na lista de espera para motoristas!"); }}>
-                <input type="email" placeholder="Seu melhor e-mail" required className="w-full rounded-md border border-border bg-background px-4 py-2.5 text-sm outline-none transition-colors focus:border-primary focus:ring-1 focus:ring-primary" />
-                <button type="submit" className="w-full rounded-md bg-primary px-4 py-2.5 text-sm font-semibold text-primary-foreground transition-colors hover:bg-primary/90">Entrar na Lista</button>
-              </form>
-            </div>
-            <div className="rounded-2xl border border-border bg-surface p-6 text-left shadow-sm transition-all hover:border-primary/50">
-              <h3 className="text-lg font-semibold flex items-center gap-2"><Users size={18} className="text-primary"/> Quero ser Passageiro</h3>
-              <p className="mt-2 text-sm text-muted-foreground">Economize em relação ao ônibus e viaje com conforto e previsibilidade.</p>
-              <form className="mt-6 flex flex-col gap-3" onSubmit={(e) => { e.preventDefault(); alert("Email cadastrado na lista de espera para passageiros!"); }}>
-                <input type="email" placeholder="Seu melhor e-mail" required className="w-full rounded-md border border-border bg-background px-4 py-2.5 text-sm outline-none transition-colors focus:border-primary focus:ring-1 focus:ring-primary" />
-                <button type="submit" className="w-full rounded-md border border-border bg-surface-2 px-4 py-2.5 text-sm font-semibold text-foreground transition-colors hover:bg-surface-3">Entrar na Lista</button>
-              </form>
-            </div>
-          </div>
+          <WaitlistForm />
         </div>
       </section>
 
@@ -276,13 +272,60 @@ function Landing() {
   );
 }
 
+function WaitlistForm() {
+  const [modo, setModo] = React.useState<"motorista" | "passageiro">("motorista");
+
+  return (
+    <div className="mx-auto mt-12 max-w-md rounded-2xl border border-border bg-surface shadow-xl overflow-hidden text-left">
+      <div className="flex p-2 bg-surface-2 gap-2 border-b border-border/50">
+        <button 
+          onClick={() => setModo("motorista")} 
+          className={`flex-1 rounded-lg py-3 text-sm font-semibold transition-all ${modo === "motorista" ? "bg-background text-primary shadow-sm ring-1 ring-border" : "text-muted-foreground hover:text-foreground"}`}
+        >
+          Para Motoristas
+        </button>
+        <button 
+          onClick={() => setModo("passageiro")} 
+          className={`flex-1 rounded-lg py-3 text-sm font-semibold transition-all ${modo === "passageiro" ? "bg-background text-primary shadow-sm ring-1 ring-border" : "text-muted-foreground hover:text-foreground"}`}
+        >
+          Para Passageiros
+        </button>
+      </div>
+
+      <div className="p-6 md:p-8 bg-surface">
+        {modo === "motorista" ? (
+          <div className="animate-in fade-in slide-in-from-bottom-2 duration-300">
+            <h3 className="text-xl font-semibold flex items-center gap-2 text-foreground"><Car size={20} className="text-primary"/> Quero ser Motorista</h3>
+            <p className="mt-2 text-sm leading-relaxed text-muted-foreground">Transforme seus assentos vazios em dinheiro todo mês e ajude a reduzir o trânsito da sua cidade.</p>
+            <form className="mt-8 flex flex-col gap-4" onSubmit={(e) => { e.preventDefault(); alert("Cadastro realizado na lista de espera para motoristas!"); }}>
+              <input type="text" placeholder="Qual o seu nome?" required className="w-full rounded-lg border border-border bg-background px-4 py-3 text-sm outline-none transition-colors focus:border-primary focus:ring-1 focus:ring-primary" />
+              <input type="email" placeholder="Seu melhor e-mail" required className="w-full rounded-lg border border-border bg-background px-4 py-3 text-sm outline-none transition-colors focus:border-primary focus:ring-1 focus:ring-primary" />
+              <button type="submit" className="w-full mt-2 rounded-lg bg-primary px-4 py-3 text-sm font-semibold text-primary-foreground shadow-md transition-transform hover:-translate-y-0.5 hover:shadow-lg">Zerar meu gasto com combustível</button>
+            </form>
+          </div>
+        ) : (
+          <div className="animate-in fade-in slide-in-from-bottom-2 duration-300">
+            <h3 className="text-xl font-semibold flex items-center gap-2 text-foreground"><Users size={20} className="text-primary"/> Quero ser Passageiro</h3>
+            <p className="mt-2 text-sm leading-relaxed text-muted-foreground">Economize em relação ao ônibus, viaje com conforto e tenha sempre uma carona recorrente garantida.</p>
+            <form className="mt-8 flex flex-col gap-4" onSubmit={(e) => { e.preventDefault(); alert("Cadastro realizado na lista de espera para passageiros!"); }}>
+              <input type="text" placeholder="Qual o seu nome?" required className="w-full rounded-lg border border-border bg-background px-4 py-3 text-sm outline-none transition-colors focus:border-primary focus:ring-1 focus:ring-primary" />
+              <input type="email" placeholder="Seu melhor e-mail" required className="w-full rounded-lg border border-border bg-background px-4 py-3 text-sm outline-none transition-colors focus:border-primary focus:ring-1 focus:ring-primary" />
+              <button type="submit" className="w-full mt-2 rounded-lg bg-primary px-4 py-3 text-sm font-semibold text-primary-foreground shadow-md transition-transform hover:-translate-y-0.5 hover:shadow-lg">Quero caronas mais baratas</button>
+            </form>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
 function CalculadoraVantagens({ vagas }: { vagas: number }) {
   const [modo, setModo] = React.useState<"motorista" | "passageiro">("motorista");
   const [n, setN] = React.useState(vagas);
   const [dias, setDias] = React.useState(22);
   const [caronasMes, setCaronasMes] = React.useState(44);
 
-  const precoOnibus = 5.50; // valor médio
+  const precoOnibus = 6.50; // valor Joinville
   const r = { vagas } as any;
   const d = calcDivisao(r, n);
   
@@ -290,6 +333,12 @@ function CalculadoraVantagens({ vagas }: { vagas: number }) {
   const custoOnibus = caronasMes * precoOnibus;
   const custoCaruni = caronasMes * d.porPassageiro;
   const economia = custoOnibus - custoCaruni;
+  const percentualEconomia = custoOnibus > 0 ? Math.round((economia / custoOnibus) * 100) : 0;
+
+  // Estimativa: 2.4kg de CO2 economizado por carona compartilhada (média de 10-15km)
+  const CO2_POR_CARONA = 2.4;
+  const carbonoMotorista = (n * 2 * dias * CO2_POR_CARONA).toFixed(1);
+  const carbonoPassageiro = (caronasMes * CO2_POR_CARONA).toFixed(1);
 
   return (
     <div className="rounded-2xl border border-border bg-surface shadow-2xl overflow-hidden flex flex-col">
@@ -338,6 +387,14 @@ function CalculadoraVantagens({ vagas }: { vagas: number }) {
                 <div className="mt-1 text-[10px] opacity-80">No final do mês</div>
               </div>
             </div>
+            
+            <div className="mt-4 flex items-center justify-between rounded-xl border border-emerald-500/20 bg-emerald-500/5 px-4 py-3">
+              <div className="flex items-center gap-2 text-sm font-medium text-emerald-600 dark:text-emerald-400">
+                <Leaf size={16} /> CO₂ Evitado na rota
+              </div>
+              <div className="num font-bold text-emerald-600 dark:text-emerald-400">{carbonoMotorista} kg</div>
+            </div>
+
             <div className="mt-6 text-center text-xs text-muted-foreground bg-surface-2/50 py-2.5 rounded-lg border border-border/50">
               Simulação considerando 2 viagens/dia (Ida e Volta).
             </div>
@@ -358,7 +415,7 @@ function CalculadoraVantagens({ vagas }: { vagas: number }) {
 
             <div className="space-y-3">
               <div className="flex items-center justify-between rounded-xl border border-border bg-background px-4 py-3 shadow-sm">
-                <div className="flex items-center gap-2 text-sm font-medium text-muted-foreground"><span className="w-2.5 h-2.5 rounded-full bg-red-500"></span> Gasto de Ônibus <span className="text-xs font-normal opacity-70">(R$ 5,50)</span></div>
+                <div className="flex items-center gap-2 text-sm font-medium text-muted-foreground"><span className="w-2.5 h-2.5 rounded-full bg-red-500"></span> Gasto de Ônibus <span className="text-xs font-normal opacity-70">(R$ 6,50)</span></div>
                 <div className="num font-semibold text-muted-foreground line-through decoration-red-500/50">{formatBRL(custoOnibus)}</div>
               </div>
               
@@ -368,9 +425,19 @@ function CalculadoraVantagens({ vagas }: { vagas: number }) {
               </div>
 
               <div className="mt-5 flex flex-col items-center justify-center rounded-xl bg-emerald-500/10 border border-emerald-500/30 p-5 text-emerald-600 dark:text-emerald-400 transform transition-transform hover:scale-[1.02]">
-                <span className="text-[11px] font-bold uppercase tracking-wider">Você Economiza</span>
+                <div className="flex items-center gap-2">
+                  <span className="text-[11px] font-bold uppercase tracking-wider">Você Economiza</span>
+                  {percentualEconomia > 0 && <span className="num rounded-full bg-emerald-500/20 px-2 py-0.5 text-[10px] font-bold text-emerald-700 dark:text-emerald-300">-{percentualEconomia}%</span>}
+                </div>
                 <span className="num mt-1 text-4xl font-black tracking-tight">{formatBRL(Math.max(0, economia))}</span>
                 <span className="mt-1 text-[11px] font-medium opacity-80">E ainda viaja sentado e com ar-condicionado.</span>
+              </div>
+
+              <div className="flex items-center justify-between rounded-xl border border-emerald-500/20 bg-emerald-500/5 px-4 py-3">
+                <div className="flex items-center gap-2 text-sm font-medium text-emerald-600 dark:text-emerald-400">
+                  <Leaf size={16} /> CO₂ Evitado
+                </div>
+                <div className="num font-bold text-emerald-600 dark:text-emerald-400">{carbonoPassageiro} kg</div>
               </div>
             </div>
           </div>
