@@ -369,6 +369,9 @@ function Landing() {
           <div className="flex items-center gap-5">
             <span>Feito em Joinville · SC</span>
             <span className="num">v0.1 demo</span>
+            <Link to="/admin/login" className="text-muted-foreground/40 hover:text-foreground transition-colors">
+              admin
+            </Link>
           </div>
         </div>
       </footer>
