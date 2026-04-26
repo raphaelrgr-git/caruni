@@ -143,17 +143,17 @@ function Landing() {
         </div>
       </section>
 
-      {/* MOTORISTA */}
-      <section id="motorista" className="border-b border-border bg-surface">
+      {/* VANTAGENS */}
+      <section id="vantagens" className="border-b border-border bg-surface">
         <div className="mx-auto grid max-w-6xl gap-10 px-5 py-20 lg:grid-cols-[1fr_1.1fr]">
           <div className="flex flex-col justify-center">
-            <div className="label-cockpit mb-2 text-primary">Pra motoristas</div>
+            <div className="label-cockpit mb-2 text-primary">Para todos</div>
             <h2 className="text-3xl font-semibold tracking-tight md:text-5xl">
-              Cancele o custo<br />
-              do seu combustível.
+              Bom para quem dirige.<br />
+              Melhor para quem vai.
             </h2>
             <p className="mt-5 max-w-md text-lg text-muted-foreground">
-              Um carro com lugares vazios todo dia é dinheiro jogado fora. O passageiro paga um valor fixo e justo. Quanto mais cheio seu carro, mais seu lucro multiplica.
+              Um carro com lugares vazios é dinheiro jogado fora. O motorista multiplica seus ganhos. O passageiro paga um valor fixo e justo, economizando em relação ao ônibus.
             </p>
             <div className="mt-8 flex flex-wrap gap-3 text-sm">
               <span className="inline-flex items-center gap-1.5 rounded-full border border-border bg-background px-3 py-1.5"><ShieldCheck size={14} className="text-primary"/> CNH Verificada</span>
@@ -161,7 +161,7 @@ function Landing() {
               <span className="inline-flex items-center gap-1.5 rounded-full border border-border bg-background px-3 py-1.5"><Repeat size={14} className="text-primary"/> Assinatura mensal</span>
             </div>
           </div>
-          <CalculadoraDivisao vagas={r.vagas} />
+          <CalculadoraVantagens vagas={r.vagas} />
         </div>
       </section>
 
@@ -230,19 +230,32 @@ function Landing() {
         </div>
       </section>
 
-      {/* CTA */}
-      <section className="border-b border-border">
+      {/* WAITLIST */}
+      <section className="border-b border-border bg-surface-2/30">
         <div className="mx-auto max-w-4xl px-5 py-20 text-center">
           <h2 className="text-balance text-3xl font-semibold tracking-tight md:text-5xl">
-            Sua rota de amanhã <br className="hidden md:inline" />já tem alguém indo no mesmo horário.
+            A revolução da carona está chegando.
           </h2>
           <p className="mx-auto mt-4 max-w-xl text-muted-foreground">
-            Entre no app demo e veja como fica organizado. Tudo navegável, sem cadastro.
+            Entre na nossa lista de espera e seja o primeiro a saber quando o CarUni estiver disponível na sua região.
           </p>
-          <div className="mt-7 flex flex-col items-center justify-center gap-3 sm:flex-row">
-            <Link to="/app" className="inline-flex items-center justify-center gap-2 rounded-md bg-primary px-5 py-3 text-sm font-semibold text-primary-foreground">
-              Abrir CarUni <ArrowRight size={16} />
-            </Link>
+          <div className="mt-10 grid gap-8 sm:grid-cols-2">
+            <div className="rounded-2xl border border-border bg-surface p-6 text-left shadow-sm transition-all hover:border-primary/50">
+              <h3 className="text-lg font-semibold flex items-center gap-2"><Car size={18} className="text-primary"/> Quero ser Motorista</h3>
+              <p className="mt-2 text-sm text-muted-foreground">Transforme seus assentos vazios em dinheiro todo mês.</p>
+              <form className="mt-6 flex flex-col gap-3" onSubmit={(e) => { e.preventDefault(); alert("Email cadastrado na lista de espera para motoristas!"); }}>
+                <input type="email" placeholder="Seu melhor e-mail" required className="w-full rounded-md border border-border bg-background px-4 py-2.5 text-sm outline-none transition-colors focus:border-primary focus:ring-1 focus:ring-primary" />
+                <button type="submit" className="w-full rounded-md bg-primary px-4 py-2.5 text-sm font-semibold text-primary-foreground transition-colors hover:bg-primary/90">Entrar na Lista</button>
+              </form>
+            </div>
+            <div className="rounded-2xl border border-border bg-surface p-6 text-left shadow-sm transition-all hover:border-primary/50">
+              <h3 className="text-lg font-semibold flex items-center gap-2"><Users size={18} className="text-primary"/> Quero ser Passageiro</h3>
+              <p className="mt-2 text-sm text-muted-foreground">Economize em relação ao ônibus e viaje com conforto e previsibilidade.</p>
+              <form className="mt-6 flex flex-col gap-3" onSubmit={(e) => { e.preventDefault(); alert("Email cadastrado na lista de espera para passageiros!"); }}>
+                <input type="email" placeholder="Seu melhor e-mail" required className="w-full rounded-md border border-border bg-background px-4 py-2.5 text-sm outline-none transition-colors focus:border-primary focus:ring-1 focus:ring-primary" />
+                <button type="submit" className="w-full rounded-md border border-border bg-surface-2 px-4 py-2.5 text-sm font-semibold text-foreground transition-colors hover:bg-surface-3">Entrar na Lista</button>
+              </form>
+            </div>
           </div>
         </div>
       </section>
@@ -263,50 +276,105 @@ function Landing() {
   );
 }
 
-function CalculadoraDivisao({ vagas }: { vagas: number }) {
+function CalculadoraVantagens({ vagas }: { vagas: number }) {
+  const [modo, setModo] = React.useState<"motorista" | "passageiro">("motorista");
   const [n, setN] = React.useState(vagas);
+  const [dias, setDias] = React.useState(22);
+  const [caronasMes, setCaronasMes] = React.useState(44);
+
+  const precoOnibus = 5.50; // valor médio
   const r = { vagas } as any;
   const d = calcDivisao(r, n);
   
-  // Simulando ida e volta, 22 dias uteis por mês
-  const ganhoMensal = d.ganhoMotorista * 2 * 22;
+  const ganhoMensal = d.ganhoMotorista * 2 * dias;
+  const custoOnibus = caronasMes * precoOnibus;
+  const custoCaruni = caronasMes * d.porPassageiro;
+  const economia = custoOnibus - custoCaruni;
 
   return (
-    <div className="rounded-2xl border border-border bg-surface shadow-2xl p-6 md:p-8">
-      <div className="flex items-center justify-between mb-2">
-        <div>
-          <div className="label-cockpit text-primary">Calculadora de Ganhos</div>
-          <div className="mt-1 text-base font-medium text-foreground">Assentos ocupados</div>
-        </div>
-        <div className="flex items-baseline gap-1 text-primary">
-          <span className="num text-4xl font-bold">{n}</span>
-          <span className="text-sm font-medium text-muted-foreground">/{vagas}</span>
-        </div>
+    <div className="rounded-2xl border border-border bg-surface shadow-2xl overflow-hidden flex flex-col">
+      <div className="flex p-2 bg-surface-2 gap-2">
+        <button 
+          onClick={() => setModo("motorista")} 
+          className={`flex-1 rounded-lg py-2.5 text-sm font-semibold transition-all ${modo === "motorista" ? "bg-background text-primary shadow-sm ring-1 ring-border" : "text-muted-foreground hover:text-foreground"}`}
+        >
+          Para Motorista
+        </button>
+        <button 
+          onClick={() => setModo("passageiro")} 
+          className={`flex-1 rounded-lg py-2.5 text-sm font-semibold transition-all ${modo === "passageiro" ? "bg-background text-primary shadow-sm ring-1 ring-border" : "text-muted-foreground hover:text-foreground"}`}
+        >
+          Para Passageiro
+        </button>
       </div>
-      
-      <input
-        type="range"
-        min={1}
-        max={vagas}
-        value={n}
-        onChange={(e) => setN(Number(e.target.value))}
-        className="mt-6 mb-8 h-3 w-full cursor-pointer appearance-none rounded-full bg-surface-2 accent-primary outline-none focus:ring-4 focus:ring-primary/20 transition-all"
-      />
-      
-      <div className="grid grid-cols-2 gap-4">
-        <div className="rounded-xl border border-border bg-background p-4 flex flex-col justify-center">
-          <div className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">Passageiro paga</div>
-          <div className="num mt-2 text-2xl font-semibold text-foreground">{formatBRL(d.porPassageiro)}</div>
-          <div className="mt-1 text-[10px] text-muted-foreground">Fixo. Mais barato que ônibus.</div>
-        </div>
-        <div className="rounded-xl bg-primary text-primary-foreground p-4 flex flex-col justify-center shadow-lg transform transition-transform duration-300 hover:scale-105">
-          <div className="text-[11px] font-semibold uppercase tracking-wider opacity-90">Motorista ganha</div>
-          <div className="num mt-2 text-3xl font-bold">{formatBRL(ganhoMensal)}</div>
-          <div className="mt-1 text-[10px] opacity-80">Por mês (Ida e Volta)</div>
-        </div>
-      </div>
-      <div className="mt-6 text-center text-xs text-muted-foreground bg-surface-2/50 py-2 rounded-lg border border-border/50">
-        Simulação baseada em 2 viagens por dia útil (22 dias/mês).
+
+      <div className="p-6 md:p-8 flex-1">
+        {modo === "motorista" ? (
+          <div className="animate-in fade-in slide-in-from-bottom-2 duration-300">
+            <div className="mb-6">
+              <div className="flex items-center justify-between mb-2">
+                <span className="text-sm font-medium text-foreground">Assentos ocupados (por viagem)</span>
+                <span className="num text-lg font-bold text-primary">{n}/{vagas}</span>
+              </div>
+              <input type="range" min={1} max={vagas} value={n} onChange={(e) => setN(Number(e.target.value))} className="w-full cursor-pointer appearance-none rounded-full bg-surface-2 accent-primary h-2.5 outline-none focus:ring-2 focus:ring-primary/20" />
+            </div>
+
+            <div className="mb-8">
+              <div className="flex items-center justify-between mb-2">
+                <span className="text-sm font-medium text-foreground">Dias letivos por mês</span>
+                <span className="num text-lg font-bold text-primary">{dias} dias</span>
+              </div>
+              <input type="range" min={1} max={30} value={dias} onChange={(e) => setDias(Number(e.target.value))} className="w-full cursor-pointer appearance-none rounded-full bg-surface-2 accent-primary h-2.5 outline-none focus:ring-2 focus:ring-primary/20" />
+            </div>
+
+            <div className="grid grid-cols-2 gap-4 mt-6">
+              <div className="rounded-xl border border-border bg-background p-4 flex flex-col justify-center">
+                <div className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">Valor Cobrado</div>
+                <div className="num mt-2 text-xl font-semibold text-foreground">{formatBRL(d.porPassageiro)} <span className="text-[10px] font-normal text-muted-foreground">/viagem</span></div>
+              </div>
+              <div className="rounded-xl bg-primary text-primary-foreground p-4 flex flex-col justify-center shadow-lg transform transition-transform hover:scale-105">
+                <div className="text-[11px] font-semibold uppercase tracking-wider opacity-90">Sua Renda Extra</div>
+                <div className="num mt-2 text-2xl font-bold">{formatBRL(ganhoMensal)}</div>
+                <div className="mt-1 text-[10px] opacity-80">No final do mês</div>
+              </div>
+            </div>
+            <div className="mt-6 text-center text-xs text-muted-foreground bg-surface-2/50 py-2.5 rounded-lg border border-border/50">
+              Simulação considerando 2 viagens/dia (Ida e Volta).
+            </div>
+          </div>
+        ) : (
+          <div className="animate-in fade-in slide-in-from-bottom-2 duration-300">
+            <div className="mb-8">
+              <div className="flex items-center justify-between mb-2">
+                <span className="text-sm font-medium text-foreground">Caronas por mês</span>
+                <span className="num text-lg font-bold text-primary">{caronasMes}</span>
+              </div>
+              <input type="range" min={0} max={60} value={caronasMes} onChange={(e) => setCaronasMes(Number(e.target.value))} className="w-full cursor-pointer appearance-none rounded-full bg-surface-2 accent-primary h-2.5 outline-none focus:ring-2 focus:ring-primary/20" />
+              <div className="mt-2 flex justify-between text-[11px] font-medium text-muted-foreground">
+                <span>0 viagens</span>
+                <span>Até 60 viagens</span>
+              </div>
+            </div>
+
+            <div className="space-y-3">
+              <div className="flex items-center justify-between rounded-xl border border-border bg-background px-4 py-3 shadow-sm">
+                <div className="flex items-center gap-2 text-sm font-medium text-muted-foreground"><span className="w-2.5 h-2.5 rounded-full bg-red-500"></span> Gasto de Ônibus <span className="text-xs font-normal opacity-70">(R$ 5,50)</span></div>
+                <div className="num font-semibold text-muted-foreground line-through decoration-red-500/50">{formatBRL(custoOnibus)}</div>
+              </div>
+              
+              <div className="flex items-center justify-between rounded-xl border border-primary/30 bg-primary/5 px-4 py-3 shadow-sm">
+                <div className="flex items-center gap-2 text-sm font-bold text-primary"><span className="w-2.5 h-2.5 rounded-full bg-primary"></span> Custo CarUni</div>
+                <div className="num text-lg font-bold text-primary">{formatBRL(custoCaruni)}</div>
+              </div>
+
+              <div className="mt-5 flex flex-col items-center justify-center rounded-xl bg-emerald-500/10 border border-emerald-500/30 p-5 text-emerald-600 dark:text-emerald-400 transform transition-transform hover:scale-[1.02]">
+                <span className="text-[11px] font-bold uppercase tracking-wider">Você Economiza</span>
+                <span className="num mt-1 text-4xl font-black tracking-tight">{formatBRL(Math.max(0, economia))}</span>
+                <span className="mt-1 text-[11px] font-medium opacity-80">E ainda viaja sentado e com ar-condicionado.</span>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );
