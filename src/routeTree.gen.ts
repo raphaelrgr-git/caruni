@@ -13,6 +13,8 @@ import { Route as AppRouteImport } from './routes/app'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AppIndexRouteImport } from './routes/app.index'
 import { Route as AppViagemAtivaRouteImport } from './routes/app.viagem-ativa'
+import { Route as AppVerificacaoRouteImport } from './routes/app.verificacao'
+import { Route as AppPublicarRouteImport } from './routes/app.publicar'
 import { Route as AppPerfilRouteImport } from './routes/app.perfil'
 import { Route as AppMinhasCaronasRouteImport } from './routes/app.minhas-caronas'
 import { Route as AppCarteiraRouteImport } from './routes/app.carteira'
@@ -38,6 +40,16 @@ const AppIndexRoute = AppIndexRouteImport.update({
 const AppViagemAtivaRoute = AppViagemAtivaRouteImport.update({
   id: '/viagem-ativa',
   path: '/viagem-ativa',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppVerificacaoRoute = AppVerificacaoRouteImport.update({
+  id: '/verificacao',
+  path: '/verificacao',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppPublicarRoute = AppPublicarRouteImport.update({
+  id: '/publicar',
+  path: '/publicar',
   getParentRoute: () => AppRoute,
 } as any)
 const AppPerfilRoute = AppPerfilRouteImport.update({
@@ -78,6 +90,8 @@ export interface FileRoutesByFullPath {
   '/app/carteira': typeof AppCarteiraRoute
   '/app/minhas-caronas': typeof AppMinhasCaronasRoute
   '/app/perfil': typeof AppPerfilRoute
+  '/app/publicar': typeof AppPublicarRoute
+  '/app/verificacao': typeof AppVerificacaoRoute
   '/app/viagem-ativa': typeof AppViagemAtivaRoute
   '/app/': typeof AppIndexRoute
   '/app/chat/$rotaId': typeof AppChatRotaIdRoute
@@ -89,6 +103,8 @@ export interface FileRoutesByTo {
   '/app/carteira': typeof AppCarteiraRoute
   '/app/minhas-caronas': typeof AppMinhasCaronasRoute
   '/app/perfil': typeof AppPerfilRoute
+  '/app/publicar': typeof AppPublicarRoute
+  '/app/verificacao': typeof AppVerificacaoRoute
   '/app/viagem-ativa': typeof AppViagemAtivaRoute
   '/app': typeof AppIndexRoute
   '/app/chat/$rotaId': typeof AppChatRotaIdRoute
@@ -102,6 +118,8 @@ export interface FileRoutesById {
   '/app/carteira': typeof AppCarteiraRoute
   '/app/minhas-caronas': typeof AppMinhasCaronasRoute
   '/app/perfil': typeof AppPerfilRoute
+  '/app/publicar': typeof AppPublicarRoute
+  '/app/verificacao': typeof AppVerificacaoRoute
   '/app/viagem-ativa': typeof AppViagemAtivaRoute
   '/app/': typeof AppIndexRoute
   '/app/chat/$rotaId': typeof AppChatRotaIdRoute
@@ -116,6 +134,8 @@ export interface FileRouteTypes {
     | '/app/carteira'
     | '/app/minhas-caronas'
     | '/app/perfil'
+    | '/app/publicar'
+    | '/app/verificacao'
     | '/app/viagem-ativa'
     | '/app/'
     | '/app/chat/$rotaId'
@@ -127,6 +147,8 @@ export interface FileRouteTypes {
     | '/app/carteira'
     | '/app/minhas-caronas'
     | '/app/perfil'
+    | '/app/publicar'
+    | '/app/verificacao'
     | '/app/viagem-ativa'
     | '/app'
     | '/app/chat/$rotaId'
@@ -139,6 +161,8 @@ export interface FileRouteTypes {
     | '/app/carteira'
     | '/app/minhas-caronas'
     | '/app/perfil'
+    | '/app/publicar'
+    | '/app/verificacao'
     | '/app/viagem-ativa'
     | '/app/'
     | '/app/chat/$rotaId'
@@ -178,6 +202,20 @@ declare module '@tanstack/react-router' {
       path: '/viagem-ativa'
       fullPath: '/app/viagem-ativa'
       preLoaderRoute: typeof AppViagemAtivaRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/app/verificacao': {
+      id: '/app/verificacao'
+      path: '/verificacao'
+      fullPath: '/app/verificacao'
+      preLoaderRoute: typeof AppVerificacaoRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/app/publicar': {
+      id: '/app/publicar'
+      path: '/publicar'
+      fullPath: '/app/publicar'
+      preLoaderRoute: typeof AppPublicarRouteImport
       parentRoute: typeof AppRoute
     }
     '/app/perfil': {
@@ -230,6 +268,8 @@ interface AppRouteChildren {
   AppCarteiraRoute: typeof AppCarteiraRoute
   AppMinhasCaronasRoute: typeof AppMinhasCaronasRoute
   AppPerfilRoute: typeof AppPerfilRoute
+  AppPublicarRoute: typeof AppPublicarRoute
+  AppVerificacaoRoute: typeof AppVerificacaoRoute
   AppViagemAtivaRoute: typeof AppViagemAtivaRoute
   AppIndexRoute: typeof AppIndexRoute
   AppChatRotaIdRoute: typeof AppChatRotaIdRoute
@@ -241,6 +281,8 @@ const AppRouteChildren: AppRouteChildren = {
   AppCarteiraRoute: AppCarteiraRoute,
   AppMinhasCaronasRoute: AppMinhasCaronasRoute,
   AppPerfilRoute: AppPerfilRoute,
+  AppPublicarRoute: AppPublicarRoute,
+  AppVerificacaoRoute: AppVerificacaoRoute,
   AppViagemAtivaRoute: AppViagemAtivaRoute,
   AppIndexRoute: AppIndexRoute,
   AppChatRotaIdRoute: AppChatRotaIdRoute,

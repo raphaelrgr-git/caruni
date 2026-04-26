@@ -5,6 +5,7 @@ import { BrandLogo, BrandMark, CnhBadge, Avatar, PresenceBar, StarRating } from 
 import { useTheme } from "@/lib/theme";
 import { Sun, Moon } from "lucide-react";
 import { ganhosMes, formatBRL, calcDivisao, rotas } from "@/data/mock";
+import { RouteMap } from "@/components/RouteMap";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -75,7 +76,7 @@ function Landing() {
           <div>
             <div className="mb-4 inline-flex items-center gap-2 rounded-full border border-border bg-surface px-3 py-1 text-xs text-muted-foreground">
               <span className="h-1.5 w-1.5 rounded-full bg-primary pulse-ring" />
-              87 rotas ativas agora em Joinville · SC
+              12 rotas verificadas hoje em Joinville · SC
             </div>
             <h1 className="text-balance text-4xl font-semibold leading-[1.05] tracking-tight md:text-6xl">
               A carona que <span className="italic">já era sua</span>,<br />
@@ -97,17 +98,20 @@ function Landing() {
             <dl className="mt-10 grid grid-cols-3 gap-3 border-t border-border pt-6 text-sm">
               <div>
                 <dt className="label-cockpit">Universitários</dt>
-                <dd className="num mt-1 text-2xl font-semibold"><Counter to={1842} /></dd>
+                <dd className="num mt-1 text-2xl font-semibold"><Counter to={312} />*</dd>
               </div>
               <div>
                 <dt className="label-cockpit">Rotas ativas</dt>
-                <dd className="num mt-1 text-2xl font-semibold"><Counter to={312} /></dd>
+                <dd className="num mt-1 text-2xl font-semibold"><Counter to={87} />*</dd>
               </div>
               <div>
                 <dt className="label-cockpit">Presença média</dt>
-                <dd className="num mt-1 text-2xl font-semibold"><Counter to={94} suffix="%" /></dd>
+                <dd className="num mt-1 text-2xl font-semibold"><Counter to={94} suffix="%" />*</dd>
               </div>
             </dl>
+            <p className="mt-4 text-[10px] text-muted-foreground italic">
+              * Valores baseados em simulação demonstrativa para a região de Joinville.
+            </p>
           </div>
 
           {/* App mockup card */}
@@ -448,23 +452,12 @@ function CalculadoraVantagens({ vagas }: { vagas: number }) {
 }
 
 function BackgroundMap() {
+  const r = rotas[0];
   return (
-    <svg
-      className="pointer-events-none absolute inset-0 h-full w-full opacity-[0.18]"
-      viewBox="0 0 1200 600"
-      fill="none"
-      aria-hidden
-    >
-      <defs>
-        <pattern id="grid" width="48" height="48" patternUnits="userSpaceOnUse">
-          <path d="M48 0H0V48" stroke="currentColor" strokeWidth="0.5" className="text-foreground" />
-        </pattern>
-      </defs>
-      <rect width="1200" height="600" fill="url(#grid)" />
-      <path d="M50 480 C 250 380, 400 420, 550 320 S 850 180, 1150 120" stroke="oklch(var(--primary))" strokeWidth="2" fill="none" strokeDasharray="6 4" />
-      <circle cx="50" cy="480" r="6" fill="oklch(var(--primary))" />
-      <circle cx="1150" cy="120" r="6" fill="oklch(var(--accent))" />
-    </svg>
+    <div className="absolute inset-0 z-0 opacity-[0.25] grayscale pointer-events-none brightness-110">
+      <RouteMap path={r.caminho} origin={r.origem.coord} destination={r.destino.coord} interactive={false} fit={true} height="100%" />
+      <div className="absolute inset-0 bg-gradient-to-b from-background via-transparent to-background" />
+    </div>
   );
 }
 
@@ -478,20 +471,10 @@ function PhoneMockup() {
           <BrandMark className="text-sm" />
           <span className="num text-[10px] text-muted-foreground">07:19</span>
         </div>
-        {/* Mini "mapa" */}
-        <div className="relative h-44 bg-surface-2">
-          <svg viewBox="0 0 360 180" className="absolute inset-0 h-full w-full">
-            <defs>
-              <pattern id="pgrid" width="20" height="20" patternUnits="userSpaceOnUse">
-                <path d="M20 0H0V20" stroke="currentColor" strokeWidth="0.4" className="text-foreground/20" />
-              </pattern>
-            </defs>
-            <rect width="360" height="180" fill="url(#pgrid)" />
-            <path d="M30 150 C 90 110, 150 130, 210 80 S 300 30, 340 25" stroke="oklch(var(--primary))" strokeWidth="3" fill="none" strokeLinecap="round" className="route-anim" />
-            <circle cx="30" cy="150" r="6" fill="oklch(var(--primary))" stroke="oklch(var(--background))" strokeWidth="2" />
-            <circle cx="340" cy="25" r="6" fill="oklch(var(--accent))" stroke="oklch(var(--background))" strokeWidth="2" />
-          </svg>
-          <div className="absolute right-3 top-3 inline-flex items-center gap-1.5 rounded-md bg-background/85 px-2 py-1 text-[10px] backdrop-blur">
+        {/* Mapa Real Mockup */}
+        <div className="relative h-44 overflow-hidden border-b border-border">
+          <RouteMap path={rotas[0].caminho} origin={rotas[0].origem.coord} destination={rotas[0].destino.coord} interactive={false} fit={true} height={176} />
+          <div className="absolute right-3 top-3 z-10 inline-flex items-center gap-1.5 rounded-md bg-background/85 px-2 py-1 text-[10px] backdrop-blur shadow-sm">
             <span className="h-1.5 w-1.5 rounded-full bg-primary pulse-ring" />
             <span className="num font-medium">12,4 km</span>
           </div>
