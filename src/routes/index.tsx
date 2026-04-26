@@ -198,51 +198,148 @@ function Landing() {
       </section>
 
       {/* COMPARATIVO */}
-      <section id="comparativo" className="border-b border-border bg-surface">
-        <div className="mx-auto max-w-5xl px-5 py-20">
-          <div className="mb-10 max-w-2xl">
-            <div className="label-cockpit mb-2">Comparativo honesto</div>
-            <h2 className="text-3xl font-semibold tracking-tight md:text-4xl">WhatsApp vs CarUni</h2>
+      <section id="comparativo" className="border-b border-border bg-surface overflow-hidden">
+        <div className="mx-auto max-w-6xl px-5 py-20">
+          <div className="mb-12 text-center md:text-left">
+            <div className="label-cockpit mb-2 text-primary">A melhor escolha</div>
+            <h2 className="text-3xl font-semibold tracking-tight md:text-5xl">Por que CarUni é imbatível?</h2>
+            <p className="mt-4 text-muted-foreground max-w-2xl">Comparado com outras formas de se deslocar, o CarUni é o único focado em previsibilidade e custo fixo para quem faz a mesma rota todo dia.</p>
           </div>
-          <div className="overflow-hidden rounded-2xl border border-border bg-background shadow-xl">
-            <table className="w-full text-sm md:text-base">
-              <thead>
-                <tr className="border-b border-border bg-surface">
-                  <th className="px-4 py-4 text-left font-medium text-muted-foreground md:px-6 w-1/3"></th>
-                  <th className="px-4 py-4 text-left font-semibold text-foreground md:px-6 w-1/3">Grupo de WhatsApp</th>
-                  <th className="px-4 py-4 text-left font-bold text-primary bg-primary/5 border-l border-primary/10 md:px-6 w-1/3 relative overflow-hidden">
-                    <span className="relative z-10">CarUni</span>
-                    <div className="absolute inset-0 bg-gradient-to-r from-primary/0 to-primary/10 pointer-events-none" />
-                  </th>
-                </tr>
-              </thead>
-              <tbody>
-                {[
-                  ["Confirmar quem vai", "Mensagem perdida", "Inscrição fixa na rota"],
-                  ["Pagamento", "Pix toda hora, calote", "Débito automático"],
-                  ["Motorista cancelou", "Você se vira", "Substituto automático"],
-                  ["Saber se a pessoa é confiável", "Boato no grupo", "CNH verificada + presença %"],
-                  ["Histórico de viagens", "Some no chat", "Extrato mensal"],
-                  ["Falta sem avisar", "Brigada no grupo", "Penalização proporcional"],
-                ].map(([k, w, c]) => (
-                  <tr key={k} className="border-b border-border last:border-0 group transition-colors hover:bg-surface/50">
-                    <td className="px-4 py-5 font-medium text-muted-foreground md:px-6">{k}</td>
-                    <td className="px-4 py-5 text-muted-foreground md:px-6">
-                      <div className="flex items-center gap-2">
-                        <XCircle size={18} className="text-red-500/70 shrink-0" />
-                        <span>{w}</span>
-                      </div>
-                    </td>
-                    <td className="px-4 py-5 font-semibold text-foreground bg-primary/5 border-l border-primary/10 transition-colors group-hover:bg-primary/10 md:px-6">
-                      <div className="flex items-center gap-2">
-                        <CheckCircle2 size={18} className="text-primary shrink-0" />
-                        <span>{c}</span>
-                      </div>
-                    </td>
+
+          <div className="relative">
+            {/* Sombra de scroll mobile */}
+            <div className="absolute inset-y-0 right-0 w-8 bg-gradient-to-l from-surface to-transparent z-10 pointer-events-none md:hidden" />
+            
+            <div className="overflow-x-auto pb-4 no-scrollbar">
+              <table className="w-full min-w-[800px] border-separate border-spacing-0 rounded-2xl border border-border bg-background shadow-2xl overflow-hidden">
+                <thead>
+                  <tr className="bg-surface-2/50 text-xs font-bold uppercase tracking-wider text-muted-foreground">
+                    <th className="px-6 py-5 text-left border-b border-border">Vantagem</th>
+                    <th className="px-6 py-5 text-left border-b border-border">Apps (Uber/99)</th>
+                    <th className="px-6 py-5 text-left border-b border-border">BlaBlaCar</th>
+                    <th className="px-6 py-5 text-left border-b border-border bg-primary/10 text-primary border-l border-primary/20">CarUni</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
+                </thead>
+                <tbody className="text-sm">
+                  {[
+                    { v: "Modelo de Viagem", a: "Aleatória (on-demand)", b: "Eventual (viagens longas)", c: "Recorrente (fixa todo dia)", s: true },
+                    { v: "Preço", a: "Dinâmico (varia com chuva/hora)", b: "Variável (por motorista)", c: "Fixo (valor de ônibus)", s: true },
+                    { v: "Segurança", a: "Desconhecidos", b: "Avaliações gerais", c: "Comunidade Universitária", s: true },
+                    { v: "Previsibilidade", a: "Pode demorar pra aceitar", b: "Depende de oferta", c: "Assinatura mensal garantida", s: true },
+                    { v: "Custo-Benefício", a: "Caro para uso diário", b: "Moderado", c: "Economia imbatível", s: true },
+                  ].map((row, i) => (
+                    <tr key={row.v} className="group transition-colors hover:bg-surface/50">
+                      <td className="px-6 py-5 font-semibold text-foreground border-b border-border whitespace-nowrap">{row.v}</td>
+                      <td className="px-6 py-5 text-muted-foreground border-b border-border">
+                        <div className="flex items-center gap-2">
+                           <span className="h-1.5 w-1.5 rounded-full bg-muted-foreground/30" />
+                           {row.a}
+                        </div>
+                      </td>
+                      <td className="px-6 py-5 text-muted-foreground border-b border-border">
+                        <div className="flex items-center gap-2">
+                           <span className="h-1.5 w-1.5 rounded-full bg-muted-foreground/30" />
+                           {row.b}
+                        </div>
+                      </td>
+                      <td className="px-6 py-5 font-bold text-foreground border-b border-primary/10 bg-primary/5 border-l border-primary/20 group-hover:bg-primary/10 transition-colors">
+                        <div className="flex items-center gap-2 text-primary">
+                          <CheckCircle2 size={18} className="shrink-0" />
+                          <span>{row.c}</span>
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <div className="mt-8 grid gap-4 md:grid-cols-3">
+             <div className="rounded-xl border border-border bg-surface/50 p-4 text-center">
+                <div className="text-2xl font-bold text-foreground mb-1">94%</div>
+                <div className="text-[10px] uppercase font-bold text-muted-foreground tracking-widest">Mais barato que Uber</div>
+             </div>
+             <div className="rounded-xl border border-border bg-surface/50 p-4 text-center">
+                <div className="text-2xl font-bold text-foreground mb-1">100%</div>
+                <div className="text-[10px] uppercase font-bold text-muted-foreground tracking-widest">Público Universitário</div>
+             </div>
+             <div className="rounded-xl border border-border bg-surface/50 p-4 text-center">
+                <div className="text-2xl font-bold text-foreground mb-1">Zero</div>
+                <div className="text-[10px] uppercase font-bold text-muted-foreground tracking-widest">Preço Dinâmico</div>
+             </div>
+          </div>
+        </div>
+      </section>
+
+      {/* PLANOS */}
+      <section id="planos" className="border-b border-border bg-background">
+        <div className="mx-auto max-w-5xl px-5 py-20">
+          <div className="mb-12 text-center">
+            <div className="label-cockpit mb-2 text-primary">Preços Justos</div>
+            <h2 className="text-3xl font-semibold tracking-tight md:text-5xl">Feito para o bolso universitário.</h2>
+            <p className="mx-auto mt-4 max-w-2xl text-muted-foreground text-lg">Sem surpresas, sem preço dinâmico. Escolha um plano de caronas e garanta seu lugar com o mesmo motorista, toda semana.</p>
+          </div>
+
+          <div className="mx-auto grid max-w-3xl gap-8 md:grid-cols-2">
+            {/* PLANO CALOURO */}
+            <div className="flex flex-col rounded-3xl border border-border bg-surface p-8 shadow-sm transition-transform hover:-translate-y-1">
+              <div className="mb-4">
+                <span className="inline-flex rounded-full bg-surface-2 px-3 py-1 text-xs font-bold uppercase tracking-wider text-muted-foreground">Plano Calouro</span>
+                <div className="mt-4 flex items-baseline text-4xl font-black text-foreground">
+                  R$ 17,50<span className="ml-1 text-sm font-medium text-muted-foreground">/mês</span>
+                </div>
+                <p className="mt-2 text-sm text-muted-foreground">Ideal para quem tem aulas esporádicas.</p>
+              </div>
+              <ul className="mb-8 flex-1 space-y-4 text-sm mt-6">
+                <li className="flex items-center gap-3">
+                  <CheckCircle2 size={18} className="text-primary" />
+                  <span>Até <strong className="font-bold">5 caronas</strong> por mês</span>
+                </li>
+                <li className="flex items-center gap-3">
+                  <CheckCircle2 size={18} className="text-primary" />
+                  <span>R$ 3,50 por viagem</span>
+                </li>
+                <li className="flex items-center gap-3">
+                  <CheckCircle2 size={18} className="text-primary" />
+                  <span>Garantia de substituição</span>
+                </li>
+              </ul>
+              <Link to="/selecao" className="w-full rounded-xl border border-border bg-background py-3 text-center text-sm font-bold text-foreground hover:bg-surface-2 transition-colors">
+                Começar como Calouro
+              </Link>
+            </div>
+
+            {/* PLANO VETERANO */}
+            <div className="relative flex flex-col rounded-3xl border-2 border-primary bg-surface p-8 shadow-2xl shadow-primary/10 transition-transform hover:-translate-y-1">
+              <div className="absolute -top-4 left-1/2 -translate-x-1/2 rounded-full bg-primary px-4 py-1 text-xs font-bold uppercase tracking-wider text-primary-foreground">
+                Mais Popular
+              </div>
+              <div className="mb-4">
+                <span className="inline-flex rounded-full bg-primary/10 px-3 py-1 text-xs font-bold uppercase tracking-wider text-primary">Plano Veterano</span>
+                <div className="mt-4 flex items-baseline text-4xl font-black text-foreground">
+                  R$ 32,00<span className="ml-1 text-sm font-medium text-muted-foreground">/mês</span>
+                </div>
+                <p className="mt-2 text-sm text-muted-foreground">Para quem vai pra faculdade todo dia.</p>
+              </div>
+              <ul className="mb-8 flex-1 space-y-4 text-sm mt-6">
+                <li className="flex items-center gap-3">
+                  <CheckCircle2 size={18} className="text-primary" />
+                  <span>Até <strong className="font-bold">10 caronas</strong> por mês</span>
+                </li>
+                <li className="flex items-center gap-3">
+                  <CheckCircle2 size={18} className="text-primary" />
+                  <span>Apenas R$ 3,20 por viagem</span>
+                </li>
+                <li className="flex items-center gap-3">
+                  <CheckCircle2 size={18} className="text-primary" />
+                  <span>Prioridade na lista de espera</span>
+                </li>
+              </ul>
+              <Link to="/selecao" className="w-full rounded-xl bg-primary py-3 text-center text-sm font-bold text-primary-foreground shadow-md hover:bg-primary/90 transition-colors">
+                Garantir meu lugar
+              </Link>
+            </div>
           </div>
         </div>
       </section>
