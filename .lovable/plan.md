@@ -1,170 +1,113 @@
+## 🎯 Objetivo
 
-# CarUni — Caronas recorrentes urbanas
-
-Um produto que parece startup brasileira de verdade: denso de informação como Uber Driver, com mapas protagonistas como no Google Maps, e a calma tipográfica de uma fintech (Nubank/Iti). Tudo mockado para a v1, focando 100% em design e fluxo navegável.
-
----
-
-## Direção visual
-
-**Identidade**
-- Nome com peso editorial: "Car**Uni**" — segunda metade em destaque cromático.
-- Tipografia: **Geist Sans** para UI, **Geist Mono** para números (preço, ganhos, horários, placas, %). Mono em números é o truque que dá ar utilitário de cockpit.
-- Hierarquia: títulos enxutos, muito uso de *labels* minúsculas em maiúsculas com tracking aberto (estilo painel de bordo), números enormes ao lado.
-- Ícones: Lucide, traço fino, sempre acompanhados de microlabel.
-
-**Paleta dual com toggle persistente**
-
-*Modo escuro (default — vibe Uber Driver / cockpit):*
-- Fundo grafite quase preto, painéis em camadas de cinza-azulado.
-- Acento principal: **verde-lima elétrico** (sinal de "rota ativa", saldo, ganhos).
-- Acento secundário: **âmbar quente** (alertas, penalização, SOS quando armado).
-- Vermelho profundo só para erro real.
-
-*Modo claro (vibe fintech BR moderna):*
-- Off-white levemente quente, cartões brancos com sombra suave de 1px.
-- Acento principal: **verde-petróleo profundo**.
-- Acento secundário: **laranja queimado/terracota**.
-- Linhas de divisão hairline, muito respiro.
-
-Toggle no canto superior do header, com transição suave. Estado salvo em localStorage.
-
-**Princípios de layout**
-- Mapa quase sempre visível, ocupando 40–60% da viewport mobile, lateralmente no desktop.
-- *Bottom sheet* arrastável sobre o mapa no mobile (padrão Uber/iFood) — três snap points: peek, half, full.
-- Cards com bordas finas e cantos sutis (radius 8–12px, nada de bolha).
-- Densidade real: muitos micro-dados visíveis sem parecer poluído (ETA, vagas, %presença, R$/vaga ao mesmo tempo).
+Transformar o formulário de waitlist (hoje só `alert()`) em um sistema funcional de captura de leads, salvando nome, e-mail e tipo (motorista/passageiro) no Lovable Cloud, com painel administrativo protegido por senha e exportação CSV.
 
 ---
 
-## Arquitetura de rotas
+## 1. Backend — Lovable Cloud
 
-**Marketing (público)**
-- `/` — Landing pública
+### Habilitar Lovable Cloud
+Necessário para criar a tabela e usar autenticação no painel admin.
 
-**App demo (entra direto, sem login real)**
-- `/app` — Início
-- `/app/buscar` — Buscar carona
-- `/app/rota/$id` — Detalhe de uma rota recorrente
-- `/app/minhas-caronas` — Minhas caronas (motorista + passageiro em abas)
-- `/app/carteira` — Carteira e extrato
-- `/app/chat/$rotaId` — Chat da comunidade de rota
-- `/app/perfil` — Perfil
-- `/app/viagem-ativa` — Tela de viagem em andamento (com SOS)
+### Tabela `leads`
+| Campo | Tipo | Notas |
+|---|---|---|
+| `id` | uuid PK | `gen_random_uuid()` |
+| `nome` | text | obrigatório, 2–100 chars |
+| `email` | text | obrigatório, validado, único por tipo |
+| `tipo` | text | `'motorista'` ou `'passageiro'` (CHECK constraint) |
+| `origem` | text | de onde veio (ex.: `'landing_waitlist'`) — útil pra futuros formulários |
+| `user_agent` | text | metadado opcional |
+| `created_at` | timestamptz | `now()` |
 
-Tab bar inferior fixa no mobile com 4 destinos (Início, Buscar, Minhas, Perfil). Sidebar densa no desktop com os mesmos atalhos + carteira e chat acessíveis.
+**RLS habilitada** com duas policies:
+- `INSERT` público (anônimo) — qualquer visitante pode se cadastrar
+- `SELECT` apenas para usuários com role `admin` (via tabela `user_roles` + função `has_role`, padrão seguro de roles)
 
----
-
-## Telas detalhadas
-
-### 1. Landing `/`
-Não é landing genérica de IA. Estrutura:
-- **Hero**: frase forte ("A carona que já era sua, agora confiável."), mockup do app flutuando à direita, mapa estilizado de fundo com uma rota desenhada animada entre dois pontos.
-- **Faixa de prova social mockada**: "1.842 universitários · 312 rotas ativas em São Paulo, Campinas e BH".
-- **Como funciona** em 3 passos com ilustrações tipográficas (sem stock photos): Cadastra rota → Entra na sua vaga fixa → Débito automático.
-- **Bloco do motorista** com a métrica-chave gigante: "Recupere até **R$ 612/mês** em combustível" — número em mono, animação de contador.
-- **Diferenciais** em grid denso: substituição automática, divisão por vagas, presença vs avaliação, SOS, chat de rota.
-- **Comparativo honesto** "WhatsApp vs CarUni" em tabela.
-- **CTA duplo**: "Quero pegar carona" / "Quero oferecer carona" — ambos levam ao `/app`.
-- Footer minimal.
-
-### 2. Início `/app`
-A tela mais densa, no espírito Uber Driver. Cabeçalho com saudação, saldo da carteira em mono e toggle de tema. Abaixo:
-- **Card-protagonista "Próxima carona"**: mapa Leaflet pequeno com a rota desenhada, horário em tipografia gigante mono ("07:42"), countdown ("em 23 min"), motorista (foto, nome, selo CNH verificada), 3 outros passageiros com avatar em pilha, valor a debitar, vagas (3/4), botão "Ver detalhes".
-- **Faixa horizontal "Esta semana"**: mini cards com cada carona da semana, status (confirmada, esperando substituto, cancelada).
-- **Bloco motorista** (se o usuário tem perfil duplo): card com ganhos do mês (mono gigante) + "Combustível recuperado: R$ 287" como destaque âmbar/lima.
-- **Reputação em duas barras**: presença 96% e avaliação 4,8 — separadas, conforme pedido.
-- **Atalho** para chat da rota com badge de mensagens novas.
-
-### 3. Buscar carona `/app/buscar`
-Layout split: mapa Leaflet ocupando metade superior (mobile) ou esquerda (desktop) com pins das rotas disponíveis.
-- Inputs no topo: origem, destino, dias da semana (chips), faixa de horário (slider duplo).
-- Lista resultados em bottom sheet: cada rota mostra motorista, horário, dias recorrentes, vagas restantes, valor por vaga *agora* e *com vagas cheias* (mostra a economia em tempo real), distância do seu ponto, %presença do motorista, selo CNH.
-- Pin selecionado expande mini-card sobre o mapa.
-- Filtros laterais: só motoristas verificados, presença >90%, gênero do motorista, ar-condicionado, etc.
-
-### 4. Detalhe da rota `/app/rota/$id`
-- Mapa grande com rota completa traçada, paradas marcadas.
-- Bloco motorista com selo, presença, avaliação, carro (modelo, cor, placa em mono).
-- **Calculadora de divisão ao vivo**: slider visual mostrando "Com 1 passageiro: R$ 18 | Com 4: R$ 6,50". Anima em tempo real.
-- Dias e horários recorrentes em grid semanal.
-- Lista de passageiros já inscritos (avatares + presença%).
-- Política de cancelamento explicada de forma humana.
-- CTA: "Assinar esta rota" → modal de confirmação que explica débito automático.
-
-### 5. Minhas caronas `/app/minhas-caronas`
-Abas: **Como passageiro** / **Como motorista**.
-- Como passageiro: lista de assinaturas ativas, próxima ocorrência de cada uma, status (confirmada, em busca de substituto com badge âmbar pulsante), histórico colapsável.
-- Como motorista: rotas que você opera, passageiros inscritos por rota, ganhos previstos da semana, botão "Cancelar próxima ocorrência" com aviso de janela de 1h.
-- Banner de **substituição em andamento** quando aplicável: "Buscando outro motorista para sua carona de quinta 07:30… 2 candidatos avaliando" com animação sutil.
-
-### 6. Viagem ativa `/app/viagem-ativa`
-- Mapa em tela quase cheia, marcador do carro animado seguindo a rota.
-- Header retrátil com motorista, ETA mono gigante, próximo passageiro a embarcar.
-- Botão **SOS** discreto no canto: círculo com ícone de escudo. Ao **segurar** (1.5s), barra de progresso preenche, dispara animação âmbar pulsante e modal "Localização enviada para Maria (mãe) via WhatsApp" — tudo mockado.
-- Atalho para o chat da rota.
-
-### 7. Carteira `/app/carteira`
-- Saldo gigante em mono no topo, botão "Adicionar saldo" (Pix mockado).
-- Cards de resumo: gasto no mês, ganhos no mês, economia vs Uber comum.
-- Extrato com transações categorizadas (carona, recarga, penalização, repasse), filtros por mês.
-- Bloco "Combustível recuperado" para quem é motorista: gráfico simples de barras semanais.
-
-### 8. Chat da rota `/app/chat/$rotaId`
-- Cabeçalho com nome da rota, motorista, avatares dos passageiros.
-- Lista de mensagens estilo WhatsApp mas mais clean, com timestamps mono.
-- Input simples, só texto.
-- Mensagens de sistema destacadas ("Lucas avisou: atrasado 5 min", "Carona de amanhã confirmada").
-
-### 9. Perfil `/app/perfil`
-- Header com avatar, nome, badges (CNH verificada com selo bem desenhado, "Motorista desde 2024", "Universitário UNICAMP").
-- **Duas barras separadas e bem desenhadas**: Presença (com %) e Avaliação (com estrelas) — exatamente como pedido.
-- Contato de emergência cadastrado (mockado: "Maria — mãe — (19) ****-1234").
-- Histórico resumido: total de caronas, km economizados, CO₂ evitado.
-- Configurações: tema, notificações, privacidade.
-- Toggle entre "ver como passageiro" e "ver como motorista" (ambos perfis ativos).
+### Tabela `user_roles` (padrão de segurança)
+Conforme regra de segurança do projeto: roles em tabela separada, nunca no perfil. Enum `app_role` com valor `admin`, função `has_role(uuid, app_role)` SECURITY DEFINER.
 
 ---
 
-## Componentes e detalhes que vendem o produto
+## 2. Frontend — Formulário funcional
 
-- **Selo CNH verificada**: ícone custom (escudo + check), sempre em verde-lima/petróleo, com tooltip "Documentos validados em 12/03/25".
-- **Calculadora de divisão**: slider de vagas com números animando — efeito de "quanto mais cheio, mais barato/mais ganho".
-- **Mapa Leaflet** com tile customizado: usa CartoDB Voyager (light) e CartoDB Dark Matter (dark), trocando junto com o tema. Rotas desenhadas com `Polyline` em verde-lima/petróleo, marcadores customizados (divIcons) com avatar do motorista.
-- **Bottom sheet** arrastável (Vaul ou implementação própria) com 3 snap points.
-- **Skeleton loaders** densos enquanto "carrega" para reforçar sensação de produto real.
-- **Microcopy brasileira** verdadeira, sem traduções genéricas ("Tô a caminho", "Falta 1 vaga", "Bora").
-
----
-
-## Dados mockados (estruturados, prontos para virar Supabase depois)
-
-Arquivo central `src/data/mock.ts` com:
-- 1 usuário atual (perfil duplo, universitário UNICAMP morando em Barão Geraldo).
-- 6 rotas recorrentes (Campinas↔Barão, Pinheiros↔USP, Santana↔Paulista, etc.) com coordenadas reais para o Leaflet renderizar bonito.
-- 12 motoristas e 25 passageiros com nomes brasileiros realistas, presença e avaliação variadas.
-- Transações de carteira dos últimos 60 dias.
-- Mensagens de chat de uma rota.
-- Próxima carona "em 23 min" sempre relativa ao now.
+### Refatorar `WaitlistForm` em `src/routes/index.tsx`
+- Validação com **zod** (nome 2–100, e-mail válido, max 255)
+- Estados: `idle` → `submitting` → `success` / `error`
+- Ao enviar:
+  - Chama `supabase.from('leads').insert({...})`
+  - Se e-mail já existe pra aquele tipo → mensagem amigável "Você já está na nossa lista 💚"
+  - Sucesso → substitui o formulário por um card de confirmação animado com nome do usuário e mensagem motivacional ("Te avisamos assim que abrir vaga em Joinville")
+  - Erro genérico → toast com mensagem clara
+- Loading state no botão (spinner + texto "Salvando...")
+- Sem `alert()` — apenas UI inline + toast (sonner já está no projeto)
 
 ---
 
-## Stack e implementação
+## 3. Painel administrativo `/admin/leads`
 
-- TanStack Start (rotas em `src/routes/`).
-- Tailwind v4 + tokens semânticos no `styles.css` (definir paletas claro/escuro completas em oklch).
-- Leaflet + react-leaflet, sem token, tiles CartoDB.
-- Componentes shadcn já instalados; adicionar Vaul para bottom sheet.
-- Tema persistido via `next-themes`-like simples em context (sem dependência extra).
-- Sem Supabase real nesta v1 — toda a camada de dados em memória, mas tipada e organizada por domínio (rotas, usuários, transações, chat) para plugar backend depois sem reescrever telas.
+### Acesso
+- Rota `src/routes/admin.leads.tsx`
+- Usuário precisa estar logado **e** ter role `admin`
+- Se não logado → redireciona para `/admin/login`
+- Se logado mas sem role admin → mostra tela "Sem permissão"
+
+### Tela de login `/admin/login`
+- Form simples: e-mail + senha (Lovable Cloud Auth, email/password)
+- **Auto-confirm de e-mail ativado** (sem confirmação por link, pra você entrar rápido)
+- Você cria sua conta admin uma vez e eu adiciono manualmente seu `user_id` em `user_roles` via migração após você me passar o e-mail (ou já adiciono lógica que promove o primeiro usuário cadastrado a admin)
+
+### UI do painel
+- **Header com KPIs** em cards: total de leads, motoristas, passageiros, % de cada tipo, leads nas últimas 24h
+- **Tabela densa** estilo dashboard (mesma estética do app):
+  - Colunas: Data, Nome, E-mail, Tipo (badge colorido), Origem
+  - Ordenação por data (mais recentes primeiro)
+  - Busca por nome/e-mail (filtro client-side)
+  - Filtro por tipo (todos / motoristas / passageiros)
+- **Botão "Exportar CSV"** no canto superior direito:
+  - Gera CSV com headers `nome,email,tipo,origem,created_at` no client
+  - Download imediato como `caruni-leads-YYYY-MM-DD.csv`
+  - Respeita os filtros aplicados (exporta só o que está visível) + opção "exportar tudo"
+- **Botão "Sair"** com logout
+
+### Visual
+- Mantém o design system: dark/light, Geist Mono nos números, badges coloridos por tipo (motorista = primary, passageiro = accent), cards em `bg-surface`
+- Mobile-friendly: tabela vira lista de cards em telas pequenas
 
 ---
 
-## Fora do escopo desta v1
-- Login real, cadastro de CNH, validação, pagamentos reais.
-- Push notifications, envio real de WhatsApp no SOS.
-- Algoritmo real de substituição (será visualmente simulado).
-- Chat em tempo real (apenas mensagens estáticas + uma "digitando…" animada).
+## 4. Acesso ao admin pelo footer
+Adiciono um link discreto **"admin"** no footer do site (texto bem pequeno, cor `muted-foreground`) apontando para `/admin/login`. Sem chamar atenção, mas você acessa rápido.
 
-Tudo isso fica desenhado e navegável; quando você quiser ligar ao Supabase, a estrutura de dados já estará no formato certo.
+---
+
+## 5. Arquivos a criar/editar
+
+**Criar:**
+- `src/routes/admin.leads.tsx` — painel
+- `src/routes/admin.login.tsx` — login
+- `src/lib/supabase.ts` — cliente Supabase (se ainda não existe)
+- `src/lib/admin.ts` — helper `requireAdmin()` para guards
+- Migrações: tabela `leads`, enum `app_role`, tabela `user_roles`, função `has_role`, policies RLS
+
+**Editar:**
+- `src/routes/index.tsx` — `WaitlistForm` funcional
+- `src/routes/__root.tsx` — adicionar `<Toaster />` do sonner se ainda não estiver montado globalmente
+- Footer da landing — link discreto pro admin
+
+---
+
+## 6. O que **não** faz parte deste plano (pra manter foco)
+- Notificação por e-mail a cada lead novo (pode adicionar depois com Resend)
+- Integração com Mailchimp / RD Station / planilha externa
+- Captura UTM / tracking avançado
+- Dashboard com gráficos temporais
+
+---
+
+## ✅ Resultado esperado
+
+1. Visitante preenche o formulário na landing → vê confirmação animada
+2. Lead salva no banco com tipo correto
+3. Você acessa `/admin/login`, entra, vê painel com todas as leads, filtra, exporta CSV
+4. Tudo no mesmo design do app, sem dependência externa
