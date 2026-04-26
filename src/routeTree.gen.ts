@@ -9,19 +9,28 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as SelecaoRouteImport } from './routes/selecao'
 import { Route as AppRouteImport } from './routes/app'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AppIndexRouteImport } from './routes/app.index'
 import { Route as AppViagemAtivaRouteImport } from './routes/app.viagem-ativa'
 import { Route as AppVerificacaoRouteImport } from './routes/app.verificacao'
+import { Route as AppSelecaoRouteImport } from './routes/app.selecao'
 import { Route as AppPublicarRouteImport } from './routes/app.publicar'
 import { Route as AppPerfilRouteImport } from './routes/app.perfil'
+import { Route as AppPassageiroRouteImport } from './routes/app.passageiro'
+import { Route as AppMotoristaRouteImport } from './routes/app.motorista'
 import { Route as AppMinhasCaronasRouteImport } from './routes/app.minhas-caronas'
 import { Route as AppCarteiraRouteImport } from './routes/app.carteira'
 import { Route as AppBuscarRouteImport } from './routes/app.buscar'
 import { Route as AppRotaIdRouteImport } from './routes/app.rota.$id'
 import { Route as AppChatRotaIdRouteImport } from './routes/app.chat.$rotaId'
 
+const SelecaoRoute = SelecaoRouteImport.update({
+  id: '/selecao',
+  path: '/selecao',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AppRoute = AppRouteImport.update({
   id: '/app',
   path: '/app',
@@ -47,6 +56,11 @@ const AppVerificacaoRoute = AppVerificacaoRouteImport.update({
   path: '/verificacao',
   getParentRoute: () => AppRoute,
 } as any)
+const AppSelecaoRoute = AppSelecaoRouteImport.update({
+  id: '/selecao',
+  path: '/selecao',
+  getParentRoute: () => AppRoute,
+} as any)
 const AppPublicarRoute = AppPublicarRouteImport.update({
   id: '/publicar',
   path: '/publicar',
@@ -55,6 +69,16 @@ const AppPublicarRoute = AppPublicarRouteImport.update({
 const AppPerfilRoute = AppPerfilRouteImport.update({
   id: '/perfil',
   path: '/perfil',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppPassageiroRoute = AppPassageiroRouteImport.update({
+  id: '/passageiro',
+  path: '/passageiro',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppMotoristaRoute = AppMotoristaRouteImport.update({
+  id: '/motorista',
+  path: '/motorista',
   getParentRoute: () => AppRoute,
 } as any)
 const AppMinhasCaronasRoute = AppMinhasCaronasRouteImport.update({
@@ -86,11 +110,15 @@ const AppChatRotaIdRoute = AppChatRotaIdRouteImport.update({
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/app': typeof AppRouteWithChildren
+  '/selecao': typeof SelecaoRoute
   '/app/buscar': typeof AppBuscarRoute
   '/app/carteira': typeof AppCarteiraRoute
   '/app/minhas-caronas': typeof AppMinhasCaronasRoute
+  '/app/motorista': typeof AppMotoristaRoute
+  '/app/passageiro': typeof AppPassageiroRoute
   '/app/perfil': typeof AppPerfilRoute
   '/app/publicar': typeof AppPublicarRoute
+  '/app/selecao': typeof AppSelecaoRoute
   '/app/verificacao': typeof AppVerificacaoRoute
   '/app/viagem-ativa': typeof AppViagemAtivaRoute
   '/app/': typeof AppIndexRoute
@@ -99,11 +127,15 @@ export interface FileRoutesByFullPath {
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/selecao': typeof SelecaoRoute
   '/app/buscar': typeof AppBuscarRoute
   '/app/carteira': typeof AppCarteiraRoute
   '/app/minhas-caronas': typeof AppMinhasCaronasRoute
+  '/app/motorista': typeof AppMotoristaRoute
+  '/app/passageiro': typeof AppPassageiroRoute
   '/app/perfil': typeof AppPerfilRoute
   '/app/publicar': typeof AppPublicarRoute
+  '/app/selecao': typeof AppSelecaoRoute
   '/app/verificacao': typeof AppVerificacaoRoute
   '/app/viagem-ativa': typeof AppViagemAtivaRoute
   '/app': typeof AppIndexRoute
@@ -114,11 +146,15 @@ export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/app': typeof AppRouteWithChildren
+  '/selecao': typeof SelecaoRoute
   '/app/buscar': typeof AppBuscarRoute
   '/app/carteira': typeof AppCarteiraRoute
   '/app/minhas-caronas': typeof AppMinhasCaronasRoute
+  '/app/motorista': typeof AppMotoristaRoute
+  '/app/passageiro': typeof AppPassageiroRoute
   '/app/perfil': typeof AppPerfilRoute
   '/app/publicar': typeof AppPublicarRoute
+  '/app/selecao': typeof AppSelecaoRoute
   '/app/verificacao': typeof AppVerificacaoRoute
   '/app/viagem-ativa': typeof AppViagemAtivaRoute
   '/app/': typeof AppIndexRoute
@@ -130,11 +166,15 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/app'
+    | '/selecao'
     | '/app/buscar'
     | '/app/carteira'
     | '/app/minhas-caronas'
+    | '/app/motorista'
+    | '/app/passageiro'
     | '/app/perfil'
     | '/app/publicar'
+    | '/app/selecao'
     | '/app/verificacao'
     | '/app/viagem-ativa'
     | '/app/'
@@ -143,11 +183,15 @@ export interface FileRouteTypes {
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
+    | '/selecao'
     | '/app/buscar'
     | '/app/carteira'
     | '/app/minhas-caronas'
+    | '/app/motorista'
+    | '/app/passageiro'
     | '/app/perfil'
     | '/app/publicar'
+    | '/app/selecao'
     | '/app/verificacao'
     | '/app/viagem-ativa'
     | '/app'
@@ -157,11 +201,15 @@ export interface FileRouteTypes {
     | '__root__'
     | '/'
     | '/app'
+    | '/selecao'
     | '/app/buscar'
     | '/app/carteira'
     | '/app/minhas-caronas'
+    | '/app/motorista'
+    | '/app/passageiro'
     | '/app/perfil'
     | '/app/publicar'
+    | '/app/selecao'
     | '/app/verificacao'
     | '/app/viagem-ativa'
     | '/app/'
@@ -172,10 +220,18 @@ export interface FileRouteTypes {
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AppRoute: typeof AppRouteWithChildren
+  SelecaoRoute: typeof SelecaoRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/selecao': {
+      id: '/selecao'
+      path: '/selecao'
+      fullPath: '/selecao'
+      preLoaderRoute: typeof SelecaoRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/app': {
       id: '/app'
       path: '/app'
@@ -211,6 +267,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppVerificacaoRouteImport
       parentRoute: typeof AppRoute
     }
+    '/app/selecao': {
+      id: '/app/selecao'
+      path: '/selecao'
+      fullPath: '/app/selecao'
+      preLoaderRoute: typeof AppSelecaoRouteImport
+      parentRoute: typeof AppRoute
+    }
     '/app/publicar': {
       id: '/app/publicar'
       path: '/publicar'
@@ -223,6 +286,20 @@ declare module '@tanstack/react-router' {
       path: '/perfil'
       fullPath: '/app/perfil'
       preLoaderRoute: typeof AppPerfilRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/app/passageiro': {
+      id: '/app/passageiro'
+      path: '/passageiro'
+      fullPath: '/app/passageiro'
+      preLoaderRoute: typeof AppPassageiroRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/app/motorista': {
+      id: '/app/motorista'
+      path: '/motorista'
+      fullPath: '/app/motorista'
+      preLoaderRoute: typeof AppMotoristaRouteImport
       parentRoute: typeof AppRoute
     }
     '/app/minhas-caronas': {
@@ -267,8 +344,11 @@ interface AppRouteChildren {
   AppBuscarRoute: typeof AppBuscarRoute
   AppCarteiraRoute: typeof AppCarteiraRoute
   AppMinhasCaronasRoute: typeof AppMinhasCaronasRoute
+  AppMotoristaRoute: typeof AppMotoristaRoute
+  AppPassageiroRoute: typeof AppPassageiroRoute
   AppPerfilRoute: typeof AppPerfilRoute
   AppPublicarRoute: typeof AppPublicarRoute
+  AppSelecaoRoute: typeof AppSelecaoRoute
   AppVerificacaoRoute: typeof AppVerificacaoRoute
   AppViagemAtivaRoute: typeof AppViagemAtivaRoute
   AppIndexRoute: typeof AppIndexRoute
@@ -280,8 +360,11 @@ const AppRouteChildren: AppRouteChildren = {
   AppBuscarRoute: AppBuscarRoute,
   AppCarteiraRoute: AppCarteiraRoute,
   AppMinhasCaronasRoute: AppMinhasCaronasRoute,
+  AppMotoristaRoute: AppMotoristaRoute,
+  AppPassageiroRoute: AppPassageiroRoute,
   AppPerfilRoute: AppPerfilRoute,
   AppPublicarRoute: AppPublicarRoute,
+  AppSelecaoRoute: AppSelecaoRoute,
   AppVerificacaoRoute: AppVerificacaoRoute,
   AppViagemAtivaRoute: AppViagemAtivaRoute,
   AppIndexRoute: AppIndexRoute,
@@ -294,6 +377,7 @@ const AppRouteWithChildren = AppRoute._addFileChildren(AppRouteChildren)
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AppRoute: AppRouteWithChildren,
+  SelecaoRoute: SelecaoRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

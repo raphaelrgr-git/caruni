@@ -62,7 +62,7 @@ function Landing() {
           </nav>
           <div className="flex items-center gap-2">
             <ThemeToggleLanding />
-            <Link to="/app" className="inline-flex items-center gap-1.5 rounded-md bg-primary px-3.5 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90">
+            <Link to="/selecao" className="inline-flex items-center gap-1.5 rounded-md bg-primary px-3.5 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90">
               Entrar no app <ArrowRight size={14} />
             </Link>
           </div>
@@ -86,11 +86,11 @@ function Landing() {
               CarUni transforma o caos do grupo de WhatsApp em assinatura de deslocamento: rota fixa, débito automático, motorista verificado e substituição garantida quando alguém cancela.
             </p>
             <div className="mt-8 flex flex-col gap-3 sm:flex-row">
-              <Link to="/app" className="group inline-flex items-center justify-center gap-2 rounded-md bg-primary px-5 py-3 text-sm font-semibold text-primary-foreground hover:bg-primary/90">
+              <Link to="/app/passageiro" className="group inline-flex items-center justify-center gap-2 rounded-md bg-primary px-5 py-3 text-sm font-semibold text-primary-foreground hover:bg-primary/90">
                 Quero pegar carona
                 <ArrowRight size={16} className="transition-transform group-hover:translate-x-0.5" />
               </Link>
-              <Link to="/app" className="inline-flex items-center justify-center gap-2 rounded-md border border-border bg-surface px-5 py-3 text-sm font-semibold text-foreground hover:bg-surface-2">
+              <Link to="/app/motorista" className="inline-flex items-center justify-center gap-2 rounded-md border border-border bg-surface px-5 py-3 text-sm font-semibold text-foreground hover:bg-surface-2">
                 Quero oferecer carona
               </Link>
             </div>
@@ -485,7 +485,7 @@ function PhoneMockup() {
             <div>
               <div className="label-cockpit">Próxima carona</div>
               <div className="num mt-0.5 text-3xl font-semibold leading-none">07:42</div>
-              <div className="mt-1 text-xs text-muted-foreground">em 23 min · Centro → UNICAMP</div>
+              <div className="mt-1 text-xs text-muted-foreground">em 23 min · Centro → UFSC Joinville</div>
             </div>
             <CnhBadge />
           </div>

@@ -85,17 +85,13 @@ export const getPessoa = (id: string) => pessoas.find((p) => p.id === id) ?? eu;
 export const rotas: Rota[] = [
   {
     id: "r1",
-    nome: "Centro → UDESC (Bom Retiro)",
+    nome: "Centro → UFSC Joinville",
     cidade: "Joinville",
-    origem: { label: "Centro · Praça Nereu Ramos", coord: [-26.3045, -48.8487] },
-    destino: { label: "UDESC · CCT Bom Retiro", coord: [-26.2906, -48.8793] },
+    origem: { label: "Centro · Terminal Central", coord: [-26.3045, -48.8463] },
+    destino: { label: "UFSC · Campus Joinville (Perini)", coord: [-26.2238, -48.8488] },
     caminho: [
-      [-26.3045, -48.8487],
-      [-26.3010, -48.8560],
-      [-26.2980, -48.8640],
-      [-26.2955, -48.8710],
-      [-26.2930, -48.8760],
-      [-26.2906, -48.8793],
+      [-26.3045, -48.8463],
+      [-26.2238, -48.8488],
     ],
     motoristaId: "u2",
     diasSemana: [1, 2, 3, 4, 5],
@@ -113,9 +109,6 @@ export const rotas: Rota[] = [
     destino: { label: "UNIVILLE · Bloco A", coord: [-26.2625, -48.8710] },
     caminho: [
       [-26.2955, -48.8420],
-      [-26.2880, -48.8500],
-      [-26.2800, -48.8580],
-      [-26.2720, -48.8650],
       [-26.2625, -48.8710],
     ],
     motoristaId: "u3",
@@ -134,9 +127,6 @@ export const rotas: Rota[] = [
     destino: { label: "IFSC · Câmpus Joinville", coord: [-26.2417, -48.8635] },
     caminho: [
       [-26.2740, -48.8390],
-      [-26.2680, -48.8460],
-      [-26.2600, -48.8520],
-      [-26.2510, -48.8580],
       [-26.2417, -48.8635],
     ],
     motoristaId: "u4",
@@ -176,9 +166,6 @@ export const rotas: Rota[] = [
     destino: { label: "Perini Business Park", coord: [-26.2358, -48.8598] },
     caminho: [
       [-26.2810, -48.8230],
-      [-26.2700, -48.8330],
-      [-26.2580, -48.8430],
-      [-26.2470, -48.8520],
       [-26.2358, -48.8598],
     ],
     motoristaId: "u2",
@@ -197,10 +184,6 @@ export const rotas: Rota[] = [
     destino: { label: "Centro · Rua do Príncipe", coord: [-26.3050, -48.8462] },
     caminho: [
       [-26.2017, -48.9131],
-      [-26.2200, -48.9000],
-      [-26.2450, -48.8850],
-      [-26.2700, -48.8700],
-      [-26.2900, -48.8580],
       [-26.3050, -48.8462],
     ],
     motoristaId: "u3",
@@ -210,6 +193,24 @@ export const rotas: Rota[] = [
     inscritos: [],
     precoBase: 14,
     km: 13.2,
+  },
+  {
+    id: "r_eu",
+    nome: "Vila Nova → UDESC",
+    cidade: "Joinville",
+    origem: { label: "Vila Nova · Binário", coord: [-26.2730, -48.8950] },
+    destino: { label: "UDESC · Bom Retiro", coord: [-26.2906, -48.8793] },
+    caminho: [
+      [-26.2730, -48.8950],
+      [-26.2906, -48.8793],
+    ],
+    motoristaId: "u1",
+    diasSemana: [1, 2, 3, 4, 5],
+    horarioIda: "07:10",
+    vagas: 4,
+    inscritos: ["u2", "u3", "u5"],
+    precoBase: 10,
+    km: 4.8,
   },
 ];
 

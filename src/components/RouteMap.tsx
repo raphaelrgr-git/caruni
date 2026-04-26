@@ -92,32 +92,52 @@ export function RouteMap({
     const run = async () => {
       if (!ready || !mapRef.current) return;
       const L = (await import("leaflet")).default;
+
+      let actualPath = path;
+
+      // Buscar rota real no OSRM se for apenas uma linha reta (poucos pontos)
+      if (path.length >= 2 && path.length < 10) {
+        try {
+          const start = path[0];
+          const end = path[path.length - 1];
+          const res = await fetch(`https://router.project-osrm.org/route/v1/driving/${start[1]},${start[0]};${end[1]},${end[0]}?overview=full&geometries=geojson`);
+          const data = await res.json();
+          if (data.routes && data.routes[0]) {
+            actualPath = data.routes[0].geometry.coordinates.map((c: any) => [c[1], c[0]]);
+          }
+        } catch (e) {
+          console.warn("Erro ao buscar rota real:", e);
+        }
+      }
+
       // limpar
       layersRef.current.forEach((lyr) => mapRef.current.removeLayer(lyr));
       layersRef.current = [];
 
       const styles = getComputedStyle(document.documentElement);
-      // Variáveis já vêm com oklch(...) embutido
       const primary = styles.getPropertyValue("--primary").trim() || "#a3e635";
       const accent = styles.getPropertyValue("--accent").trim() || "#fb923c";
       const fg = styles.getPropertyValue("--foreground").trim() || "#fff";
       const bg = styles.getPropertyValue("--background").trim() || "#000";
 
-      // Glow line (mais larga, opaca)
-      const glow = L.polyline(path, {
+      // Glow line
+      const glow = L.polyline(actualPath, {
         color: primary,
-        weight: 9,
-        opacity: 0.18,
+        weight: 10,
+        opacity: 0.2,
         lineCap: "round",
         lineJoin: "round",
       }).addTo(mapRef.current);
-      const line = L.polyline(path, {
+
+      const line = L.polyline(actualPath, {
         color: primary,
         weight: 4,
-        opacity: 0.95,
+        opacity: 1,
         lineCap: "round",
         lineJoin: "round",
+        dashArray: interactive ? "" : "8, 12",
       }).addTo(mapRef.current);
+      
       layersRef.current.push(glow, line);
 
       const dotIcon = (color: string, ring = "transparent", size = 14) =>
@@ -156,11 +176,11 @@ export function RouteMap({
         layersRef.current.push(m);
       }
 
-      if (fit && path.length > 1) {
-        const bounds = L.latLngBounds(path);
-        mapRef.current.fitBounds(bounds, { padding: [28, 28] });
-      } else if (path.length) {
-        mapRef.current.setView(path[0], 14);
+      if (fit && actualPath.length > 1) {
+        const bounds = L.latLngBounds(actualPath);
+        mapRef.current.fitBounds(bounds, { padding: [30, 30], animate: interactive });
+      } else if (actualPath.length) {
+        mapRef.current.setView(actualPath[0], 15);
       }
     };
     void run();
