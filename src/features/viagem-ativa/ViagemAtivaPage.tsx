@@ -1,222 +1,200 @@
 import * as React from "react";
-import { Link } from "@tanstack/react-router";
-import { ArrowLeft, Shield, MessageCircle, CheckCircle2, XCircle, Star } from "lucide-react";
+import { Link, useSearch } from "@tanstack/react-router";
+import { CheckCircle2, MessageCircle, Shield, XCircle } from "lucide-react";
+import { AppBackButton } from "@/components/AppBackButton";
 import { RouteMap } from "@/components/RouteMap";
-import { Avatar, CnhBadge, StarRating } from "@/components/Brand";
-import { getPessoa, contatoEmergencia, formatHora } from "@/data/mock";
-import { useCaruniStore } from "@/data/store";
+import {
+  disputeRide,
+  driverConfirmRide,
+  getMyRides,
+  passengerConfirmRide,
+  type MyRide,
+} from "@/lib/api";
+import { useAuth } from "@/lib/auth";
+import { formatRideStatus } from "@/lib/labels";
+import { pickRelevantMyRide } from "@/lib/rides";
+import type { LatLng } from "@/lib/types";
 
 export function ViagemAtivaPage() {
-  const { rotas, rides, confirmDriverBoarded, confirmPassengerRide, addReview } = useCaruniStore();
-  const activeRide = rides[0];
-  const r = rotas.find((rota) => rota.id === activeRide?.rotaId) ?? rotas[0];
-  const m = getPessoa(r.motoristaId);
-  const [rating, setRating] = React.useState(5);
-  const [reviewSent, setReviewSent] = React.useState(false);
+  const { user } = useAuth();
+  const search = useSearch({ strict: false }) as { rideId?: string };
+  const [rides, setRides] = React.useState<MyRide[]>([]);
+  const [loading, setLoading] = React.useState(true);
+  const [feedback, setFeedback] = React.useState("");
 
-  const [step, setStep] = React.useState(1);
+  const reload = React.useCallback(async () => {
+    setLoading(true);
+    try {
+      const data = await getMyRides();
+      setRides(data);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
   React.useEffect(() => {
-    const t = setInterval(() => setStep((s) => (s + 1) % r.caminho.length), 2200);
-    return () => clearInterval(t);
-  }, [r.caminho.length]);
+    void reload();
+  }, [reload]);
 
-  const [holding, setHolding] = React.useState(false);
-  const [progress, setProgress] = React.useState(0);
-  const [armed, setArmed] = React.useState(false);
-  const ref = React.useRef<number | null>(null);
+  const activeRide = React.useMemo(() => {
+    if (search.rideId) {
+      return rides.find((ride) => ride.id === search.rideId) ?? pickRelevantMyRide(rides);
+    }
+    return pickRelevantMyRide(rides);
+  }, [rides, search.rideId]);
+  const path: LatLng[] =
+    activeRide?.route.geometry?.coordinates.map(([lng, lat]) => [lat, lng] as LatLng) ?? [];
 
-  const start = () => {
-    setHolding(true);
-    const t0 = performance.now();
-    const tick = (t: number) => {
-      const p = Math.min(1, (t - t0) / 1500);
-      setProgress(p);
-      if (p < 1 && holding !== false) ref.current = requestAnimationFrame(tick);
-      if (p >= 1) {
-        setArmed(true);
-        setHolding(false);
-      }
-    };
-    ref.current = requestAnimationFrame(tick);
-  };
-  const cancel = () => {
-    setHolding(false);
-    setProgress(0);
-    if (ref.current) cancelAnimationFrame(ref.current);
+  const handleAction = async (action: () => Promise<unknown>, message: string) => {
+    try {
+      await action();
+      setFeedback(message);
+      await reload();
+    } catch (error) {
+      setFeedback(error instanceof Error ? error.message : "Falha na atualização da viagem.");
+    }
   };
 
-  const eta = new Date(Date.now() + 14 * 60 * 1000);
+  if (loading) {
+    return <div className="p-8 text-center text-sm text-muted-foreground">Carregando viagem…</div>;
+  }
+
+  if (!activeRide) {
+    return (
+      <div className="p-8 text-center text-sm text-muted-foreground">
+        Nenhuma corrida ativa encontrada.
+      </div>
+    );
+  }
 
   return (
     <div className="relative h-[calc(100vh-7rem)] w-full overflow-hidden lg:h-[calc(100vh-3rem)]">
       <RouteMap
-        path={r.caminho}
-        origin={r.origem.coord}
-        destination={r.destino.coord}
-        carPosition={r.caminho[step]}
+        path={path}
+        origin={path[0]}
+        destination={path[path.length - 1]}
         height="100%"
         interactive={false}
         fit
+        privacyMode={user?.role === "PASSAGEIRO"}
+        privacySeed={activeRide.route.id}
       />
 
-      <div className="pointer-events-auto absolute left-3 right-3 top-3 z-[400] rounded-xl border border-border bg-surface/95 p-4 backdrop-blur lg:left-6 lg:right-auto lg:w-96">
+      <div className="absolute left-3 right-3 top-3 z-[400] rounded-xl border border-border bg-surface/95 p-4 backdrop-blur lg:left-6 lg:right-auto lg:w-[28rem]">
         <div className="flex items-center justify-between">
-          <Link
-            to="/app"
-            className="inline-flex items-center gap-1 text-[11px] text-muted-foreground hover:text-foreground"
-          >
-            <ArrowLeft size={12} /> Sair
-          </Link>
-          <span className="num rounded-md bg-success/15 px-2 py-0.5 text-[10px] font-medium uppercase tracking-wider text-success">
-            • em rota
+          <AppBackButton fallbackTo="/app" label="Voltar" className="text-[11px]" />
+          <span className="rounded-md bg-success/15 px-2 py-0.5 text-[10px] uppercase tracking-wider text-success">
+            {formatRideStatus(activeRide.status)}
           </span>
         </div>
-        <div className="mt-3 flex items-center gap-3">
-          <Avatar name={m.nome} color={m.cor} size={42} iniciais={m.iniciais} />
-          <div className="min-w-0 flex-1">
-            <div className="flex items-center gap-2">
-              <span className="truncate text-sm font-medium text-foreground">{m.nome}</span>
-              {m.cnhVerificada && <CnhBadge />}
-            </div>
-            <div className="mt-0.5 flex items-center gap-3 text-[10px] text-muted-foreground">
-              <StarRating value={m.avaliacao} />
-              {m.carro && <span className="num">{m.carro.placa}</span>}
-            </div>
+
+        <h1 className="mt-3 text-lg font-semibold text-foreground">{activeRide.route.name}</h1>
+        <p className="mt-1 text-xs text-muted-foreground">
+          {activeRide.route.originLabel} → {activeRide.route.destinationLabel}
+        </p>
+        <p className="mt-1 text-xs text-muted-foreground">
+          {new Date(activeRide.scheduledAt).toLocaleString("pt-BR")}
+        </p>
+
+        {activeRide.route.driver ? (
+          <p className="mt-3 text-xs text-muted-foreground">
+            Motorista: <span className="text-foreground">{activeRide.route.driver.name}</span>
+          </p>
+        ) : null}
+
+        {activeRide.participants?.length ? (
+          <div className="mt-3 text-xs text-muted-foreground">
+            Passageiros: {activeRide.participants.map((participant) => participant.name).join(", ")}
           </div>
+        ) : null}
+
+        <div className="mt-4 grid gap-2 sm:grid-cols-2">
+          {user?.role === "MOTORISTA" ? (
+            <>
+              <button
+                onClick={() =>
+                  void handleAction(
+                    () => driverConfirmRide(activeRide.id, true),
+                    "Embarque confirmado pelo motorista.",
+                  )
+                }
+                className="rounded-md bg-primary px-3 py-2 text-xs font-medium text-primary-foreground"
+              >
+                Confirmar embarque
+              </button>
+              <button
+                onClick={() =>
+                  void handleAction(
+                    () => driverConfirmRide(activeRide.id, false),
+                    "No-show registrado.",
+                  )
+                }
+                className="rounded-md border border-warn/40 bg-warn/5 px-3 py-2 text-xs font-medium text-warn"
+              >
+                Registrar no-show
+              </button>
+            </>
+          ) : (
+            <>
+              <button
+                onClick={() =>
+                  void handleAction(
+                    () => passengerConfirmRide(activeRide.id),
+                    "Viagem confirmada pelo passageiro.",
+                  )
+                }
+                className="rounded-md bg-primary px-3 py-2 text-xs font-medium text-primary-foreground"
+              >
+                Confirmar viagem
+              </button>
+              <button
+                onClick={() =>
+                  void handleAction(
+                    () => disputeRide(activeRide.id),
+                    "Disputa aberta para a viagem.",
+                  )
+                }
+                className="rounded-md border border-border px-3 py-2 text-xs font-medium text-foreground"
+              >
+                Abrir disputa
+              </button>
+            </>
+          )}
         </div>
-        <div className="mt-3 flex items-baseline justify-between border-t border-border pt-3">
-          <span className="label-cockpit text-[10px] text-muted-foreground">ETA</span>
-          <span className="num text-2xl font-semibold text-foreground">{formatHora(eta)}</span>
+
+        <div className="mt-4 flex items-center gap-2 text-xs text-muted-foreground">
+          {activeRide.driverConfirmedAt ? (
+            <span className="inline-flex items-center gap-1 text-success">
+              <CheckCircle2 size={14} /> motorista confirmou
+            </span>
+          ) : null}
+          {activeRide.passengerConfirmedAt ? (
+            <span className="inline-flex items-center gap-1 text-success">
+              <CheckCircle2 size={14} /> passageiro confirmou
+            </span>
+          ) : null}
+          {activeRide.status === "DISPUTE" ? (
+            <span className="inline-flex items-center gap-1 text-warn">
+              <XCircle size={14} /> em disputa
+            </span>
+          ) : null}
         </div>
-        {activeRide && (
-          <div className="mt-3 rounded-lg border border-border bg-surface-2/70 p-3">
-            <div className="flex items-center justify-between gap-3">
-              <div>
-                <p className="label-cockpit text-[10px] text-muted-foreground">Confirmação</p>
-                <p className="mt-1 text-xs text-muted-foreground">
-                  Status: <span className="font-medium text-foreground">{activeRide.status}</span>
-                </p>
-              </div>
-              {activeRide.status === "confirmada" && (
-                <CheckCircle2 size={18} className="text-success" />
-              )}
-              {activeRide.status === "disputa" && <XCircle size={18} className="text-warn" />}
-            </div>
-            {activeRide.status === "agendada" ? (
-              <div className="mt-3 grid grid-cols-3 gap-2">
-                <button
-                  onClick={() => confirmDriverBoarded(activeRide.id, true)}
-                  className="rounded-md bg-primary px-2 py-2 text-[10px] font-medium text-primary-foreground"
-                >
-                  Motorista: embarcou
-                </button>
-                <button
-                  onClick={() => confirmPassengerRide(activeRide.id)}
-                  className="rounded-md border border-border px-2 py-2 text-[10px] font-medium text-foreground"
-                >
-                  Passageiro: viajei
-                </button>
-                <button
-                  onClick={() => confirmDriverBoarded(activeRide.id, false)}
-                  className="rounded-md border border-warn/40 bg-warn/5 px-2 py-2 text-[10px] font-medium text-warn"
-                >
-                  No-show
-                </button>
-              </div>
-            ) : (
-              <div className="mt-3">
-                <div className="flex gap-1">
-                  {[1, 2, 3, 4, 5].map((n) => (
-                    <button
-                      key={n}
-                      onClick={() => setRating(n)}
-                      className={n <= rating ? "text-warn" : "text-muted-foreground"}
-                    >
-                      <Star size={16} fill="currentColor" />
-                    </button>
-                  ))}
-                </div>
-                <button
-                  onClick={() => {
-                    addReview(r.id, m.id, rating, "Viagem confirmada pelo fluxo do MVP.");
-                    setReviewSent(true);
-                  }}
-                  disabled={reviewSent}
-                  className="mt-2 rounded-md bg-primary px-3 py-2 text-[10px] font-medium text-primary-foreground disabled:opacity-60"
-                >
-                  {reviewSent ? "Avaliação enviada" : "Avaliar motorista"}
-                </button>
-              </div>
-            )}
-          </div>
-        )}
+
+        {feedback ? <p className="mt-3 text-xs text-muted-foreground">{feedback}</p> : null}
       </div>
 
       <Link
         to="/app/chat/$rotaId"
-        params={{ rotaId: r.id }}
+        params={{ rotaId: activeRide.route.id }}
         className="absolute right-3 top-[180px] z-[400] inline-flex h-11 w-11 items-center justify-center rounded-full border border-border bg-surface/95 text-foreground shadow-lg backdrop-blur lg:top-3"
         aria-label="Chat da rota"
       >
         <MessageCircle size={18} />
       </Link>
 
-      <div className="absolute bottom-4 right-4 z-[400]">
-        <button
-          onMouseDown={start}
-          onTouchStart={start}
-          onMouseUp={cancel}
-          onMouseLeave={cancel}
-          onTouchEnd={cancel}
-          className={`relative flex h-14 w-14 items-center justify-center rounded-full border shadow-lg transition-colors ${
-            armed
-              ? "border-warn bg-warn text-warn-foreground pulse-warn"
-              : "border-border bg-surface/95 text-foreground backdrop-blur"
-          }`}
-          aria-label="SOS — segure para acionar"
-        >
-          <Shield size={20} />
-          {holding && (
-            <svg className="absolute inset-0 -rotate-90" viewBox="0 0 56 56">
-              <circle
-                cx="28"
-                cy="28"
-                r="26"
-                fill="none"
-                stroke="oklch(var(--warn))"
-                strokeWidth="3"
-                strokeDasharray={163.36}
-                strokeDashoffset={163.36 * (1 - progress)}
-                strokeLinecap="round"
-              />
-            </svg>
-          )}
-        </button>
+      <div className="absolute bottom-4 right-4 z-[400] rounded-full border border-border bg-surface/95 p-4 shadow-lg backdrop-blur">
+        <Shield size={20} className="text-foreground" />
       </div>
-
-      {armed && (
-        <div
-          role="dialog"
-          className="absolute inset-0 z-[500] flex items-center justify-center bg-black/60 p-6"
-          onClick={() => {
-            setArmed(false);
-            setProgress(0);
-          }}
-        >
-          <div className="max-w-sm rounded-xl border border-warn/40 bg-surface p-6 text-center">
-            <Shield size={28} className="mx-auto text-warn" />
-            <p className="mt-3 text-base font-semibold text-foreground">SOS acionado</p>
-            <p className="mt-1 text-sm text-muted-foreground">
-              Localização enviada para{" "}
-              <span className="font-medium text-foreground">{contatoEmergencia.nome}</span> (
-              {contatoEmergencia.relacao}) via WhatsApp.
-            </p>
-            <button className="mt-4 rounded-md border border-border px-4 py-2 text-xs font-medium text-foreground hover:bg-surface-2">
-              Fechar
-            </button>
-          </div>
-        </div>
-      )}
     </div>
   );
 }

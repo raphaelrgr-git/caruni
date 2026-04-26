@@ -31,6 +31,7 @@ export function CadastroPage() {
         password,
         universityName: university,
         course: course || undefined,
+        role: role === "condutor" ? "MOTORISTA" : "PASSAGEIRO",
       });
       // Auto-verify in dev (backend returns token directly)
       await verifyEmail(verificationToken);

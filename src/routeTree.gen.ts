@@ -16,11 +16,17 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as AppIndexRouteImport } from './routes/app.index'
 import { Route as AppViagemAtivaRouteImport } from './routes/app.viagem-ativa'
 import { Route as AppPerfilRouteImport } from './routes/app.perfil'
+import { Route as AppNotificacoesRouteImport } from './routes/app.notificacoes'
 import { Route as AppMinhasCaronasRouteImport } from './routes/app.minhas-caronas'
 import { Route as AppCriarRotaRouteImport } from './routes/app.criar-rota'
 import { Route as AppCarteiraRouteImport } from './routes/app.carteira'
 import { Route as AppBuscarRouteImport } from './routes/app.buscar'
+import { Route as AppPerfilIndexRouteImport } from './routes/app.perfil.index'
 import { Route as AppRotaIdRouteImport } from './routes/app.rota.$id'
+import { Route as AppPerfilVisualizarRouteImport } from './routes/app.perfil.visualizar'
+import { Route as AppPerfilPrivacidadeRouteImport } from './routes/app.perfil.privacidade'
+import { Route as AppPerfilConfiguracoesRouteImport } from './routes/app.perfil.configuracoes'
+import { Route as AppPerfilConexoesRouteImport } from './routes/app.perfil.conexoes'
 import { Route as AppChatRotaIdRouteImport } from './routes/app.chat.$rotaId'
 
 const LoginRoute = LoginRouteImport.update({
@@ -58,6 +64,11 @@ const AppPerfilRoute = AppPerfilRouteImport.update({
   path: '/perfil',
   getParentRoute: () => AppRoute,
 } as any)
+const AppNotificacoesRoute = AppNotificacoesRouteImport.update({
+  id: '/notificacoes',
+  path: '/notificacoes',
+  getParentRoute: () => AppRoute,
+} as any)
 const AppMinhasCaronasRoute = AppMinhasCaronasRouteImport.update({
   id: '/minhas-caronas',
   path: '/minhas-caronas',
@@ -78,10 +89,35 @@ const AppBuscarRoute = AppBuscarRouteImport.update({
   path: '/buscar',
   getParentRoute: () => AppRoute,
 } as any)
+const AppPerfilIndexRoute = AppPerfilIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => AppPerfilRoute,
+} as any)
 const AppRotaIdRoute = AppRotaIdRouteImport.update({
   id: '/rota/$id',
   path: '/rota/$id',
   getParentRoute: () => AppRoute,
+} as any)
+const AppPerfilVisualizarRoute = AppPerfilVisualizarRouteImport.update({
+  id: '/visualizar',
+  path: '/visualizar',
+  getParentRoute: () => AppPerfilRoute,
+} as any)
+const AppPerfilPrivacidadeRoute = AppPerfilPrivacidadeRouteImport.update({
+  id: '/privacidade',
+  path: '/privacidade',
+  getParentRoute: () => AppPerfilRoute,
+} as any)
+const AppPerfilConfiguracoesRoute = AppPerfilConfiguracoesRouteImport.update({
+  id: '/configuracoes',
+  path: '/configuracoes',
+  getParentRoute: () => AppPerfilRoute,
+} as any)
+const AppPerfilConexoesRoute = AppPerfilConexoesRouteImport.update({
+  id: '/conexoes',
+  path: '/conexoes',
+  getParentRoute: () => AppPerfilRoute,
 } as any)
 const AppChatRotaIdRoute = AppChatRotaIdRouteImport.update({
   id: '/chat/$rotaId',
@@ -98,11 +134,17 @@ export interface FileRoutesByFullPath {
   '/app/carteira': typeof AppCarteiraRoute
   '/app/criar-rota': typeof AppCriarRotaRoute
   '/app/minhas-caronas': typeof AppMinhasCaronasRoute
-  '/app/perfil': typeof AppPerfilRoute
+  '/app/notificacoes': typeof AppNotificacoesRoute
+  '/app/perfil': typeof AppPerfilRouteWithChildren
   '/app/viagem-ativa': typeof AppViagemAtivaRoute
   '/app/': typeof AppIndexRoute
   '/app/chat/$rotaId': typeof AppChatRotaIdRoute
+  '/app/perfil/conexoes': typeof AppPerfilConexoesRoute
+  '/app/perfil/configuracoes': typeof AppPerfilConfiguracoesRoute
+  '/app/perfil/privacidade': typeof AppPerfilPrivacidadeRoute
+  '/app/perfil/visualizar': typeof AppPerfilVisualizarRoute
   '/app/rota/$id': typeof AppRotaIdRoute
+  '/app/perfil/': typeof AppPerfilIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -112,11 +154,16 @@ export interface FileRoutesByTo {
   '/app/carteira': typeof AppCarteiraRoute
   '/app/criar-rota': typeof AppCriarRotaRoute
   '/app/minhas-caronas': typeof AppMinhasCaronasRoute
-  '/app/perfil': typeof AppPerfilRoute
+  '/app/notificacoes': typeof AppNotificacoesRoute
   '/app/viagem-ativa': typeof AppViagemAtivaRoute
   '/app': typeof AppIndexRoute
   '/app/chat/$rotaId': typeof AppChatRotaIdRoute
+  '/app/perfil/conexoes': typeof AppPerfilConexoesRoute
+  '/app/perfil/configuracoes': typeof AppPerfilConfiguracoesRoute
+  '/app/perfil/privacidade': typeof AppPerfilPrivacidadeRoute
+  '/app/perfil/visualizar': typeof AppPerfilVisualizarRoute
   '/app/rota/$id': typeof AppRotaIdRoute
+  '/app/perfil': typeof AppPerfilIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -128,11 +175,17 @@ export interface FileRoutesById {
   '/app/carteira': typeof AppCarteiraRoute
   '/app/criar-rota': typeof AppCriarRotaRoute
   '/app/minhas-caronas': typeof AppMinhasCaronasRoute
-  '/app/perfil': typeof AppPerfilRoute
+  '/app/notificacoes': typeof AppNotificacoesRoute
+  '/app/perfil': typeof AppPerfilRouteWithChildren
   '/app/viagem-ativa': typeof AppViagemAtivaRoute
   '/app/': typeof AppIndexRoute
   '/app/chat/$rotaId': typeof AppChatRotaIdRoute
+  '/app/perfil/conexoes': typeof AppPerfilConexoesRoute
+  '/app/perfil/configuracoes': typeof AppPerfilConfiguracoesRoute
+  '/app/perfil/privacidade': typeof AppPerfilPrivacidadeRoute
+  '/app/perfil/visualizar': typeof AppPerfilVisualizarRoute
   '/app/rota/$id': typeof AppRotaIdRoute
+  '/app/perfil/': typeof AppPerfilIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -145,11 +198,17 @@ export interface FileRouteTypes {
     | '/app/carteira'
     | '/app/criar-rota'
     | '/app/minhas-caronas'
+    | '/app/notificacoes'
     | '/app/perfil'
     | '/app/viagem-ativa'
     | '/app/'
     | '/app/chat/$rotaId'
+    | '/app/perfil/conexoes'
+    | '/app/perfil/configuracoes'
+    | '/app/perfil/privacidade'
+    | '/app/perfil/visualizar'
     | '/app/rota/$id'
+    | '/app/perfil/'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -159,11 +218,16 @@ export interface FileRouteTypes {
     | '/app/carteira'
     | '/app/criar-rota'
     | '/app/minhas-caronas'
-    | '/app/perfil'
+    | '/app/notificacoes'
     | '/app/viagem-ativa'
     | '/app'
     | '/app/chat/$rotaId'
+    | '/app/perfil/conexoes'
+    | '/app/perfil/configuracoes'
+    | '/app/perfil/privacidade'
+    | '/app/perfil/visualizar'
     | '/app/rota/$id'
+    | '/app/perfil'
   id:
     | '__root__'
     | '/'
@@ -174,11 +238,17 @@ export interface FileRouteTypes {
     | '/app/carteira'
     | '/app/criar-rota'
     | '/app/minhas-caronas'
+    | '/app/notificacoes'
     | '/app/perfil'
     | '/app/viagem-ativa'
     | '/app/'
     | '/app/chat/$rotaId'
+    | '/app/perfil/conexoes'
+    | '/app/perfil/configuracoes'
+    | '/app/perfil/privacidade'
+    | '/app/perfil/visualizar'
     | '/app/rota/$id'
+    | '/app/perfil/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -239,6 +309,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppPerfilRouteImport
       parentRoute: typeof AppRoute
     }
+    '/app/notificacoes': {
+      id: '/app/notificacoes'
+      path: '/notificacoes'
+      fullPath: '/app/notificacoes'
+      preLoaderRoute: typeof AppNotificacoesRouteImport
+      parentRoute: typeof AppRoute
+    }
     '/app/minhas-caronas': {
       id: '/app/minhas-caronas'
       path: '/minhas-caronas'
@@ -267,12 +344,47 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppBuscarRouteImport
       parentRoute: typeof AppRoute
     }
+    '/app/perfil/': {
+      id: '/app/perfil/'
+      path: '/'
+      fullPath: '/app/perfil/'
+      preLoaderRoute: typeof AppPerfilIndexRouteImport
+      parentRoute: typeof AppPerfilRoute
+    }
     '/app/rota/$id': {
       id: '/app/rota/$id'
       path: '/rota/$id'
       fullPath: '/app/rota/$id'
       preLoaderRoute: typeof AppRotaIdRouteImport
       parentRoute: typeof AppRoute
+    }
+    '/app/perfil/visualizar': {
+      id: '/app/perfil/visualizar'
+      path: '/visualizar'
+      fullPath: '/app/perfil/visualizar'
+      preLoaderRoute: typeof AppPerfilVisualizarRouteImport
+      parentRoute: typeof AppPerfilRoute
+    }
+    '/app/perfil/privacidade': {
+      id: '/app/perfil/privacidade'
+      path: '/privacidade'
+      fullPath: '/app/perfil/privacidade'
+      preLoaderRoute: typeof AppPerfilPrivacidadeRouteImport
+      parentRoute: typeof AppPerfilRoute
+    }
+    '/app/perfil/configuracoes': {
+      id: '/app/perfil/configuracoes'
+      path: '/configuracoes'
+      fullPath: '/app/perfil/configuracoes'
+      preLoaderRoute: typeof AppPerfilConfiguracoesRouteImport
+      parentRoute: typeof AppPerfilRoute
+    }
+    '/app/perfil/conexoes': {
+      id: '/app/perfil/conexoes'
+      path: '/conexoes'
+      fullPath: '/app/perfil/conexoes'
+      preLoaderRoute: typeof AppPerfilConexoesRouteImport
+      parentRoute: typeof AppPerfilRoute
     }
     '/app/chat/$rotaId': {
       id: '/app/chat/$rotaId'
@@ -284,12 +396,33 @@ declare module '@tanstack/react-router' {
   }
 }
 
+interface AppPerfilRouteChildren {
+  AppPerfilConexoesRoute: typeof AppPerfilConexoesRoute
+  AppPerfilConfiguracoesRoute: typeof AppPerfilConfiguracoesRoute
+  AppPerfilPrivacidadeRoute: typeof AppPerfilPrivacidadeRoute
+  AppPerfilVisualizarRoute: typeof AppPerfilVisualizarRoute
+  AppPerfilIndexRoute: typeof AppPerfilIndexRoute
+}
+
+const AppPerfilRouteChildren: AppPerfilRouteChildren = {
+  AppPerfilConexoesRoute: AppPerfilConexoesRoute,
+  AppPerfilConfiguracoesRoute: AppPerfilConfiguracoesRoute,
+  AppPerfilPrivacidadeRoute: AppPerfilPrivacidadeRoute,
+  AppPerfilVisualizarRoute: AppPerfilVisualizarRoute,
+  AppPerfilIndexRoute: AppPerfilIndexRoute,
+}
+
+const AppPerfilRouteWithChildren = AppPerfilRoute._addFileChildren(
+  AppPerfilRouteChildren,
+)
+
 interface AppRouteChildren {
   AppBuscarRoute: typeof AppBuscarRoute
   AppCarteiraRoute: typeof AppCarteiraRoute
   AppCriarRotaRoute: typeof AppCriarRotaRoute
   AppMinhasCaronasRoute: typeof AppMinhasCaronasRoute
-  AppPerfilRoute: typeof AppPerfilRoute
+  AppNotificacoesRoute: typeof AppNotificacoesRoute
+  AppPerfilRoute: typeof AppPerfilRouteWithChildren
   AppViagemAtivaRoute: typeof AppViagemAtivaRoute
   AppIndexRoute: typeof AppIndexRoute
   AppChatRotaIdRoute: typeof AppChatRotaIdRoute
@@ -301,7 +434,8 @@ const AppRouteChildren: AppRouteChildren = {
   AppCarteiraRoute: AppCarteiraRoute,
   AppCriarRotaRoute: AppCriarRotaRoute,
   AppMinhasCaronasRoute: AppMinhasCaronasRoute,
-  AppPerfilRoute: AppPerfilRoute,
+  AppNotificacoesRoute: AppNotificacoesRoute,
+  AppPerfilRoute: AppPerfilRouteWithChildren,
   AppViagemAtivaRoute: AppViagemAtivaRoute,
   AppIndexRoute: AppIndexRoute,
   AppChatRotaIdRoute: AppChatRotaIdRoute,

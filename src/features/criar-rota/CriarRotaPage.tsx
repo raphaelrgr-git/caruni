@@ -1,10 +1,12 @@
 import * as React from "react";
-import { Link, useNavigate } from "@tanstack/react-router";
-import { ArrowLeft, Clock, MapPin, PlusCircle, Route as RouteIcon, Users } from "lucide-react";
+import { useNavigate } from "@tanstack/react-router";
+import { Clock, Crosshair, MapPin, PlusCircle, Route as RouteIcon, Users } from "lucide-react";
+import { AppBackButton } from "@/components/AppBackButton";
 import { RouteMap } from "@/components/RouteMap";
 import { AddressAutocomplete } from "@/components/AddressAutocomplete";
-import { diasSemanaLabels } from "@/data/mock";
+import { reverseGeocodeLatLng } from "@/lib/google-maps";
 import { previewRoute, createRoute, type GeocodeSuggestion } from "@/lib/api";
+import { WEEKDAY_LABELS } from "@/lib/types";
 
 export function CriarRotaPage() {
   const navigate = useNavigate();
@@ -12,8 +14,12 @@ export function CriarRotaPage() {
   const [nome, setNome] = React.useState("");
   const [horarioIda, setHorarioIda] = React.useState("07:30");
   const [vagas, setVagas] = React.useState(4);
+  const [visibilityMode, setVisibilityMode] = React.useState<"PUBLICA" | "PRIVADA" | "HIBRIDA">("PUBLICA");
+  const [publicSeats, setPublicSeats] = React.useState(2);
+  const [privateSeats, setPrivateSeats] = React.useState(2);
   const [originPlace, setOriginPlace] = React.useState<GeocodeSuggestion | null>(null);
   const [destinationPlace, setDestinationPlace] = React.useState<GeocodeSuggestion | null>(null);
+  const [mapTarget, setMapTarget] = React.useState<"origin" | "destination">("origin");
   const [preview, setPreview] = React.useState<{
     path: [number, number][];
     distanceMeters: number;
@@ -25,11 +31,40 @@ export function CriarRotaPage() {
   const [submitLoading, setSubmitLoading] = React.useState(false);
   const [submitError, setSubmitError] = React.useState<string | null>(null);
 
+  React.useEffect(() => {
+    if (visibilityMode !== "HIBRIDA") return;
+    if (publicSeats + privateSeats === vagas) return;
+    setPublicSeats(Math.min(publicSeats, vagas));
+    setPrivateSeats(Math.max(0, vagas - Math.min(publicSeats, vagas)));
+  }, [privateSeats, publicSeats, vagas, visibilityMode]);
+
   const km = preview ? +(preview.distanceMeters / 1000).toFixed(1) : 0;
   const autoNome =
     originPlace && destinationPlace
       ? `${originPlace.label.split(",")[0]} → ${destinationPlace.label.split(",")[0]}`
       : "";
+
+  const handleMapSelection = async ([lat, lng]: [number, number]) => {
+    try {
+      const place = await reverseGeocodeLatLng(lat, lng);
+      if (mapTarget === "origin") {
+        setOriginPlace(place);
+      } else {
+        setDestinationPlace(place);
+      }
+    } catch {
+      const fallback = {
+        label: `${lat.toFixed(5)}, ${lng.toFixed(5)}`,
+        lat,
+        lng,
+      };
+      if (mapTarget === "origin") {
+        setOriginPlace(fallback);
+      } else {
+        setDestinationPlace(fallback);
+      }
+    }
+  };
 
   // Recalculate route preview whenever origin or destination changes
   React.useEffect(() => {
@@ -80,6 +115,9 @@ export function CriarRotaPage() {
         weekdays: dias,
         departureTime: horarioIda,
         seats: vagas,
+        visibilityMode,
+        publicSeats: visibilityMode === "HIBRIDA" ? publicSeats : undefined,
+        privateSeats: visibilityMode === "HIBRIDA" ? privateSeats : undefined,
       });
       void navigate({ to: "/app/minhas-caronas" });
     } catch (err) {
@@ -91,15 +129,10 @@ export function CriarRotaPage() {
 
   return (
     <div className="mx-auto w-full max-w-5xl px-4 py-6 lg:px-8 lg:py-10">
-      <Link
-        to="/app/minhas-caronas"
-        className="inline-flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground"
-      >
-        <ArrowLeft size={12} /> Voltar
-      </Link>
+      <AppBackButton fallbackTo="/app/minhas-caronas" className="text-xs" />
 
       <div className="mt-4 grid gap-4 lg:grid-cols-[1.35fr_0.65fr]">
-        <form onSubmit={(e) => void submit(e)} className="rounded-xl border border-border bg-surface p-5">
+        <form id="criar-rota-form" onSubmit={(e) => void submit(e)} className="rounded-xl border border-border bg-surface p-5">
           <div>
             <p className="label-cockpit text-[10px] text-muted-foreground">Motorista</p>
             <h1 className="mt-1 text-2xl font-semibold tracking-tight text-foreground">
@@ -157,6 +190,49 @@ export function CriarRotaPage() {
                 required
               />
             </Field>
+            <Field label="Modo da carona" className="sm:col-span-2">
+              <div className="grid gap-2 sm:grid-cols-3">
+                {[
+                  { key: "PUBLICA", label: "Pública" },
+                  { key: "PRIVADA", label: "Privada" },
+                  { key: "HIBRIDA", label: "Híbrida" },
+                ].map((mode) => (
+                  <button
+                    key={mode.key}
+                    type="button"
+                    onClick={() => setVisibilityMode(mode.key as typeof visibilityMode)}
+                    className={`rounded-xl border px-3 py-3 text-sm font-medium ${
+                      visibilityMode === mode.key
+                        ? "border-primary bg-primary text-primary-foreground"
+                        : "border-border bg-surface-2 text-foreground"
+                    }`}
+                  >
+                    {mode.label}
+                  </button>
+                ))}
+              </div>
+            </Field>
+            {visibilityMode === "HIBRIDA" ? (
+              <>
+                <Field label="Vagas públicas">
+                  <input
+                    type="number"
+                    min={0}
+                    max={vagas}
+                    value={publicSeats}
+                    onChange={(e) => {
+                      const next = Math.max(0, Math.min(vagas, Number(e.target.value)));
+                      setPublicSeats(next);
+                      setPrivateSeats(Math.max(0, vagas - next));
+                    }}
+                    className="field-input"
+                  />
+                </Field>
+                <Field label="Vagas privadas">
+                  <input type="number" value={privateSeats} readOnly className="field-input bg-surface-2/60" />
+                </Field>
+              </>
+            ) : null}
           </div>
 
           <div className="mt-5">
@@ -179,47 +255,66 @@ export function CriarRotaPage() {
                         : "border-border bg-surface-2 text-muted-foreground hover:text-foreground"
                     }`}
                   >
-                    {diasSemanaLabels[d]}
+                    {WEEKDAY_LABELS[d]}
                   </button>
                 );
               })}
             </div>
           </div>
 
-          {submitError && (
-            <p className="mt-3 rounded-md bg-destructive/10 px-3 py-2 text-xs text-destructive">
-              {submitError}
-            </p>
-          )}
-
-          <button
-            type="submit"
-            disabled={
-              dias.length === 0 ||
-              previewLoading ||
-              !preview ||
-              !originPlace ||
-              !destinationPlace ||
-              submitLoading
-            }
-            className="mt-6 inline-flex items-center gap-1.5 rounded-md bg-primary px-4 py-2 text-xs font-medium text-primary-foreground hover:bg-primary/90 disabled:cursor-not-allowed disabled:opacity-50"
-          >
-            <PlusCircle size={14} /> {submitLoading ? "Publicando…" : "Publicar rota"}
-          </button>
         </form>
 
         <aside className="space-y-3">
           <div className="rounded-xl border border-border bg-surface p-5">
             <p className="label-cockpit text-[10px] text-muted-foreground">Resumo</p>
+            <div className="mt-3 flex flex-wrap gap-2">
+              <button
+                type="button"
+                onClick={() => setMapTarget("origin")}
+                className={`inline-flex items-center gap-2 rounded-full px-3 py-1.5 text-xs font-medium ${
+                  mapTarget === "origin"
+                    ? "bg-primary text-primary-foreground"
+                    : "bg-surface-2 text-muted-foreground"
+                }`}
+              >
+                <Crosshair size={13} /> Selecionar origem no mapa
+              </button>
+              <button
+                type="button"
+                onClick={() => setMapTarget("destination")}
+                className={`inline-flex items-center gap-2 rounded-full px-3 py-1.5 text-xs font-medium ${
+                  mapTarget === "destination"
+                    ? "bg-primary text-primary-foreground"
+                    : "bg-surface-2 text-muted-foreground"
+                }`}
+              >
+                <Crosshair size={13} /> Selecionar destino no mapa
+              </button>
+            </div>
             <div className="mt-4 overflow-hidden rounded-lg">
               <RouteMap
                 path={preview?.path ?? []}
                 origin={originPlace ? [originPlace.lat, originPlace.lng] : undefined}
                 destination={destinationPlace ? [destinationPlace.lat, destinationPlace.lng] : undefined}
+                selectedPoint={
+                  mapTarget === "origin"
+                    ? originPlace
+                      ? [originPlace.lat, originPlace.lng]
+                      : undefined
+                    : destinationPlace
+                      ? [destinationPlace.lat, destinationPlace.lng]
+                      : undefined
+                }
                 height={220}
-                interactive={false}
+                interactive
+                selectable
+                onSelectPoint={(point) => void handleMapSelection(point)}
               />
             </div>
+            <p className="mt-3 text-xs text-muted-foreground">
+              Clique no mapa para definir {mapTarget === "origin" ? "a origem" : "o destino"} ou
+              use os campos de endereço acima.
+            </p>
             <div className="mt-4 space-y-3 text-sm">
               {originPlace && destinationPlace && (
                 <Row
@@ -255,27 +350,29 @@ export function CriarRotaPage() {
                       : "–"
                 }
               />
-              {preview?.provider && (
-                <Row
-                  icon={<RouteIcon size={14} />}
-                  label="Provider"
-                  value={preview.provider.toUpperCase()}
-                />
-              )}
             </div>
             {previewError ? (
               <p className="mt-3 text-xs leading-relaxed text-destructive">{previewError}</p>
             ) : null}
           </div>
-          <div className="rounded-xl border border-warn/40 bg-warn/5 p-4">
-            <p className="text-sm font-medium text-foreground">Regra de cancelamento</p>
-            <p className="mt-1 text-xs leading-relaxed text-muted-foreground">
-              No MVP, cancelar com menos de 2h vira histórico de cancelamento e pode reter 50% dos
-              créditos reservados.
-            </p>
-          </div>
         </aside>
       </div>
+
+      {submitError && (
+        <p className="mt-4 rounded-md bg-destructive/10 px-3 py-2 text-xs text-destructive">
+          {submitError}
+        </p>
+      )}
+
+      <button
+        type="submit"
+        form="criar-rota-form"
+        disabled={!preview || !originPlace || !destinationPlace || dias.length === 0 || submitLoading}
+        className="mt-4 flex w-full items-center justify-center gap-2 rounded-xl bg-primary py-3 text-sm font-semibold text-primary-foreground transition-colors hover:bg-primary/90 disabled:cursor-not-allowed disabled:opacity-50"
+      >
+        <PlusCircle size={16} />
+        {submitLoading ? "Publicando…" : "Publicar rota"}
+      </button>
     </div>
   );
 }

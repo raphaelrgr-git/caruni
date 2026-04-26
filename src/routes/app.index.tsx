@@ -1,180 +1,491 @@
 import * as React from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { Clock, Users, ShieldCheck, ArrowRight, MessageCircle, Fuel, TrendingUp, CalendarCheck, AlertCircle, MapPin, ChevronUp, Navigation, Search } from "lucide-react";
-import { RouteMap } from "@/components/RouteMap";
-import { Avatar, CnhBadge, PresenceBar, StarRating } from "@/components/Brand";
-import { Drawer } from "vaul";
 import {
-  proximaCarona,
-  semanaCaronas,
-  getRota,
-  getPessoa,
-  ganhosMes,
-  eu,
-  formatBRL,
-  formatHora,
-  pessoas,
-} from "@/data/mock";
+  Area,
+  AreaChart,
+  CartesianGrid,
+  Line,
+  LineChart,
+  XAxis,
+  YAxis,
+} from "recharts";
+import {
+  ArrowUpRight,
+  CalendarClock,
+  Car,
+  CreditCard,
+  MapPin,
+  MessageCircle,
+  Search,
+  TrendingUp,
+  Users,
+  Wallet,
+} from "lucide-react";
+import { OccupancyTrack } from "@/components/OccupancyTrack";
+import { RouteMap } from "@/components/RouteMap";
+import { Avatar } from "@/components/Brand";
+import {
+  ChartContainer,
+  ChartTooltip,
+  ChartTooltipContent,
+} from "@/components/ui/chart";
+import {
+  getDashboardSummary,
+  getMyBookings,
+  getMyRoutes,
+  getRouteDetail,
+  type DashboardSummaryResponse,
+  type MyBooking,
+  type MyRoute,
+} from "@/lib/api";
+import { useAuth } from "@/lib/auth";
+import { formatBookingStatus, formatRideStatus } from "@/lib/labels";
+import { pickRelevantSummaryRide } from "@/lib/rides";
+import type { LatLng } from "@/lib/types";
+
+const brl = new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" });
+
+const dashboardChartConfig = {
+  savings: { label: "Economia", color: "hsl(var(--primary))" },
+  bus: { label: "Ônibus", color: "#f97316" },
+  private: { label: "Uber/99", color: "#0f172a" },
+  earnings: { label: "Ganhos", color: "hsl(var(--primary))" },
+  occupancy: { label: "Ocupação", color: "#f97316" },
+} as const;
 
 export const Route = createFileRoute("/app/")({
   head: () => ({
     meta: [
       { title: "CarUni — Início" },
-      { name: "description", content: "Sua próxima carona, ganhos do mês e reputação no painel CarUni." },
+      {
+        name: "description",
+        content: "Painel do CarUni com economia, ganhos, próximas viagens e operação da rota.",
+      },
     ],
   }),
   component: AppHome,
 });
 
 function AppHome() {
-  const [mounted, setMounted] = React.useState(false);
-  const [prox, setProx] = React.useState(() => proximaCarona());
-  
+  const { user } = useAuth();
+  const [summary, setSummary] = React.useState<DashboardSummaryResponse | null>(null);
+  const [bookings, setBookings] = React.useState<MyBooking[]>([]);
+  const [routes, setRoutes] = React.useState<MyRoute[]>([]);
+  const [path, setPath] = React.useState<LatLng[]>([]);
+  const [loading, setLoading] = React.useState(true);
+
   React.useEffect(() => {
-    setProx(proximaCarona());
-    setMounted(true);
-  }, []);
-  
-  const motorista = prox.motorista;
-  const inscritos = prox.rota.inscritos.map(getPessoa).filter((p) => p.id !== eu.id);
+    let cancelled = false;
+    setLoading(true);
+    Promise.all([
+      getDashboardSummary().catch(() => null),
+      user?.role === "MOTORISTA" ? getMyRoutes().catch(() => []) : getMyBookings().catch(() => []),
+    ])
+      .then(async ([dashboard, roleData]) => {
+        if (cancelled) return;
+        setSummary(dashboard);
+        const relevantRide = dashboard ? pickRelevantSummaryRide(dashboard.nextRides) : null;
+        if (relevantRide?.routeId) {
+          const detail = await getRouteDetail(relevantRide.routeId).catch(() => null);
+          if (!cancelled) {
+            setPath(detail?.geometry?.coordinates.map(([lng, lat]) => [lat, lng] as LatLng) ?? []);
+          }
+        } else {
+          setPath([]);
+        }
+        if (user?.role === "MOTORISTA") {
+          setRoutes(roleData as MyRoute[]);
+        } else {
+          setBookings(roleData as MyBooking[]);
+        }
+      })
+      .finally(() => {
+        if (!cancelled) setLoading(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [user?.role]);
+
+  const nextRide = React.useMemo(
+    () => (summary ? pickRelevantSummaryRide(summary.nextRides) : null),
+    [summary],
+  );
+  const isDriver = user?.role === "MOTORISTA";
 
   return (
-    <div className="fixed inset-x-0 bottom-[64px] top-[54px] lg:bottom-0 lg:left-60 lg:top-0 overflow-hidden bg-background">
-      {/* MAPA FULL SCREEN */}
-      <div className="absolute inset-0 z-0">
-        <RouteMap
-          path={prox.rota.caminho}
-          origin={prox.rota.origem.coord}
-          destination={prox.rota.destino.coord}
-          height="100%"
-          className="h-full w-full"
-        />
-        
-        {/* Overlay gradient top for better text visibility */}
-        <div className="absolute inset-x-0 top-0 z-10 h-32 bg-gradient-to-b from-background/80 to-transparent pointer-events-none" />
-      </div>
+    <div className="mx-auto w-full max-w-7xl px-4 py-6 lg:px-8 lg:py-10">
+      <div className="grid gap-5 xl:grid-cols-[1.08fr_0.92fr]">
+        <section className="overflow-hidden rounded-[30px] border border-border bg-surface shadow-sm">
+          <div className="grid gap-0 lg:grid-cols-[1.2fr_0.8fr]">
+            <div className="p-5 lg:p-7">
+              <div className="inline-flex rounded-full border border-border bg-surface-2 px-3 py-1 text-[11px] font-medium text-muted-foreground">
+                {isDriver ? "Painel do motorista" : "Painel do passageiro"}
+              </div>
+              <h1 className="mt-4 text-3xl font-semibold tracking-tight text-foreground lg:text-4xl">
+                {isDriver
+                  ? "Ganhos previsíveis com rotas recorrentes."
+                  : "Economia recorrente para sua rotina universitária."}
+              </h1>
+              <p className="mt-3 max-w-2xl text-sm leading-relaxed text-muted-foreground lg:text-[15px]">
+                {isDriver
+                  ? "Acompanhe ocupação, repasses e próximas corridas sem depender de grupo improvisado."
+                  : "Compare o que você já economizou contra ônibus e Uber/99 e entre na próxima rota com menos atrito."}
+              </p>
 
-      {/* ELEMENTOS FLUTUANTES (HUD) */}
-      <div className="absolute inset-x-0 top-0 z-20 flex flex-col gap-4 p-4 lg:p-6 pointer-events-none">
-        
-        {/* Saudação (Glassmorphism) */}
-        <div className="self-start rounded-full border border-border/50 bg-background/60 px-4 py-2 backdrop-blur-md shadow-sm pointer-events-auto">
-          <p className="label-cockpit text-[10px] text-muted-foreground">Bom dia</p>
-          <h1 className="text-sm font-semibold tracking-tight text-foreground">
-            Pronto pra rodar, {eu.nome.split(" ")[0]}?
-          </h1>
-        </div>
-      </div>
+              <div className="mt-6 grid gap-3 sm:grid-cols-2">
+                {isDriver ? (
+                  <>
+                    <MetricCard
+                      icon={<Wallet size={16} />}
+                      label="Ganho líquido estimado"
+                      value={brl.format(summary?.estimatedFuelSavings ?? 0)}
+                      hint={`Estimativa com custo médio de ${brl.format(summary?.estimatedCostPerKm ?? 0.62)}/km`}
+                    />
+                    <MetricCard
+                      icon={<Users size={16} />}
+                      label="Ocupação média"
+                      value={`${average(summary?.occupancyTimeline?.map((item) => item.occupancy) ?? [])}%`}
+                      hint="Baseado nas suas rotas ativas"
+                    />
+                  </>
+                ) : (
+                  <>
+                    <MetricCard
+                      icon={<TrendingUp size={16} />}
+                      label="Economia vs ônibus"
+                      value={brl.format(summary?.savings.busSavings ?? 0)}
+                      hint={`${summary?.savings.confirmedTrips ?? 0} viagens confirmadas`}
+                    />
+                    <MetricCard
+                      icon={<TrendingUp size={16} />}
+                      label="Economia vs Uber/99"
+                      value={brl.format(summary?.savings.privateSavings ?? 0)}
+                      hint={`Projeção semanal: ${brl.format(summary?.savings.weeklyProjectionPrivate ?? 0)}`}
+                    />
+                  </>
+                )}
+              </div>
 
-      <div className="absolute right-4 top-4 z-20 flex flex-col gap-2 pointer-events-auto">
-        {/* Quick Actions laterais */}
-        <Link
-          to="/app/buscar"
-          className="flex h-10 w-10 items-center justify-center rounded-full border border-border/50 bg-background/80 text-foreground backdrop-blur-md shadow-lg transition-transform hover:scale-105"
-          aria-label="Buscar Carona"
-        >
-          <Search size={18} />
-        </Link>
-      </div>
-
-      {/* BOTTOM SHEET (GAVETA) COM DETALHES DA CARONA */}
-      <Drawer.Root snapPoints={[0.3, 0.8]} activeSnapPoint={0.3} open={true} dismissible={false} modal={false}>
-        <Drawer.Portal>
-          <Drawer.Content className="fixed bottom-[64px] lg:bottom-0 left-0 lg:left-60 right-0 z-30 flex flex-col rounded-t-[20px] border-t border-border bg-surface shadow-[0_-8px_30px_rgba(0,0,0,0.12)]">
-            <div className="mx-auto mt-3 h-1.5 w-12 flex-shrink-0 rounded-full bg-muted-foreground/30" />
-            
-            <div className="flex-1 overflow-y-auto px-4 py-5 lg:px-8">
-              <div className="mx-auto max-w-3xl">
-                
-                {/* Cabeçalho da Gaveta */}
-                <div className="flex items-start justify-between gap-4">
-                  <div>
-                    <p className="label-cockpit text-[10px] text-primary pulse-ring px-2 py-0.5 rounded-full bg-primary/10 inline-flex mb-2">Próxima Carona</p>
-                    <h2 className="text-xl font-semibold text-foreground leading-tight">{prox.rota.nome}</h2>
-                    <div className="mt-1 flex items-center gap-1.5 text-xs text-muted-foreground">
-                      <MapPin size={12} />
-                      {prox.rota.origem.label.split('·')[0]} → {prox.rota.destino.label.split('·')[0]}
-                    </div>
-                  </div>
-                  <div className="text-right">
-                    <p className="num text-3xl font-semibold leading-none text-foreground" suppressHydrationWarning>
-                      {mounted ? formatHora(prox.horario) : "--:--"}
-                    </p>
-                    <p className="mt-1 inline-flex items-center gap-1 rounded-md bg-warn/15 px-2 py-0.5 text-[11px] font-medium text-warn" suppressHydrationWarning>
-                      <Clock size={11} /> em {mounted ? prox.minutosFaltando : 23} min
-                    </p>
-                  </div>
-                </div>
-
-                {/* Motorista e Vagas */}
-                <div className="mt-6 flex items-center justify-between gap-3 rounded-xl border border-border bg-surface-2/50 p-4">
-                  <div className="flex items-center gap-3">
-                    <Avatar name={motorista.nome} color={motorista.cor} size={46} iniciais={motorista.iniciais} />
-                    <div>
-                      <div className="flex items-center gap-2">
-                        <span className="text-sm font-medium text-foreground">{motorista.nome}</span>
-                        {motorista.cnhVerificada && <CnhBadge />}
-                      </div>
-                      <div className="mt-0.5 flex items-center gap-3 text-[11px] text-muted-foreground">
-                        <StarRating value={motorista.avaliacao} />
-                        <span className="num hidden sm:inline">{motorista.carro?.placa}</span>
-                      </div>
-                    </div>
-                  </div>
-                  
-                  <div className="text-right">
-                     <p className="label-cockpit text-[9px] text-muted-foreground">Vagas</p>
-                     <p className="num mt-0.5 text-lg font-semibold text-foreground">
-                        {prox.ocupadas}<span className="text-muted-foreground text-sm">/{prox.rota.vagas}</span>
-                     </p>
-                  </div>
-                </div>
-
-                {/* Botões de Ação Principais */}
-                <div className="mt-4 grid grid-cols-2 gap-3">
+              <div className="mt-6 flex flex-wrap gap-2">
+                {isDriver ? (
+                  <>
+                    <Link
+                      to="/app/criar-rota"
+                      className="inline-flex items-center gap-2 rounded-full bg-primary px-4 py-2.5 text-sm font-medium text-primary-foreground"
+                    >
+                      <Car size={15} /> Publicar rota
+                    </Link>
+                    <Link
+                      to="/app/minhas-caronas"
+                      className="inline-flex items-center gap-2 rounded-full border border-border px-4 py-2.5 text-sm font-medium text-foreground"
+                    >
+                      <Users size={15} /> Ver operação
+                    </Link>
+                  </>
+                ) : (
+                  <>
+                    <Link
+                      to="/app/buscar"
+                      className="inline-flex items-center gap-2 rounded-full bg-primary px-4 py-2.5 text-sm font-medium text-primary-foreground"
+                    >
+                      <Search size={15} /> Buscar carona
+                    </Link>
+                    <Link
+                      to="/app/minhas-caronas"
+                      className="inline-flex items-center gap-2 rounded-full border border-border px-4 py-2.5 text-sm font-medium text-foreground"
+                    >
+                      <CalendarClock size={15} /> Ver reservas
+                    </Link>
+                  </>
+                )}
+                {nextRide ? (
                   <Link
                     to="/app/viagem-ativa"
-                    className="flex items-center justify-center gap-2 rounded-lg bg-primary py-3.5 text-sm font-semibold text-primary-foreground shadow-md transition-transform hover:scale-[1.02]"
+                    search={{ rideId: nextRide.id }}
+                    className="inline-flex items-center gap-2 rounded-full border border-border px-4 py-2.5 text-sm font-medium text-foreground"
                   >
-                    <Navigation size={16} /> Ver no Mapa
+                    <MapPin size={15} /> Entrar na corrida
                   </Link>
-                  <Link
-                    to="/app/chat/$rotaId"
-                    params={{ rotaId: prox.rota.id }}
-                    className="flex items-center justify-center gap-2 rounded-lg border border-border bg-surface py-3.5 text-sm font-medium text-foreground transition-colors hover:bg-surface-2"
-                  >
-                    <MessageCircle size={16} /> Chat da Rota
-                  </Link>
-                </div>
-                
-                {/* Área Expansível (Visível no SnapPoint 0.8) */}
-                <div className="mt-8 space-y-6 border-t border-border pt-6">
-                   <h3 className="text-sm font-semibold text-foreground">Resumo da Semana</h3>
-                   <div className="grid grid-cols-2 gap-3 sm:grid-cols-5">
-                      {semanaCaronas.map((c) => {
-                        const tone = c.status === "feita" ? "border-border text-muted-foreground"
-                                   : c.status === "substituto" ? "border-warn/40 bg-warn/5 text-warn"
-                                   : "border-primary/40 bg-primary/5 text-foreground";
-                        return (
-                          <div key={c.data} className={`rounded-lg border p-3 ${tone}`}>
-                            <div className="flex items-baseline justify-between">
-                              <span className="label-cockpit text-[10px]">{c.dia}</span>
-                              <span className="num text-[10px] opacity-80">{c.data}</span>
-                            </div>
-                            <div className="mt-2 text-[10px] capitalize">
-                                {c.status}
-                            </div>
-                          </div>
-                        );
-                      })}
-                   </div>
-                </div>
-
+                ) : null}
               </div>
             </div>
-          </Drawer.Content>
-        </Drawer.Portal>
-      </Drawer.Root>
+
+            <div className="flex flex-col border-t border-border bg-surface-2/50 lg:border-l lg:border-t-0">
+              <div className="overflow-hidden border-b border-border">
+                <RouteMap path={path} height={260} interactive={false} className="rounded-none border-0" />
+              </div>
+              <div className="flex-1 p-5">
+                <p className="label-cockpit text-[10px] text-muted-foreground">Próxima viagem</p>
+                <h2 className="mt-2 text-xl font-semibold text-foreground">
+                  {nextRide?.routeName ?? "Sem corrida agendada"}
+                </h2>
+                <p className="mt-1 text-sm text-muted-foreground">
+                  {nextRide
+                    ? `${nextRide.originLabel} → ${nextRide.destinationLabel}`
+                    : isDriver
+                      ? "Crie uma rota para começar a receber passageiros."
+                      : "Reserve uma rota para aparecer aqui."}
+                </p>
+                {nextRide ? (
+                  <div className="mt-4 rounded-2xl border border-border bg-background/80 p-4">
+                    <p className="text-sm font-medium text-foreground">
+                      {new Date(nextRide.scheduledAt).toLocaleString("pt-BR")}
+                    </p>
+                    <div className="mt-3 flex items-center justify-between text-xs text-muted-foreground">
+                      <span className="inline-flex items-center gap-1.5">
+                        <CalendarClock size={12} />
+                        {formatRideStatus(nextRide.status)}
+                      </span>
+                      <Link
+                        to="/app/chat/$rotaId"
+                        params={{ rotaId: nextRide.routeId }}
+                        className="inline-flex items-center gap-1 text-primary"
+                      >
+                        Abrir chat <ArrowUpRight size={12} />
+                      </Link>
+                    </div>
+                  </div>
+                ) : null}
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <section className="grid gap-5">
+          <div className="overflow-hidden rounded-[30px] border border-border bg-surface p-5 lg:p-6">
+            <div className="flex min-w-0 items-center justify-between gap-3">
+              <div className="min-w-0">
+                <p className="label-cockpit text-[10px] text-muted-foreground">
+                  {isDriver ? "Economia de combustível" : "Série de economia"}
+                </p>
+                <h2 className="mt-1 max-w-full text-wrap text-xl font-semibold leading-tight text-foreground">
+                  {isDriver ? "Quanto você está economizando de gasolina" : "Quanto o app já evitou de gasto"}
+                </h2>
+              </div>
+            </div>
+
+            <div className="mt-5 h-[220px] min-w-0 overflow-hidden sm:h-[260px]">
+              {isDriver ? (
+                <DriverCharts summary={summary} />
+              ) : (
+                <PassengerChart summary={summary} />
+              )}
+            </div>
+          </div>
+
+          <div className="rounded-[30px] border border-border bg-surface p-5 lg:p-6">
+            <div className="flex items-center justify-between gap-3">
+              <div>
+                <p className="label-cockpit text-[10px] text-muted-foreground">
+                  {isDriver ? "Rotas em operação" : "Reservas e corridas"}
+                </p>
+                <h2 className="mt-1 text-xl font-semibold text-foreground">
+                  {isDriver ? "O que precisa da sua atenção agora" : "Suas próximas movimentações"}
+                </h2>
+              </div>
+              <Link
+                to={isDriver ? "/app/minhas-caronas" : "/app/minhas-caronas"}
+                className="text-sm font-medium text-primary"
+              >
+                Ver tudo
+              </Link>
+            </div>
+
+            {loading ? (
+              <p className="mt-5 text-sm text-muted-foreground">Carregando…</p>
+            ) : isDriver ? (
+              <div className="mt-5 space-y-3">
+                {routes.slice(0, 3).map((route) => (
+                  <div
+                    key={route.id}
+                    className="rounded-2xl border border-border bg-surface-2/60 p-4"
+                  >
+                    <div className="flex items-start justify-between gap-3">
+                      <div>
+                        <p className="text-sm font-semibold text-foreground">{route.name}</p>
+                        <p className="mt-1 text-xs text-muted-foreground">
+                          {route.originLabel} → {route.destinationLabel}
+                        </p>
+                      </div>
+                      <span className="rounded-full bg-primary/10 px-2.5 py-1 text-[11px] font-medium text-primary">
+                        {route.occupiedSeats}/{route.seats} vagas ocupadas
+                      </span>
+                    </div>
+                    <div className="mt-4">
+                      <OccupancyTrack
+                        name={route.name}
+                        seats={route.seats}
+                        occupiedSeats={route.occupiedSeats}
+                        passengerNames={route.passengers.map((passenger) => passenger.name)}
+                        compact
+                      />
+                    </div>
+                    <div className="mt-4 flex flex-wrap items-center gap-2">
+                      {route.passengers.slice(0, 4).map((passenger) => (
+                        <span key={passenger.id} className="inline-flex items-center gap-2 rounded-full bg-background px-2 py-1 text-xs text-foreground">
+                          <Avatar name={passenger.name} size={20} />
+                          {passenger.name}
+                        </span>
+                      ))}
+                      {route.passengers.length === 0 ? (
+                        <span className="text-xs text-muted-foreground">Nenhum passageiro ativo ainda.</span>
+                      ) : null}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="mt-5 space-y-3">
+                {bookings.slice(0, 3).map((booking) => (
+                  <div
+                    key={booking.id}
+                    className="rounded-2xl border border-border bg-surface-2/60 p-4"
+                  >
+                    <div className="flex items-start justify-between gap-3">
+                      <div>
+                        <p className="text-sm font-semibold text-foreground">{booking.route.name}</p>
+                        <p className="mt-1 text-xs text-muted-foreground">
+                          {booking.route.originLabel} → {booking.route.destinationLabel}
+                        </p>
+                      </div>
+                      <span className="rounded-full bg-primary/10 px-2.5 py-1 text-[11px] font-medium text-primary">
+                        {formatBookingStatus(booking.status)}
+                      </span>
+                    </div>
+                    <div className="mt-4 flex flex-wrap gap-2">
+                      <span className="inline-flex items-center gap-2 rounded-full bg-background px-3 py-1 text-xs text-foreground">
+                        <CalendarClock size={12} />
+                        {booking.ride
+                          ? new Date(booking.ride.scheduledAt).toLocaleString("pt-BR")
+                          : "Aguardando próxima instância"}
+                      </span>
+                      <span className="inline-flex items-center gap-2 rounded-full bg-background px-3 py-1 text-xs text-foreground">
+                        <MessageCircle size={12} />
+                        Motorista: {booking.route.driver.name}
+                      </span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        </section>
+      </div>
     </div>
   );
+}
+
+function PassengerChart({ summary }: { summary: DashboardSummaryResponse | null }) {
+  const data = summary?.timeline ?? [];
+
+  if (data.length === 0) {
+    return <EmptyChart text="Assim que você confirmar viagens, a curva de economia aparece aqui." />;
+  }
+
+  return (
+    <ChartContainer config={dashboardChartConfig} className="h-full w-full">
+      <AreaChart data={data} margin={{ left: 8, right: 8, top: 12, bottom: 0 }}>
+        <defs>
+          <linearGradient id="savingsFill" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stopColor="var(--color-savings)" stopOpacity={0.32} />
+            <stop offset="100%" stopColor="var(--color-savings)" stopOpacity={0.02} />
+          </linearGradient>
+        </defs>
+        <CartesianGrid vertical={false} strokeDasharray="3 3" />
+        <XAxis dataKey="label" tickLine={false} axisLine={false} />
+        <YAxis tickLine={false} axisLine={false} width={44} />
+        <ChartTooltip content={<ChartTooltipContent />} />
+        <Area
+          type="monotone"
+          dataKey="savings"
+          stroke="var(--color-savings)"
+          strokeWidth={2.5}
+          fill="url(#savingsFill)"
+        />
+        <Line type="monotone" dataKey="bus" stroke="var(--color-bus)" strokeWidth={2} dot={false} />
+        <Line
+          type="monotone"
+          dataKey="private"
+          stroke="var(--color-private)"
+          strokeWidth={2}
+          dot={false}
+        />
+      </AreaChart>
+    </ChartContainer>
+  );
+}
+
+function DriverCharts({ summary }: { summary: DashboardSummaryResponse | null }) {
+  const earnings = summary?.fuelSavingsTimeline ?? [];
+
+  if (earnings.length === 0) {
+    return <EmptyChart text="A curva aparece quando houver repasses em rotas confirmadas." />;
+  }
+
+  return (
+    <ChartContainer config={dashboardChartConfig} className="h-full min-h-0 w-full min-w-0">
+      <LineChart data={earnings} margin={{ left: 0, right: 12, top: 12, bottom: 0 }}>
+        <CartesianGrid vertical={false} strokeDasharray="3 3" />
+        <XAxis dataKey="label" tickLine={false} axisLine={false} />
+        <YAxis
+          tickLine={false}
+          axisLine={false}
+          width={52}
+          tickFormatter={(value) => brl.format(Number(value)).replace(",00", "")}
+        />
+        <ChartTooltip
+          content={
+            <ChartTooltipContent
+              formatter={(value) => brl.format(Number(value))}
+            />
+          }
+        />
+        <Line
+          type="monotone"
+          dataKey="netSavings"
+          stroke="var(--color-earnings)"
+          strokeWidth={3}
+          dot={{ r: 3 }}
+          activeDot={{ r: 5 }}
+        />
+      </LineChart>
+    </ChartContainer>
+  );
+}
+
+function MetricCard({
+  icon,
+  label,
+  value,
+  hint,
+}: {
+  icon: React.ReactNode;
+  label: string;
+  value: string;
+  hint: string;
+}) {
+  return (
+    <div className="rounded-[24px] border border-border bg-background/80 p-4">
+      <div className="flex items-center gap-2 text-muted-foreground">
+        {icon}
+        <span className="label-cockpit text-[10px]">{label}</span>
+      </div>
+      <p className="mt-3 text-2xl font-semibold tracking-tight text-foreground">{value}</p>
+      <p className="mt-1 text-xs text-muted-foreground">{hint}</p>
+    </div>
+  );
+}
+
+function EmptyChart({ text }: { text: string }) {
+  return (
+    <div className="flex h-full items-center justify-center rounded-[24px] border border-dashed border-border bg-surface-2/40 px-6 text-center text-sm text-muted-foreground">
+      {text}
+    </div>
+  );
+}
+
+function average(values: number[]) {
+  if (values.length === 0) return 0;
+  return Math.round(values.reduce((sum, value) => sum + value, 0) / values.length);
 }

@@ -8,10 +8,41 @@
  * CarUni — Design system
  * Dual tema. Modo escuro: vibe Uber Driver (cockpit grafite + verde-lima).
  * Modo claro: vibe fintech BR (off-white quente + verde-petróleo + terracota).
- * Tipografia: Geist Sans (UI) + Geist Mono (números).
+ * Tipografia: Montserrat.
  */
 
-@import url("https://fonts.googleapis.com/css2?family=Geist:wght@300;400;500;600;700&family=Geist+Mono:wght@400;500;600&display=swap");
+@import url("https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap");
+
+@keyframes reservation-burst {
+  0% {
+    transform: translate(-50%, -50%) scale(0.2);
+  }
+  100% {
+    transform: translate(-50%, -50%) scale(24);
+  }
+}
+
+@keyframes reservation-badge {
+  0% {
+    opacity: 0;
+    transform: scale(0.7) translateY(10px);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+@keyframes reservation-fade-up {
+  0% {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
 
 @theme inline {
   --radius-sm: calc(var(--radius) - 4px);
@@ -61,8 +92,20 @@
   --color-success-foreground: var(--success-foreground);
   --color-warn: var(--warn);
   --color-warn-foreground: var(--warn-foreground);
-  --font-sans: "Geist", ui-sans-serif, system-ui, sans-serif;
-  --font-mono: "Geist Mono", ui-monospace, SFMono-Regular, monospace;
+  --font-sans: "Montserrat", ui-sans-serif, system-ui, sans-serif;
+  --font-mono: "Montserrat", ui-sans-serif, system-ui, sans-serif;
+}
+
+.animate-reservation-burst {
+  animation: reservation-burst 0.75s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+}
+
+.animate-reservation-badge {
+  animation: reservation-badge 0.45s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.animate-reservation-fade-up {
+  animation: reservation-fade-up 0.38s cubic-bezier(0.22, 1, 0.36, 1) both;
 }
 
 :root {
@@ -164,13 +207,14 @@
     -webkit-font-smoothing: antialiased;
   }
 
-  /* Tipografia utilitária — números sempre em mono */
+  /* Tipografia utilitária — números com alinhamento tabular, sem trocar a família */
   .font-mono,
   .num {
-    font-family: var(--font-mono);
+    font-family: var(--font-sans);
     font-feature-settings:
       "tnum" 1,
       "cv11" 1;
+    font-variant-numeric: tabular-nums;
   }
 
   /* Label "painel de bordo" */

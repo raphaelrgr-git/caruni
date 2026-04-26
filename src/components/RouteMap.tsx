@@ -1,18 +1,61 @@
 import * as React from "react";
-import type { Layer, Map as LeafletMap, TileLayer } from "leaflet";
+import { loadGoogleMaps } from "@/lib/google-maps";
 import { useTheme } from "@/lib/theme";
-import type { LatLng } from "@/data/mock";
+import { anonymizePoint, clipPolylineEnds } from "@/lib/privacy";
+import type { LatLng } from "@/lib/types";
 
 interface RouteMapProps {
   path: LatLng[];
   origin?: LatLng;
   destination?: LatLng;
   stops?: LatLng[];
-  carPosition?: LatLng; // marcador de carro em movimento
+  carPosition?: LatLng;
+  selectedPoint?: LatLng;
+  selectable?: boolean;
+  onSelectPoint?: (point: LatLng) => void;
   height?: number | string;
   interactive?: boolean;
   className?: string;
   fit?: boolean;
+  privacyMode?: boolean;
+  privacySeed?: string;
+}
+
+const JOINVILLE_CENTER: LatLng = [-26.3045, -48.8487];
+
+const LIGHT_MAP_STYLES: Array<Record<string, unknown>> = [
+  { featureType: "poi", stylers: [{ visibility: "off" }] },
+  { featureType: "transit", stylers: [{ visibility: "off" }] },
+];
+
+const DARK_MAP_STYLES: Array<Record<string, unknown>> = [
+  { elementType: "geometry", stylers: [{ color: "#0f172a" }] },
+  { elementType: "labels.text.fill", stylers: [{ color: "#dbe4ef" }] },
+  { elementType: "labels.text.stroke", stylers: [{ color: "#0f172a" }] },
+  { featureType: "road", elementType: "geometry", stylers: [{ color: "#172554" }] },
+  { featureType: "road.highway", elementType: "geometry", stylers: [{ color: "#1d4ed8" }] },
+  { featureType: "water", elementType: "geometry", stylers: [{ color: "#082f49" }] },
+  { featureType: "poi", stylers: [{ visibility: "off" }] },
+  { featureType: "transit", stylers: [{ visibility: "off" }] },
+];
+
+function toLatLngLiteral(point: LatLng) {
+  return { lat: point[0], lng: point[1] };
+}
+
+function isFiniteCoord(value: unknown): value is number {
+  return typeof value === "number" && Number.isFinite(value);
+}
+
+function isValidLatLng(point: unknown): point is LatLng {
+  if (!Array.isArray(point) || point.length < 2) return false;
+  const [lat, lng] = point;
+  return isFiniteCoord(lat) && isFiniteCoord(lng) && Math.abs(lat) <= 90 && Math.abs(lng) <= 180;
+}
+
+function sanitizePoints(points: LatLng[] | undefined): LatLng[] {
+  if (!points?.length) return [];
+  return points.filter(isValidLatLng);
 }
 
 export function RouteMap({
@@ -21,160 +64,277 @@ export function RouteMap({
   destination,
   stops,
   carPosition,
+  selectedPoint,
+  selectable = false,
+  onSelectPoint,
   height = 240,
   interactive = true,
   className = "",
   fit = true,
+  privacyMode = false,
+  privacySeed = "default",
 }: RouteMapProps) {
   const { theme } = useTheme();
   const ref = React.useRef<HTMLDivElement | null>(null);
-  const mapRef = React.useRef<LeafletMap | null>(null);
-  const tileRef = React.useRef<TileLayer | null>(null);
-  const layersRef = React.useRef<Layer[]>([]);
+  const mapRef = React.useRef<any>(null);
+  const overlaysRef = React.useRef<Array<{ setMap(map: any): void }>>([]);
+  const clickListenerRef = React.useRef<{ remove(): void } | null>(null);
   const [ready, setReady] = React.useState(false);
+  const [error, setError] = React.useState<string | null>(null);
 
-  // Init mapa client-side
   React.useEffect(() => {
     let cancelled = false;
-    if (typeof window === "undefined") return;
-    (async () => {
-      const L = (await import("leaflet")).default;
-      await import("leaflet/dist/leaflet.css");
-      if (cancelled || !ref.current) return;
 
-      const map = L.map(ref.current, {
-        zoomControl: false,
-        attributionControl: true,
-        dragging: interactive,
-        scrollWheelZoom: interactive,
-        doubleClickZoom: interactive,
-        touchZoom: interactive,
-        boxZoom: interactive,
-        keyboard: interactive,
+    void loadGoogleMaps()
+      .then((google) => {
+        if (cancelled || !ref.current || mapRef.current) return;
+
+        const map = new google.maps.Map(ref.current, {
+          center: toLatLngLiteral(JOINVILLE_CENTER),
+          zoom: 12,
+          disableDefaultUI: true,
+          clickableIcons: false,
+          keyboardShortcuts: interactive,
+          draggable: interactive,
+          scrollwheel: interactive,
+          disableDoubleClickZoom: !interactive,
+          gestureHandling: interactive ? "auto" : "none",
+          styles: theme === "dark" ? DARK_MAP_STYLES : LIGHT_MAP_STYLES,
+        });
+        mapRef.current = map;
+        setReady(true);
+      })
+      .catch((err) => {
+        if (!cancelled) {
+          setError(err instanceof Error ? err.message : "Falha ao carregar mapa.");
+        }
       });
-      mapRef.current = map;
-      setReady(true);
-    })();
+
     return () => {
       cancelled = true;
-      if (mapRef.current) {
-        mapRef.current.remove();
-        mapRef.current = null;
-      }
+      clickListenerRef.current?.remove();
+      overlaysRef.current.forEach((overlay) => overlay.setMap(null));
+      overlaysRef.current = [];
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [interactive, theme]);
 
-  // Trocar tile com tema
   React.useEffect(() => {
-    const run = async () => {
-      if (!ready || !mapRef.current) return;
-      const L = (await import("leaflet")).default;
-      if (tileRef.current) {
-        mapRef.current.removeLayer(tileRef.current);
-      }
-      const url =
-        theme === "dark"
-          ? "https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png"
-          : "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png";
-      tileRef.current = L.tileLayer(url, {
-        subdomains: theme === "dark" ? "abcd" : "abc",
-        maxZoom: 19,
-        attribution: theme === "dark" ? "© OSM · CARTO" : "© OpenStreetMap",
-      }).addTo(mapRef.current);
-      mapRef.current.invalidateSize();
-    };
-    void run();
-  }, [theme, ready]);
+    if (!mapRef.current) return;
+    mapRef.current.setOptions({
+      styles: theme === "dark" ? DARK_MAP_STYLES : LIGHT_MAP_STYLES,
+      draggable: interactive,
+      scrollwheel: interactive,
+      disableDoubleClickZoom: !interactive,
+      gestureHandling: interactive ? "auto" : "none",
+    });
+  }, [interactive, theme]);
 
-  // Desenhar rota + markers
   React.useEffect(() => {
-    const run = async () => {
-      if (!ready || !mapRef.current) return;
-      const L = (await import("leaflet")).default;
-      // limpar
-      layersRef.current.forEach((lyr) => mapRef.current.removeLayer(lyr));
-      layersRef.current = [];
-      if (!path.length) {
-        mapRef.current.setView([-26.3045, -48.8487], 12);
-        return;
-      }
+    if (!ready || !mapRef.current) return;
+    const google = (window as Window & { google?: any }).google;
+    if (!google) return;
 
-      const primary = theme === "dark" ? "#bef264" : "#0f766e";
-      const accent = theme === "dark" ? "#fbbf24" : "#f97316";
-      const fg = theme === "dark" ? "#f8fafc" : "#0f172a";
-      const bg = theme === "dark" ? "#111827" : "#ffffff";
-      const stopColor = theme === "dark" ? "#f8fafc" : "#1f2937";
+    overlaysRef.current.forEach((overlay) => overlay.setMap(null));
+    overlaysRef.current = [];
+    clickListenerRef.current?.remove();
+    clickListenerRef.current = null;
 
-      // Glow line (mais larga, opaca)
-      const glow = L.polyline(path, {
-        color: primary,
-        weight: 9,
-        opacity: theme === "dark" ? 0.2 : 0.14,
-        lineCap: "round",
-        lineJoin: "round",
-      }).addTo(mapRef.current);
-      const line = L.polyline(path, {
-        color: primary,
-        weight: 4,
-        opacity: 0.95,
-        lineCap: "round",
-        lineJoin: "round",
-      }).addTo(mapRef.current);
-      layersRef.current.push(glow, line);
+    const map = mapRef.current;
+    const validPath = sanitizePoints(path);
+    const validOrigin = isValidLatLng(origin) ? origin : undefined;
+    const validDestination = isValidLatLng(destination) ? destination : undefined;
+    const validStops = sanitizePoints(stops);
+    const validSelectedPoint = isValidLatLng(selectedPoint) ? selectedPoint : undefined;
+    const validCarPosition = isValidLatLng(carPosition) ? carPosition : undefined;
 
-      const dotIcon = (color: string, ring = "transparent", size = 14) =>
-        L.divIcon({
-          className: "",
-          iconSize: [size, size],
-          iconAnchor: [size / 2, size / 2],
-          html: `<div style="width:${size}px;height:${size}px;border-radius:9999px;background:${color};border:2px solid ${ring};box-shadow:0 0 0 3px ${bg}, 0 4px 12px rgba(0,0,0,.35);"></div>`,
-        });
+    const fallbackPath: LatLng[] =
+      validPath.length > 0
+        ? validPath
+        : validOrigin && validDestination
+          ? [validOrigin, validDestination]
+          : [];
 
-      const o = origin ?? path[0];
-      const d = destination ?? path[path.length - 1];
+    const primary = theme === "dark" ? "#bef264" : "#0f766e";
+    const accent = theme === "dark" ? "#fbbf24" : "#f97316";
+    const stopColor = theme === "dark" ? "#f8fafc" : "#1f2937";
+    const bgStroke = theme === "dark" ? "#0f172a" : "#ffffff";
+
+    const clippedPath = privacyMode ? clipPolylineEnds(fallbackPath) : fallbackPath;
+    const displayPath = sanitizePoints(clippedPath);
+
+    if (displayPath.length > 0) {
+      const pathOverlay = new google.maps.Polyline({
+        path: displayPath.map(toLatLngLiteral),
+        strokeColor: primary,
+        strokeOpacity: 0.95,
+        strokeWeight: 5,
+        map,
+      });
+      overlaysRef.current.push(pathOverlay);
+
+      const glowOverlay = new google.maps.Polyline({
+        path: displayPath.map(toLatLngLiteral),
+        strokeColor: primary,
+        strokeOpacity: theme === "dark" ? 0.22 : 0.16,
+        strokeWeight: 10,
+        map,
+      });
+      overlaysRef.current.push(glowOverlay);
+    }
+
+    const dotIcon = (color: string, scale = 8) => ({
+      path: google.maps.SymbolPath.CIRCLE,
+      fillColor: color,
+      fillOpacity: 1,
+      strokeColor: bgStroke,
+      strokeWeight: 3,
+      scale,
+    });
+
+    const o = validOrigin ?? fallbackPath[0];
+    const d = validDestination ?? fallbackPath[fallbackPath.length - 1];
+
+    const visiblePoints: LatLng[] = [];
+
+    if (privacyMode) {
+      const circleStyle = {
+        strokeColor: primary,
+        strokeOpacity: 0.45,
+        strokeWeight: 1.5,
+        fillColor: primary,
+        fillOpacity: 0.08,
+        radius: 500,
+      };
+
       if (o) {
-        const m = L.marker(o, { icon: dotIcon(primary, fg, 14) }).addTo(mapRef.current);
-        layersRef.current.push(m);
+        const point = anonymizePoint(o[0], o[1], `${privacySeed}-o`) as LatLng;
+        const circle = new google.maps.Circle({
+          ...circleStyle,
+          center: toLatLngLiteral(point),
+          map,
+        });
+        const marker = new google.maps.Marker({
+          position: toLatLngLiteral(point),
+          icon: dotIcon(primary, 6),
+          map,
+        });
+        overlaysRef.current.push(circle, marker);
+        visiblePoints.push(point);
       }
       if (d) {
-        const m = L.marker(d, { icon: dotIcon(accent, fg, 14) }).addTo(mapRef.current);
-        layersRef.current.push(m);
-      }
-      stops?.forEach((s) => {
-        const m = L.marker(s, { icon: dotIcon(stopColor, bg, 8) }).addTo(mapRef.current);
-        layersRef.current.push(m);
-      });
-
-      if (carPosition) {
-        const carIcon = L.divIcon({
-          className: "",
-          iconSize: [36, 36],
-          iconAnchor: [18, 18],
-          html: `<div style="width:36px;height:36px;border-radius:9999px;background:${primary};display:flex;align-items:center;justify-content:center;box-shadow:0 0 0 4px ${bg}, 0 0 0 8px color-mix(in oklab, ${primary} 25%, transparent), 0 8px 24px rgba(0,0,0,.4);">
-            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="${bg}" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M14 16H9m10 0h3v-3.15a1 1 0 0 0-.84-.99L16 11l-2.7-3.6a1 1 0 0 0-.8-.4H5.24a2 2 0 0 0-1.8 1.1l-.8 1.63A6 6 0 0 0 2 12.42V16h2"/><circle cx="6.5" cy="16.5" r="2.5"/><circle cx="16.5" cy="16.5" r="2.5"/></svg>
-          </div>`,
+        const point = anonymizePoint(d[0], d[1], `${privacySeed}-d`) as LatLng;
+        const circle = new google.maps.Circle({
+          ...circleStyle,
+          center: toLatLngLiteral(point),
+          map,
         });
-        const m = L.marker(carPosition, { icon: carIcon }).addTo(mapRef.current);
-        layersRef.current.push(m);
+        const marker = new google.maps.Marker({
+          position: toLatLngLiteral(point),
+          icon: dotIcon(accent, 6),
+          map,
+        });
+        overlaysRef.current.push(circle, marker);
+        visiblePoints.push(point);
       }
+    } else {
+      if (o) {
+        const marker = new google.maps.Marker({
+          position: toLatLngLiteral(o),
+          icon: dotIcon(primary, 8),
+          map,
+        });
+        overlaysRef.current.push(marker);
+        visiblePoints.push(o);
+      }
+      if (d) {
+        const marker = new google.maps.Marker({
+          position: toLatLngLiteral(d),
+          icon: dotIcon(accent, 8),
+          map,
+        });
+        overlaysRef.current.push(marker);
+        visiblePoints.push(d);
+      }
+    }
 
-      if (fit && path.length > 1) {
-        const bounds = L.latLngBounds(path);
-        mapRef.current.fitBounds(bounds, { padding: [28, 28] });
-      } else if (path.length) {
-        mapRef.current.setView(path[0], 14);
-      }
-    };
-    void run();
-  }, [ready, theme, path, origin, destination, stops, carPosition, fit]);
+    validStops.forEach((stop) => {
+      const marker = new google.maps.Marker({
+        position: toLatLngLiteral(stop),
+        icon: dotIcon(stopColor, 5),
+        map,
+      });
+      overlaysRef.current.push(marker);
+      visiblePoints.push(stop);
+    });
+
+    if (validSelectedPoint) {
+      const marker = new google.maps.Marker({
+        position: toLatLngLiteral(validSelectedPoint),
+        icon: dotIcon("#2563eb", 7),
+        map,
+      });
+      overlaysRef.current.push(marker);
+      visiblePoints.push(validSelectedPoint);
+    }
+
+    if (validCarPosition) {
+      const marker = new google.maps.Marker({
+        position: toLatLngLiteral(validCarPosition),
+        icon: dotIcon(primary, 9),
+        map,
+      });
+      overlaysRef.current.push(marker);
+      visiblePoints.push(validCarPosition);
+    }
+
+    if (selectable && onSelectPoint) {
+      clickListenerRef.current = map.addListener("click", (event: any) => {
+        if (!event.latLng) return;
+        onSelectPoint([event.latLng.lat(), event.latLng.lng()]);
+      });
+    }
+
+    const boundsSource = sanitizePoints([...visiblePoints, ...displayPath]);
+
+    if (fit && boundsSource.length > 1) {
+      const bounds = new google.maps.LatLngBounds();
+      boundsSource.forEach((point) => bounds.extend(toLatLngLiteral(point)));
+      map.fitBounds(bounds, 48);
+    } else if (boundsSource.length) {
+      map.setCenter(toLatLngLiteral(boundsSource[0]));
+      map.setZoom(14);
+    } else {
+      map.setCenter(toLatLngLiteral(JOINVILLE_CENTER));
+      map.setZoom(12);
+    }
+  }, [
+    ready,
+    path,
+    origin,
+    destination,
+    stops,
+    carPosition,
+    selectedPoint,
+    selectable,
+    onSelectPoint,
+    fit,
+    privacyMode,
+    privacySeed,
+    theme,
+  ]);
 
   return (
     <div
-      ref={ref}
       className={`relative overflow-hidden rounded-lg border border-border bg-surface ${className}`}
       style={{ height: typeof height === "number" ? `${height}px` : height }}
       aria-label="Mapa da rota"
-    />
+    >
+      <div ref={ref} className="h-full w-full" />
+      {error ? (
+        <div className="absolute inset-0 flex items-center justify-center bg-surface/90 px-4 text-center text-sm text-muted-foreground">
+          {error}
+        </div>
+      ) : null}
+    </div>
   );
 }

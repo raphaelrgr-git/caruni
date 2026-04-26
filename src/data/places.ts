@@ -1,4 +1,4 @@
-import type { LatLng } from "@/data/mock";
+import type { LatLng } from "@/lib/types";
 
 export interface PlaceSuggestion {
   id: string;

@@ -1,6 +1,7 @@
 import { createFileRoute, Outlet, redirect } from "@tanstack/react-router";
 import { AppShell } from "@/components/AppShell";
 import { getMe } from "@/lib/api";
+import { NotificationProvider } from "@/lib/notifications";
 
 export const Route = createFileRoute("/app")({
   head: () => ({
@@ -17,8 +18,10 @@ export const Route = createFileRoute("/app")({
     }
   },
   component: () => (
-    <AppShell>
-      <Outlet />
-    </AppShell>
+    <NotificationProvider>
+      <AppShell>
+        <Outlet />
+      </AppShell>
+    </NotificationProvider>
   ),
 });

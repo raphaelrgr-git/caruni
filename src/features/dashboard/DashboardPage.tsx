@@ -1,51 +1,56 @@
 import * as React from "react";
 import { Link } from "@tanstack/react-router";
 import {
-  AlertCircle,
   ArrowRight,
   Bus,
   CalendarCheck,
+  Car,
   Clock,
-  MessageCircle,
+  Flame,
+  PlusCircle,
   Route as RouteIcon,
-  ShieldCheck,
-  Sparkles,
+  Search,
   TrendingUp,
-  Users,
+  Trophy,
 } from "lucide-react";
 import { RouteMap } from "@/components/RouteMap";
-import { Avatar, CnhBadge, PresenceBar, StarRating } from "@/components/Brand";
-import {
-  proximaCarona,
-  semanaCaronas,
-  getRota,
-  getPessoa,
-  ganhosMes,
-  eu,
-  formatBRL,
-  formatHora,
-  pessoas,
-} from "@/data/mock";
-import { useCaruniStore } from "@/data/store";
+import { getDashboardSummary, getRouteDetail, type DashboardSummaryResponse } from "@/lib/api";
+import { useAuth } from "@/lib/auth";
+import { formatRideStatus } from "@/lib/labels";
+import type { LatLng } from "@/lib/types";
+
+const brl = new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" });
 
 export function DashboardPage() {
-  const { activePlan, creditSummary, savings, subscription, selectPlan, plans } = useCaruniStore();
+  const { user } = useAuth();
+  const [summary, setSummary] = React.useState<DashboardSummaryResponse | null>(null);
+  const [loading, setLoading] = React.useState(true);
   const [mounted, setMounted] = React.useState(false);
-  const [prox, setProx] = React.useState(() => proximaCarona());
+
   React.useEffect(() => {
-    setProx(proximaCarona());
     setMounted(true);
+    getDashboardSummary()
+      .then(setSummary)
+      .catch(() => setSummary(null))
+      .finally(() => setLoading(false));
   }, []);
-  const motorista = prox.motorista;
-  const inscritos = prox.rota.inscritos.map(getPessoa).filter((p) => p.id !== eu.id);
+
+  const isDriver = user?.role === "MOTORISTA";
+  const greeting = isDriver ? "Pronto pra rodar?" : "Bom dia";
+
+  if (loading) {
+    return (
+      <div className="p-8 text-center text-sm text-muted-foreground">Carregando dashboard…</div>
+    );
+  }
 
   return (
     <div className="mx-auto w-full max-w-6xl px-4 py-6 lg:px-8 lg:py-10">
       <div className="mb-6 flex items-end justify-between">
         <div>
-          <p className="label-cockpit text-[10px] text-muted-foreground">Bom dia</p>
+          <p className="label-cockpit text-[10px] text-muted-foreground">{greeting}</p>
           <h1 className="mt-1 text-2xl font-semibold tracking-tight text-foreground lg:text-3xl">
-            Pronto pra rodar, {eu.nome.split(" ")[0]}?
+            {user?.name?.split(" ")[0] ?? "Bem-vindo"}
           </h1>
         </div>
         <div className="hidden items-center gap-3 lg:flex">
@@ -62,374 +67,450 @@ export function DashboardPage() {
         </div>
       </div>
 
-      <div className="grid gap-4 lg:grid-cols-3">
-        <section className="lg:col-span-2">
-          <div className="overflow-hidden rounded-xl border border-border bg-surface">
-            <RouteMap
-              path={prox.rota.caminho}
-              origin={prox.rota.origem.coord}
-              destination={prox.rota.destino.coord}
-              height={260}
-            />
-            <div className="border-t border-border p-5">
-              <div className="flex items-start justify-between gap-4">
-                <div>
-                  <p className="label-cockpit text-[10px] text-muted-foreground">Próxima carona</p>
-                  <h2 className="mt-1 text-lg font-semibold text-foreground">{prox.rota.nome}</h2>
-                  <p className="mt-1 text-xs text-muted-foreground">
-                    {prox.rota.origem.label} → {prox.rota.destino.label}
-                  </p>
-                </div>
-                <div className="text-right">
-                  <p
-                    className="num text-3xl font-semibold leading-none text-foreground lg:text-4xl"
-                    suppressHydrationWarning
-                  >
-                    {mounted ? formatHora(prox.horario) : "--:--"}
-                  </p>
-                  <p
-                    className="mt-1 inline-flex items-center gap-1 rounded-md bg-primary/15 px-2 py-0.5 text-[11px] font-medium text-primary"
-                    suppressHydrationWarning
-                  >
-                    <Clock size={11} /> em {mounted ? prox.minutosFaltando : 23} min
-                  </p>
-                </div>
-              </div>
-
-              <div className="mt-5 flex items-center justify-between gap-3">
-                <div className="flex items-center gap-3">
-                  <Avatar
-                    name={motorista.nome}
-                    color={motorista.cor}
-                    size={42}
-                    iniciais={motorista.iniciais}
-                  />
-                  <div>
-                    <div className="flex items-center gap-2">
-                      <span className="text-sm font-medium text-foreground">{motorista.nome}</span>
-                      {motorista.cnhVerificada && <CnhBadge />}
-                    </div>
-                    <div className="mt-0.5 flex items-center gap-3 text-[11px] text-muted-foreground">
-                      <StarRating value={motorista.avaliacao} />
-                      <span className="num">{motorista.presenca}% presença</span>
-                      {motorista.carro && (
-                        <span className="num hidden sm:inline">{motorista.carro.placa}</span>
-                      )}
-                    </div>
-                  </div>
-                </div>
-                <div className="flex -space-x-2">
-                  {inscritos.slice(0, 3).map((p) => (
-                    <Avatar
-                      key={p.id}
-                      name={p.nome}
-                      color={p.cor}
-                      size={28}
-                      iniciais={p.iniciais}
-                    />
-                  ))}
-                </div>
-              </div>
-
-              <div className="mt-5 grid grid-cols-3 gap-3 border-t border-border pt-4">
-                <div>
-                  <p className="label-cockpit text-[9px] text-muted-foreground">Vagas</p>
-                  <p className="num mt-0.5 text-base font-semibold text-foreground">
-                    {prox.ocupadas}
-                    <span className="text-muted-foreground">/{prox.rota.vagas}</span>
-                  </p>
-                </div>
-                <div>
-                  <p className="label-cockpit text-[9px] text-muted-foreground">Crédito</p>
-                  <p className="num mt-0.5 text-base font-semibold text-foreground">1 viagem</p>
-                </div>
-                <div>
-                  <p className="label-cockpit text-[9px] text-muted-foreground">Distância</p>
-                  <p className="num mt-0.5 text-base font-semibold text-foreground">
-                    {prox.rota.km} km
-                  </p>
-                </div>
-              </div>
-
-              <div className="mt-5 flex flex-wrap gap-2">
-                <Link
-                  to="/app/viagem-ativa"
-                  className="inline-flex items-center gap-1.5 rounded-md bg-primary px-3 py-2 text-xs font-medium text-primary-foreground transition-colors hover:bg-primary/90"
-                >
-                  Ver viagem ativa <ArrowRight size={13} />
-                </Link>
-                <Link
-                  to="/app/rota/$id"
-                  params={{ id: prox.rota.id }}
-                  className="inline-flex items-center gap-1.5 rounded-md border border-border bg-surface px-3 py-2 text-xs font-medium text-foreground transition-colors hover:bg-surface-2"
-                >
-                  Detalhes da rota
-                </Link>
-                <Link
-                  to="/app/chat/$rotaId"
-                  params={{ rotaId: prox.rota.id }}
-                  className="inline-flex items-center gap-1.5 rounded-md border border-border bg-surface px-3 py-2 text-xs font-medium text-foreground transition-colors hover:bg-surface-2"
-                >
-                  <MessageCircle size={13} /> Chat{" "}
-                  <span className="num rounded bg-warn/20 px-1 text-[10px] text-warn">2</span>
-                </Link>
-              </div>
-            </div>
-          </div>
-        </section>
-
-        <aside className="flex flex-col gap-4">
-          <div className="rounded-xl border border-border bg-surface p-5">
-            <div className="flex items-start justify-between gap-3">
-              <div>
-                <p className="label-cockpit text-[10px] text-muted-foreground">Seu plano</p>
-                <p className="mt-1 text-xl font-semibold text-foreground">{activePlan.nome}</p>
-                <p className="mt-1 text-xs text-muted-foreground">{activePlan.pitch}</p>
-              </div>
-              {activePlan.priority && (
-                <span className="inline-flex items-center gap-1 rounded-md bg-primary/15 px-2 py-0.5 text-[10px] font-medium text-primary">
-                  <Sparkles size={11} /> prioridade
-                </span>
-              )}
-            </div>
-            <div className="mt-4">
-              <div className="mb-1.5 flex items-center justify-between text-xs">
-                <span className="text-muted-foreground">Créditos disponíveis</span>
-                <span className="num font-medium text-foreground">
-                  {creditSummary.disponivel}/{creditSummary.total}
-                </span>
-              </div>
-              <div className="h-2 overflow-hidden rounded-full bg-surface-2">
-                <div
-                  className="h-full bg-primary"
-                  style={{ width: `${(creditSummary.disponivel / creditSummary.total) * 100}%` }}
-                />
-              </div>
-              <p className="mt-2 text-[11px] text-muted-foreground">
-                {creditSummary.reservado} reservado · reset em{" "}
-                {new Date(subscription.cycleEnd).toLocaleDateString("pt-BR", {
-                  weekday: "short",
-                  day: "2-digit",
-                })}
-              </p>
-            </div>
-            <div className="mt-4 grid grid-cols-2 gap-2">
-              {plans.map((plan) => (
-                <button
-                  key={plan.id}
-                  onClick={() => selectPlan(plan.id)}
-                  className={`rounded-md border px-3 py-2 text-left text-xs ${
-                    plan.id === activePlan.id
-                      ? "border-primary bg-primary/10 text-foreground"
-                      : "border-border bg-surface-2/40 text-muted-foreground hover:text-foreground"
-                  }`}
-                >
-                  <span className="font-medium">{plan.nome}</span>
-                  <span className="num mt-0.5 block">
-                    {plan.creditsIncluded} viagens · {formatBRL(plan.costPerTrip)}
-                  </span>
-                </button>
-              ))}
-            </div>
-          </div>
-
-          <div className="rounded-xl border border-border bg-surface p-5">
-            <p className="label-cockpit text-[10px] text-muted-foreground">Economia realizada</p>
-            <div className="mt-4 grid grid-cols-2 gap-3">
-              <SavingTile
-                icon={<Bus size={14} />}
-                label="vs ônibus"
-                value={formatBRL(savings.busSavings)}
-                sub={`${savings.confirmedTrips} viagens · tarifa R$ 6,50`}
-              />
-              <SavingTile
-                icon={<RouteIcon size={14} />}
-                label="vs Uber/99"
-                value={formatBRL(savings.privateSavings)}
-                sub="estimativa por km"
-              />
-            </div>
-            <div className="mt-3 rounded-md border border-border bg-surface-2/60 px-3 py-2 text-[11px] text-muted-foreground">
-              Projeção se usar tudo:{" "}
-              <span className="num font-medium text-foreground">
-                {formatBRL(savings.weeklyProjectionBus)}
-              </span>{" "}
-              vs ônibus ·{" "}
-              <span className="num font-medium text-foreground">
-                {formatBRL(savings.weeklyProjectionPrivate)}
-              </span>{" "}
-              vs Uber/99
-            </div>
-          </div>
-
-          <div className="rounded-xl border border-border bg-surface p-5">
-            <p className="label-cockpit text-[10px] text-muted-foreground">Sua reputação</p>
-            <div className="mt-4 space-y-4">
-              <div>
-                <div className="mb-1.5 flex items-center justify-between">
-                  <span className="text-xs text-muted-foreground">Presença</span>
-                  <span className="num text-xs font-medium text-foreground">{eu.presenca}%</span>
-                </div>
-                <PresenceBar value={eu.presenca} label={false} />
-              </div>
-              <div>
-                <div className="mb-1.5 flex items-center justify-between">
-                  <span className="text-xs text-muted-foreground">Avaliação</span>
-                  <StarRating value={eu.avaliacao} />
-                </div>
-                <div className="relative h-1.5 overflow-hidden rounded-full bg-surface-2">
-                  <div
-                    className="h-full bg-warn"
-                    style={{ width: `${(eu.avaliacao / 5) * 100}%` }}
-                  />
-                </div>
-              </div>
-            </div>
-            <div className="mt-4 flex items-center gap-2 rounded-md border border-border bg-surface-2/60 px-3 py-2 text-[11px] text-muted-foreground">
-              <ShieldCheck size={13} className="text-success" />
-              CNH validada · 12/03/25
-            </div>
-          </div>
-
-          <div className="rounded-xl border border-border bg-surface p-5">
-            <div className="flex items-start justify-between">
-              <div>
-                <p className="label-cockpit text-[10px] text-muted-foreground">Ganhos · este mês</p>
-                <p className="num mt-1 text-3xl font-semibold text-foreground">
-                  {formatBRL(ganhosMes.total)}
-                </p>
-              </div>
-              <span className="inline-flex items-center gap-1 rounded-md bg-success/15 px-2 py-0.5 text-[11px] font-medium text-success">
-                <TrendingUp size={11} /> +12%
-              </span>
-            </div>
-            <div className="mt-4 flex items-end gap-1.5">
-              {ganhosMes.semanal.map((v, i) => {
-                const max = Math.max(...ganhosMes.semanal);
-                const h = (v / max) * 56;
-                return (
-                  <div key={i} className="flex flex-1 flex-col items-center gap-1">
-                    <div className="w-full rounded-sm bg-primary/70" style={{ height: `${h}px` }} />
-                    <span className="text-[9px] text-muted-foreground">S{i + 1}</span>
-                  </div>
-                );
-              })}
-            </div>
-            <div className="mt-4 flex items-center gap-2 rounded-md border border-border bg-surface-2/60 px-3 py-2 text-[11px]">
-              <TrendingUp size={13} className="text-primary" />
-              <span className="text-muted-foreground">Economia dos passageiros</span>
-              <span className="num ml-auto font-medium text-foreground">
-                {formatBRL(ganhosMes.combustivelRecuperado)}
-              </span>
-            </div>
-          </div>
-        </aside>
-      </div>
-
-      <section className="mt-8">
-        <div className="mb-3 flex items-center justify-between">
-          <h3 className="text-sm font-semibold text-foreground">Esta semana</h3>
-          <Link
-            to="/app/minhas-caronas"
-            className="text-[11px] text-muted-foreground hover:text-foreground"
-          >
-            Ver todas →
-          </Link>
-        </div>
-        <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
-          {semanaCaronas.map((c) => {
-            const r = getRota(c.rotaId);
-            const tone =
-              c.status === "feita"
-                ? "border-border text-muted-foreground"
-                : c.status === "substituto"
-                  ? "border-warn/40 bg-warn/5 text-warn"
-                  : "border-primary/40 bg-primary/5 text-foreground";
-            return (
-              <div key={c.data} className={`rounded-lg border p-3 ${tone}`}>
-                <div className="flex items-baseline justify-between">
-                  <span className="label-cockpit text-[10px]">{c.dia}</span>
-                  <span className="num text-[10px] opacity-80">{c.data}</span>
-                </div>
-                <p className="num mt-1 text-base font-semibold text-foreground">{r?.horarioIda}</p>
-                <p className="mt-0.5 truncate text-[10px] text-muted-foreground">{r?.nome}</p>
-                <div className="mt-2 flex items-center justify-between text-[10px]">
-                  <span className="capitalize">
-                    {c.status === "substituto" ? (
-                      <span className="inline-flex items-center gap-1">
-                        <AlertCircle size={10} /> substituto
-                      </span>
-                    ) : c.status === "feita" ? (
-                      <span className="inline-flex items-center gap-1">
-                        <CalendarCheck size={10} /> feita
-                      </span>
-                    ) : (
-                      <span className="inline-flex items-center gap-1">
-                        <Clock size={10} /> agendada
-                      </span>
-                    )}
-                  </span>
-                  <span className="num font-medium text-foreground">1 crédito</span>
-                </div>
-              </div>
-            );
-          })}
-        </div>
-      </section>
-
-      <section className="mt-8">
-        <div className="rounded-xl border border-border bg-surface p-5">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="label-cockpit text-[10px] text-muted-foreground">Comunidade da rota</p>
-              <p className="mt-1 text-sm font-semibold text-foreground">
-                Centro → UDESC · 7 universitários
-              </p>
-            </div>
-            <Link
-              to="/app/chat/$rotaId"
-              params={{ rotaId: "r1" }}
-              className="inline-flex items-center gap-1 text-[11px] text-primary hover:underline"
-            >
-              Abrir chat <ArrowRight size={12} />
-            </Link>
-          </div>
-          <div className="mt-3 flex -space-x-2">
-            {pessoas.slice(1, 7).map((p) => (
-              <Avatar key={p.id} name={p.nome} color={p.cor} size={30} iniciais={p.iniciais} />
-            ))}
-            <span className="ml-3 inline-flex items-center text-[11px] text-muted-foreground">
-              + você
-            </span>
-          </div>
-          <p className="mt-3 flex items-center gap-2 text-xs text-muted-foreground">
-            <Users size={12} /> 2 mensagens novas hoje
-          </p>
-        </div>
-      </section>
+      {isDriver ? (
+        <DriverDashboard summary={summary} />
+      ) : (
+        <PassengerDashboard summary={summary} />
+      )}
     </div>
   );
 }
 
-function SavingTile({
-  icon,
-  label,
-  value,
-  sub,
+// ── Passageiro ────────────────────────────────────────────────────────────────
+
+function PassengerDashboard({ summary }: { summary: DashboardSummaryResponse | null }) {
+  const nextRide = summary?.nextRides[0] ?? null;
+
+  return (
+    <div className="grid gap-4 lg:grid-cols-3">
+      <section className="lg:col-span-2 space-y-4">
+        {nextRide ? (
+          <NextRideCard ride={nextRide} />
+        ) : (
+          <EmptyRideCard />
+        )}
+
+        {summary && summary.nextRides.length > 1 && (
+          <div className="rounded-xl border border-border bg-surface p-5">
+            <p className="label-cockpit text-[10px] text-muted-foreground">Próximas corridas</p>
+            <div className="mt-3 space-y-2">
+              {summary.nextRides.slice(1, 5).map((ride) => (
+                <div
+                  key={ride.id}
+                  className="flex items-center justify-between rounded-lg bg-surface-2/60 px-3 py-2"
+                >
+                  <div className="min-w-0">
+                    <p className="truncate text-sm font-medium text-foreground">{ride.routeName}</p>
+                    <p className="text-[11px] text-muted-foreground">
+                      {ride.originLabel} → {ride.destinationLabel}
+                    </p>
+                  </div>
+                  <div className="ml-3 text-right">
+                    <p className="num text-xs font-medium text-foreground">
+                      {new Date(ride.scheduledAt).toLocaleString("pt-BR", {
+                        weekday: "short",
+                        hour: "2-digit",
+                        minute: "2-digit",
+                      })}
+                    </p>
+                    <span className="text-[10px] uppercase tracking-wider text-muted-foreground">
+                      {formatRideStatus(ride.status)}
+                    </span>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+      </section>
+
+      <aside className="flex flex-col gap-4">
+        <CreditsCard credits={summary?.credits ?? null} />
+        <StreakCard />
+
+        {summary?.savings && (
+          <SavingsCard savings={summary.savings} />
+        )}
+
+        <div className="rounded-xl border border-border bg-surface p-5">
+          <p className="label-cockpit text-[10px] text-muted-foreground">Acesso rápido</p>
+          <div className="mt-3 flex flex-col gap-2">
+            <Link
+              to="/app/buscar"
+              className="flex items-center gap-2 rounded-md border border-border bg-surface-2/40 px-3 py-2 text-sm text-foreground hover:bg-surface-2"
+            >
+              <Search size={14} className="text-muted-foreground" /> Buscar carona
+            </Link>
+            <Link
+              to="/app/minhas-caronas"
+              className="flex items-center gap-2 rounded-md border border-border bg-surface-2/40 px-3 py-2 text-sm text-foreground hover:bg-surface-2"
+            >
+              <CalendarCheck size={14} className="text-muted-foreground" /> Minhas caronas
+            </Link>
+          </div>
+        </div>
+      </aside>
+    </div>
+  );
+}
+
+// ── Motorista ─────────────────────────────────────────────────────────────────
+
+function DriverDashboard({ summary }: { summary: DashboardSummaryResponse | null }) {
+  const nextRide = summary?.nextRides[0] ?? null;
+
+  return (
+    <div className="grid gap-4 lg:grid-cols-3">
+      <section className="lg:col-span-2 space-y-4">
+        {nextRide ? (
+          <NextRideCard ride={nextRide} driverView />
+        ) : (
+          <div className="rounded-xl border border-border bg-surface p-6 text-center">
+            <Car size={28} className="mx-auto text-muted-foreground" />
+            <p className="mt-3 text-sm font-medium text-foreground">Nenhuma viagem próxima</p>
+            <p className="mt-1 text-xs text-muted-foreground">
+              Crie ou gerencie suas rotas para começar a receber passageiros.
+            </p>
+            <div className="mt-4 flex justify-center gap-2">
+              <Link
+                to="/app/criar-rota"
+                className="inline-flex items-center gap-1.5 rounded-md bg-primary px-3 py-2 text-xs font-medium text-primary-foreground"
+              >
+                <PlusCircle size={13} /> Nova rota
+              </Link>
+              <Link
+                to="/app/minhas-caronas"
+                className="inline-flex items-center gap-1.5 rounded-md border border-border px-3 py-2 text-xs font-medium text-foreground"
+              >
+                Minhas rotas
+              </Link>
+            </div>
+          </div>
+        )}
+
+        {summary?.earningsTimeline && summary.earningsTimeline.length > 0 && (
+          <EarningsChart data={summary.earningsTimeline} />
+        )}
+      </section>
+
+      <aside className="flex flex-col gap-4">
+        {summary?.occupancyTimeline && summary.occupancyTimeline.length > 0 && (
+          <OccupancyCard data={summary.occupancyTimeline} />
+        )}
+        <StreakCard />
+
+        <div className="rounded-xl border border-border bg-surface p-5">
+          <p className="label-cockpit text-[10px] text-muted-foreground">Acesso rápido</p>
+          <div className="mt-3 flex flex-col gap-2">
+            <Link
+              to="/app/criar-rota"
+              className="flex items-center gap-2 rounded-md border border-border bg-surface-2/40 px-3 py-2 text-sm text-foreground hover:bg-surface-2"
+            >
+              <PlusCircle size={14} className="text-muted-foreground" /> Criar nova rota
+            </Link>
+            <Link
+              to="/app/minhas-caronas"
+              className="flex items-center gap-2 rounded-md border border-border bg-surface-2/40 px-3 py-2 text-sm text-foreground hover:bg-surface-2"
+            >
+              <Car size={14} className="text-muted-foreground" /> Minhas rotas
+            </Link>
+            <Link
+              to="/app/viagem-ativa"
+              search={{ rideId: nextRide.id }}
+              className="flex items-center gap-2 rounded-md border border-border bg-surface-2/40 px-3 py-2 text-sm text-foreground hover:bg-surface-2"
+            >
+              <RouteIcon size={14} className="text-muted-foreground" /> Viagem ativa
+            </Link>
+          </div>
+        </div>
+      </aside>
+    </div>
+  );
+}
+
+// ── Shared cards ─────────────────────────────────────────────────────────────
+
+function NextRideCard({
+  ride,
+  driverView = false,
 }: {
-  icon: React.ReactNode;
-  label: string;
-  value: string;
-  sub: string;
+  ride: DashboardSummaryResponse["nextRides"][number];
+  driverView?: boolean;
+}) {
+  const [mapPath, setMapPath] = React.useState<LatLng[]>([]);
+  const [origin, setOrigin] = React.useState<LatLng | undefined>();
+  const [destination, setDestination] = React.useState<LatLng | undefined>();
+
+  React.useEffect(() => {
+    getRouteDetail(ride.routeId)
+      .then((detail) => {
+        if (detail.geometry) {
+          setMapPath(
+            detail.geometry.coordinates.map(([lng, lat]) => [lat, lng] as LatLng),
+          );
+        }
+        setOrigin([detail.origin.lat, detail.origin.lng]);
+        setDestination([detail.destination.lat, detail.destination.lng]);
+      })
+      .catch(() => {});
+  }, [ride.routeId]);
+
+  const scheduled = new Date(ride.scheduledAt);
+  const now = new Date();
+  const diffMin = Math.round((scheduled.getTime() - now.getTime()) / 60000);
+
+  return (
+    <div className="overflow-hidden rounded-xl border border-border bg-surface">
+      <RouteMap
+        path={mapPath}
+        origin={origin}
+        destination={destination}
+        height={260}
+        privacyMode={!driverView}
+        privacySeed={ride.routeId}
+      />
+      <div className="border-t border-border p-5">
+        <div className="flex items-start justify-between gap-4">
+          <div>
+            <p className="label-cockpit text-[10px] text-muted-foreground">
+              {driverView ? "Próxima viagem a operar" : "Próxima carona"}
+            </p>
+            <h2 className="mt-1 text-lg font-semibold text-foreground">{ride.routeName}</h2>
+            <p className="mt-1 text-xs text-muted-foreground">
+              {ride.originLabel} → {ride.destinationLabel}
+            </p>
+          </div>
+          <div className="text-right">
+            <p className="num text-3xl font-semibold leading-none text-foreground">
+              {scheduled.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" })}
+            </p>
+            {diffMin > 0 && (
+              <p className="mt-1 inline-flex items-center gap-1 rounded-md bg-primary/15 px-2 py-0.5 text-[11px] font-medium text-primary">
+                <Clock size={11} /> em {diffMin} min
+              </p>
+            )}
+          </div>
+        </div>
+
+        <div className="mt-4 flex flex-wrap gap-2">
+          <Link
+            to="/app/viagem-ativa"
+            search={{ rideId: ride.id }}
+            className="inline-flex items-center gap-1.5 rounded-md bg-primary px-3 py-2 text-xs font-medium text-primary-foreground"
+          >
+            {driverView ? "Gerenciar viagem" : "Entrar na corrida"} <ArrowRight size={13} />
+          </Link>
+          <Link
+            to="/app/rota/$id"
+            params={{ id: ride.routeId }}
+            className="inline-flex items-center gap-1.5 rounded-md border border-border bg-surface px-3 py-2 text-xs font-medium text-foreground"
+          >
+            Detalhes da rota
+          </Link>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function EmptyRideCard() {
+  return (
+    <div className="rounded-xl border border-border bg-surface p-6 text-center">
+      <Search size={28} className="mx-auto text-muted-foreground" />
+      <p className="mt-3 text-sm font-medium text-foreground">Nenhuma carona agendada</p>
+      <p className="mt-1 text-xs text-muted-foreground">
+        Busque rotas disponíveis e reserve sua próxima carona.
+      </p>
+      <Link
+        to="/app/buscar"
+        className="mt-4 inline-flex items-center gap-1.5 rounded-md bg-primary px-3 py-2 text-xs font-medium text-primary-foreground"
+      >
+        <Search size={13} /> Buscar carona
+      </Link>
+    </div>
+  );
+}
+
+function CreditsCard({
+  credits,
+}: {
+  credits: DashboardSummaryResponse["credits"] | null;
+}) {
+  if (!credits) return null;
+  const pct = credits.total > 0 ? (credits.available / credits.total) * 100 : 0;
+  return (
+    <div className="rounded-xl border border-border bg-surface p-5">
+      <p className="label-cockpit text-[10px] text-muted-foreground">Créditos</p>
+      <p className="num mt-1 text-2xl font-semibold text-foreground">
+        {credits.available}
+        <span className="text-base text-muted-foreground">/{credits.total}</span>
+      </p>
+      <div className="mt-3 h-2 overflow-hidden rounded-full bg-surface-2">
+        <div className="h-full bg-primary transition-all" style={{ width: `${pct}%` }} />
+      </div>
+      <p className="mt-2 text-[11px] text-muted-foreground">
+        {credits.reserved} reservado · {credits.consumed} usados
+      </p>
+      <Link
+        to="/app/carteira"
+        className="mt-3 inline-flex items-center gap-1 text-xs text-primary hover:underline"
+      >
+        Ver carteira <ArrowRight size={11} />
+      </Link>
+    </div>
+  );
+}
+
+function SavingsCard({
+  savings,
+}: {
+  savings: DashboardSummaryResponse["savings"];
 }) {
   return (
-    <div className="rounded-lg border border-border bg-surface-2/40 p-3">
-      <div className="flex items-center gap-1.5 text-muted-foreground">
-        {icon}
-        <span className="label-cockpit text-[9px]">{label}</span>
+    <div className="rounded-xl border border-border bg-surface p-5">
+      <p className="label-cockpit text-[10px] text-muted-foreground">Economia realizada</p>
+      <div className="mt-4 grid grid-cols-2 gap-3">
+        <div className="rounded-lg border border-border bg-surface-2/40 p-3">
+          <div className="flex items-center gap-1.5 text-muted-foreground">
+            <Bus size={13} />
+            <span className="label-cockpit text-[9px]">vs ônibus</span>
+          </div>
+          <p className="num mt-2 text-lg font-semibold text-primary">
+            {brl.format(savings.busSavings)}
+          </p>
+          <p className="mt-0.5 text-[10px] text-muted-foreground">
+            {savings.confirmedTrips} viagens
+          </p>
+        </div>
+        <div className="rounded-lg border border-border bg-surface-2/40 p-3">
+          <div className="flex items-center gap-1.5 text-muted-foreground">
+            <RouteIcon size={13} />
+            <span className="label-cockpit text-[9px]">vs Uber/99</span>
+          </div>
+          <p className="num mt-2 text-lg font-semibold text-primary">
+            {brl.format(savings.privateSavings)}
+          </p>
+          <p className="mt-0.5 text-[10px] text-muted-foreground">estimativa km</p>
+        </div>
       </div>
-      <p className="num mt-2 text-lg font-semibold text-primary">{value}</p>
-      <p className="mt-0.5 text-[10px] text-muted-foreground">{sub}</p>
+    </div>
+  );
+}
+
+function EarningsChart({
+  data,
+}: {
+  data: NonNullable<DashboardSummaryResponse["earningsTimeline"]>;
+}) {
+  const max = Math.max(...data.map((d) => d.earnings), 1);
+  return (
+    <div className="rounded-xl border border-border bg-surface p-5">
+      <div className="flex items-start justify-between">
+        <div>
+          <p className="label-cockpit text-[10px] text-muted-foreground">Ganhos por semana</p>
+          <p className="num mt-1 text-2xl font-semibold text-foreground">
+            {brl.format(data.reduce((sum, d) => sum + d.earnings, 0))}
+          </p>
+        </div>
+        <span className="inline-flex items-center gap-1 rounded-md bg-success/15 px-2 py-0.5 text-[11px] font-medium text-success">
+          <TrendingUp size={11} />
+        </span>
+      </div>
+      <div className="mt-4 flex items-end gap-1.5">
+        {data.map((d, i) => {
+          const h = Math.max(4, (d.earnings / max) * 56);
+          return (
+            <div key={i} className="flex flex-1 flex-col items-center gap-1">
+              <div className="w-full rounded-sm bg-primary/70" style={{ height: `${h}px` }} />
+              <span className="text-[9px] text-muted-foreground">{d.label}</span>
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
+// ── StreakCard ─────────────────────────────────────────────────────────────
+
+function StreakCard() {
+  const { user } = useAuth();
+  const streak = user?.streak;
+  if (!streak || streak.current === 0) return null;
+
+  const isDriver = user?.role === "MOTORISTA";
+
+  // Milestones to show
+  const milestones = isDriver
+    ? [
+        { threshold: 5, label: "Visibilidade +", reached: streak.milestones.m5 },
+        { threshold: 10, label: "Prioridade", reached: streak.milestones.m10 },
+        { threshold: 20, label: "Taxa 10%", reached: streak.milestones.m20 },
+      ]
+    : [
+        { threshold: 8, label: "Viagem grátis a cada 8", reached: streak.freeRidesEarned > 0 },
+      ];
+
+  const nextMilestone = isDriver
+    ? [5, 10, 20].find((t) => streak.current < t) ?? null
+    : streak.current % 8 === 0 ? null : 8 - (streak.current % 8);
+
+  return (
+    <div className="rounded-xl border border-border bg-surface p-5">
+      <div className="flex items-center gap-2">
+        <Flame size={15} className="text-warn" />
+        <p className="label-cockpit text-[10px] text-muted-foreground">Sequência</p>
+      </div>
+      <div className="mt-3 flex items-end justify-between gap-3">
+        <div>
+          <p className="num text-3xl font-semibold text-foreground">{streak.current}</p>
+          <p className="mt-0.5 text-xs text-muted-foreground">
+            viagens seguidas · recorde {streak.longest}
+          </p>
+        </div>
+        {nextMilestone != null && typeof nextMilestone === "number" && (
+          <div className="text-right">
+            <p className="text-[10px] text-muted-foreground">próximo bônus em</p>
+            <p className="num text-lg font-semibold text-primary">{nextMilestone}</p>
+          </div>
+        )}
+      </div>
+
+      {milestones.some((m) => m.reached) && (
+        <div className="mt-3 flex flex-wrap gap-1.5">
+          {milestones.filter((m) => m.reached).map((m) => (
+            <span
+              key={m.threshold}
+              className="inline-flex items-center gap-1 rounded-full bg-warn/15 px-2 py-0.5 text-[10px] font-medium text-warn"
+            >
+              <Trophy size={9} /> {m.label}
+            </span>
+          ))}
+        </div>
+      )}
+
+      {streak.freeRidesEarned > 0 && !isDriver && (
+        <p className="mt-2 text-[11px] text-success">
+          🎁 {streak.freeRidesEarned} viagem(ns) grátis ganhas
+        </p>
+      )}
+    </div>
+  );
+}
+
+function OccupancyCard({
+  data,
+}: {
+  data: NonNullable<DashboardSummaryResponse["occupancyTimeline"]>;
+}) {
+  const avg = data.length > 0 ? data.reduce((s, d) => s + d.occupancy, 0) / data.length : 0;
+  return (
+    <div className="rounded-xl border border-border bg-surface p-5">
+      <p className="label-cockpit text-[10px] text-muted-foreground">Ocupação média</p>
+      <p className="num mt-1 text-2xl font-semibold text-foreground">{avg.toFixed(0)}%</p>
+      <div className="mt-3 h-2 overflow-hidden rounded-full bg-surface-2">
+        <div className="h-full bg-primary" style={{ width: `${avg}%` }} />
+      </div>
     </div>
   );
 }
