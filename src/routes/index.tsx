@@ -1,11 +1,14 @@
 import * as React from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { ArrowRight, ShieldCheck, Repeat, Users, MessageCircle, Zap, Wallet, Car, Phone, BadgeCheck, Leaf, CheckCircle2, XCircle } from "lucide-react";
+import { ArrowRight, ShieldCheck, Repeat, Users, MessageCircle, Zap, Wallet, Car, Phone, BadgeCheck, Leaf, CheckCircle2, XCircle, Loader2, Sparkles } from "lucide-react";
 import { BrandLogo, BrandMark, CnhBadge, Avatar, PresenceBar, StarRating } from "@/components/Brand";
 import { useTheme } from "@/lib/theme";
 import { Sun, Moon } from "lucide-react";
 import { ganhosMes, formatBRL, calcDivisao, rotas } from "@/data/mock";
 import { RouteMap } from "@/components/RouteMap";
+import { z } from "zod";
+import { toast } from "sonner";
+import { supabase } from "@/integrations/supabase/client";
 
 export const Route = createFileRoute("/")({
   head: () => ({
