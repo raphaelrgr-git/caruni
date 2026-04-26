@@ -22,6 +22,7 @@ export async function registerRoutingModule(app: FastifyInstance) {
     const route = await resolveRealRoute({
       origin: body.origin,
       destination: body.destination,
+      googleMapsServerApiKey: env.GOOGLE_MAPS_SERVER_API_KEY,
       orsApiKey: env.ORS_API_KEY,
     });
 

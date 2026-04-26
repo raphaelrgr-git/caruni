@@ -4,8 +4,10 @@ import {
   CreditStatus,
   Prisma,
   RideStatus,
+  RouteVisibilityMode,
   SubscriptionPlanKey,
   SubscriptionStatus,
+  UserRole,
   WalletTransactionType,
 } from "@prisma/client";
 import type { FastifyInstance, FastifyReply } from "fastify";
@@ -13,6 +15,7 @@ import { prisma } from "../prisma.js";
 
 const BUS_FARE = 6.5;
 const ROUTING_PROVIDER = "openrouteservice";
+const DRIVER_COST_PER_KM = 0.62;
 
 export const PLAN_CATALOG = [
   {
@@ -256,30 +259,56 @@ export async function getWalletSummary(userId: string) {
 
 export async function getDashboardSummary(userId: string) {
   await expireOldCredits(userId);
-  const [credits, rides, activeSubscription] = await Promise.all([
-    prisma.creditLedgerEntry.findMany({
-      where: { userId },
-      include: {
-        rideInstance: {
-          include: { route: true },
-        },
-      },
-    }),
-    prisma.rideInstance.findMany({
-      where: {
-        bookings: {
-          some: {
-            userId,
-            status: BookingStatus.ACTIVE,
+  const [user, credits, passengerRides, driverRides, activeSubscription, routeSummaries] =
+    await Promise.all([
+      prisma.user.findUnique({
+        where: { id: userId },
+        select: { role: true },
+      }),
+      prisma.creditLedgerEntry.findMany({
+        where: { userId },
+        include: {
+          rideInstance: {
+            include: { route: true },
           },
         },
-      },
-      include: { route: true },
-      orderBy: { scheduledAt: "asc" },
-      take: 5,
-    }),
-    getActiveSubscription(userId),
-  ]);
+        orderBy: { createdAt: "asc" },
+      }),
+      prisma.rideInstance.findMany({
+        where: {
+          bookings: {
+            some: {
+              userId,
+              status: BookingStatus.ACTIVE,
+            },
+          },
+        },
+        include: { route: true },
+        orderBy: { scheduledAt: "asc" },
+        take: 5,
+      }),
+      prisma.rideInstance.findMany({
+        where: {
+          route: { driverId: userId },
+        },
+        include: { route: true, bookings: { where: { status: BookingStatus.ACTIVE } } },
+        orderBy: { scheduledAt: "asc" },
+        take: 5,
+      }),
+      getActiveSubscription(userId),
+      prisma.route.findMany({
+        where: { driverId: userId },
+        include: {
+          bookings: { where: { status: BookingStatus.ACTIVE } },
+        },
+        orderBy: { createdAt: "desc" },
+        take: 6,
+      }),
+    ]);
+
+  if (!user) {
+    throw new Error("Usuario nao encontrado.");
+  }
 
   const consumed = credits.filter((credit) => credit.status === CreditStatus.CONSUMIDO);
   const caruniCost = consumed.reduce((sum, credit) => sum + toMoney(credit.monetaryValue), 0);
@@ -306,8 +335,16 @@ export async function getDashboardSummary(userId: string) {
       (estimatePrivateTripCost(avgKm) - toMoney(activeSubscription.plan.costPerTrip))
     : 0;
 
-  return {
-    nextRides: rides.map((ride) => ({
+  const now = Date.now();
+  const nextRides = (user.role === UserRole.MOTORISTA ? driverRides : passengerRides)
+    .filter((ride) => {
+      if (ride.status === RideStatus.CANCELLED) return false;
+      const scheduledAt = new Date(ride.scheduledAt).getTime();
+      const durationMs = ((ride.route.durationSeconds ?? 0) + 15 * 60) * 1000;
+      return scheduledAt >= now || scheduledAt + durationMs > now;
+    })
+    .sort((a, b) => a.scheduledAt.getTime() - b.scheduledAt.getTime())
+    .map((ride) => ({
       id: ride.id,
       routeId: ride.routeId,
       routeName: ride.route.name,
@@ -316,7 +353,91 @@ export async function getDashboardSummary(userId: string) {
       originLabel: ride.route.originLabel,
       destinationLabel: ride.route.destinationLabel,
       distanceMeters: ride.route.distanceMeters,
-    })),
+    }));
+
+  const timeline = consumed
+    .sort((a, b) => a.createdAt.getTime() - b.createdAt.getTime())
+    .slice(-6)
+    .reduce<
+      Array<{ label: string; caruni: number; bus: number; private: number; savings: number }>
+    >((acc, credit, index) => {
+      const km = (credit.rideInstance?.route.distanceMeters ?? 0) / 1000;
+      const caruni = Number((acc[index - 1]?.caruni ?? 0) + toMoney(credit.monetaryValue));
+      const bus = Number((acc[index - 1]?.bus ?? 0) + BUS_FARE);
+      const privateValue = Number(
+        (acc[index - 1]?.private ?? 0) + estimatePrivateTripCost(km),
+      );
+      acc.push({
+        label: `Viagem ${index + 1}`,
+        caruni: Number(caruni.toFixed(2)),
+        bus: Number(bus.toFixed(2)),
+        private: Number(privateValue.toFixed(2)),
+        savings: Number((privateValue - caruni).toFixed(2)),
+      });
+      return acc;
+    }, []);
+
+  const driverTransactions = await prisma.walletTransaction.findMany({
+    where: {
+      userId,
+      type: WalletTransactionType.REPASSE,
+    },
+    include: {
+      rideInstance: {
+        include: {
+          route: true,
+        },
+      },
+    },
+    orderBy: { createdAt: "asc" },
+    take: 12,
+  });
+
+  const earningsTimeline = driverTransactions.reduce<
+    Array<{ label: string; earnings: number; rides: number }>
+  >((acc, transaction, index) => {
+    const prevEarnings = acc[index - 1]?.earnings ?? 0;
+    const prevRides = acc[index - 1]?.rides ?? 0;
+    acc.push({
+      label: new Intl.DateTimeFormat("pt-BR", {
+        month: "short",
+        day: "2-digit",
+      }).format(transaction.createdAt),
+      earnings: Number((prevEarnings + toMoney(transaction.amount)).toFixed(2)),
+      rides: prevRides + 1,
+    });
+    return acc;
+  }, []);
+
+  const occupancyTimeline = routeSummaries.map((route, index) => ({
+    label: route.name.length > 18 ? `Rota ${index + 1}` : route.name,
+    occupancy:
+      route.seats > 0 ? Number(((route.bookings.length / route.seats) * 100).toFixed(0)) : 0,
+  }));
+
+  const fuelSavingsTimeline = driverTransactions.reduce<
+    Array<{ label: string; netSavings: number; earnings: number; estimatedCost: number }>
+  >((acc, transaction, index) => {
+    const prevNet = acc[index - 1]?.netSavings ?? 0;
+    const prevEarnings = acc[index - 1]?.earnings ?? 0;
+    const prevCost = acc[index - 1]?.estimatedCost ?? 0;
+    const routeKm = (transaction.rideInstance?.route.distanceMeters ?? 0) / 1000;
+    const estimatedCost = routeKm * DRIVER_COST_PER_KM;
+    const earnings = toMoney(transaction.amount);
+    acc.push({
+      label: new Intl.DateTimeFormat("pt-BR", {
+        month: "short",
+        day: "2-digit",
+      }).format(transaction.createdAt),
+      netSavings: Number((prevNet + earnings - estimatedCost).toFixed(2)),
+      earnings: Number((prevEarnings + earnings).toFixed(2)),
+      estimatedCost: Number((prevCost + estimatedCost).toFixed(2)),
+    });
+    return acc;
+  }, []);
+
+  return {
+    nextRides,
     credits: {
       total: credits.length,
       available: credits.filter((credit) => credit.status === CreditStatus.DISPONIVEL).length,
@@ -333,6 +454,12 @@ export async function getDashboardSummary(userId: string) {
       weeklyProjectionBus: Number(weeklyProjectionBus.toFixed(2)),
       weeklyProjectionPrivate: Number(weeklyProjectionPrivate.toFixed(2)),
     },
+    timeline,
+    earningsTimeline,
+    occupancyTimeline,
+    fuelSavingsTimeline,
+    estimatedFuelSavings: Number((fuelSavingsTimeline.at(-1)?.netSavings ?? 0).toFixed(2)),
+    estimatedCostPerKm: DRIVER_COST_PER_KM,
   };
 }
 
@@ -394,6 +521,17 @@ export async function reserveCreditForBooking(params: {
   weekdays: number[];
 }) {
   const { userId, routeId, rideInstanceId, type, weekdays } = params;
+  const user = await prisma.user.findUnique({
+    where: { id: userId },
+    select: { role: true },
+  });
+  if (!user) {
+    throw new Error("Usuario nao encontrado.");
+  }
+  if (user.role !== UserRole.PASSAGEIRO) {
+    throw new Error("Apenas passageiros podem reservar vagas.");
+  }
+
   const route = await prisma.route.findUnique({
     where: { id: routeId },
     include: {
@@ -422,8 +560,14 @@ export async function reserveCreditForBooking(params: {
     throw new Error("Usuario ja possui reserva ativa nesta rota.");
   }
 
-  const credit = await getAvailableCredit(userId);
-  if (!credit) {
+  const activeBookings = route.bookings.filter((booking) => booking.status === BookingStatus.ACTIVE);
+  const pendingApproval =
+    route.visibilityMode === RouteVisibilityMode.PRIVADA ||
+    (route.visibilityMode === RouteVisibilityMode.HIBRIDA &&
+      activeBookings.length >= (route.publicSeats ?? route.seats));
+
+  const credit = pendingApproval ? null : await getAvailableCredit(userId);
+  if (!pendingApproval && !credit) {
     throw new Error("Sem credito disponivel.");
   }
 
@@ -435,29 +579,32 @@ export async function reserveCreditForBooking(params: {
         rideInstanceId,
         type,
         weekdays,
+        status: pendingApproval ? BookingStatus.PENDING_APPROVAL : BookingStatus.ACTIVE,
       },
     });
 
-    await tx.creditLedgerEntry.update({
-      where: { id: credit.id },
-      data: {
-        status: CreditStatus.RESERVADO,
-        bookingId: booking.id,
-        rideInstanceId,
-        description: `Credito reservado · ${route.name}`,
-      },
-    });
+    if (credit) {
+      await tx.creditLedgerEntry.update({
+        where: { id: credit.id },
+        data: {
+          status: CreditStatus.RESERVADO,
+          bookingId: booking.id,
+          rideInstanceId,
+          description: `Credito reservado · ${route.name}`,
+        },
+      });
 
-    await tx.walletTransaction.create({
-      data: {
-        userId,
-        bookingId: booking.id,
-        rideInstanceId,
-        type: WalletTransactionType.CREDITO_RESERVADO,
-        description: `Credito reservado · ${route.name}`,
-        amount: 0,
-      },
-    });
+      await tx.walletTransaction.create({
+        data: {
+          userId,
+          bookingId: booking.id,
+          rideInstanceId,
+          type: WalletTransactionType.CREDITO_RESERVADO,
+          description: `Credito reservado · ${route.name}`,
+          amount: 0,
+        },
+      });
+    }
 
     return booking;
   });
@@ -466,7 +613,7 @@ export async function reserveCreditForBooking(params: {
 export async function setAuthCookie(
   app: FastifyInstance,
   reply: FastifyReply,
-  payload: { userId: string; email: string },
+  payload: { userId: string; email: string; role?: UserRole },
 ) {
   const token = app.jwt.sign(payload);
   reply.setCookie("caruni_token", token, {
@@ -478,12 +625,112 @@ export async function setAuthCookie(
   return token;
 }
 
+export async function getUserRole(userId: string) {
+  return prisma.user.findUnique({
+    where: { id: userId },
+    select: { role: true, vehicle: true },
+  });
+}
+
 export async function resolveRealRoute(params: {
   origin: { lat: number; lng: number };
   destination: { lat: number; lng: number };
+  waypoints?: Array<{ lat: number; lng: number }>;
+  googleMapsServerApiKey?: string;
   orsApiKey?: string;
 }) {
-  const { origin, destination, orsApiKey } = params;
+  const { origin, destination, waypoints = [], googleMapsServerApiKey, orsApiKey } = params;
+  const points = [origin, ...waypoints, destination];
+  const coordinates = points.map((point) => [point.lng, point.lat] as [number, number]);
+
+  if (googleMapsServerApiKey) {
+    const qs = new URLSearchParams({
+      origin: `${origin.lat},${origin.lng}`,
+      destination: `${destination.lat},${destination.lng}`,
+      mode: "driving",
+      language: "pt-BR",
+      region: "br",
+      key: googleMapsServerApiKey,
+    });
+
+    if (waypoints.length) {
+      qs.set(
+        "waypoints",
+        waypoints.map((point) => `${point.lat},${point.lng}`).join("|"),
+      );
+    }
+
+    const response = await fetch(
+      `https://maps.googleapis.com/maps/api/directions/json?${qs.toString()}`,
+    );
+    if (!response.ok) {
+      throw new Error(`Google Directions falhou com status ${response.status}.`);
+    }
+
+    const payload = (await response.json()) as {
+      status: string;
+      routes?: Array<{
+        overview_polyline?: { points: string };
+        legs?: Array<{
+          distance?: { value: number };
+          duration?: { value: number };
+        }>;
+      }>;
+      error_message?: string;
+    };
+
+    if (payload.status !== "OK" || !payload.routes?.length) {
+      throw new Error(payload.error_message || `Google Directions retornou ${payload.status}.`);
+    }
+
+    const route = payload.routes[0];
+    const decodePolyline = (encoded: string): [number, number][] => {
+      let index = 0;
+      let lat = 0;
+      let lng = 0;
+      const path: [number, number][] = [];
+
+      while (index < encoded.length) {
+        let shift = 0;
+        let result = 0;
+        let byte = 0;
+        do {
+          byte = encoded.charCodeAt(index++) - 63;
+          result |= (byte & 0x1f) << shift;
+          shift += 5;
+        } while (byte >= 0x20);
+        lat += result & 1 ? ~(result >> 1) : result >> 1;
+
+        shift = 0;
+        result = 0;
+        do {
+          byte = encoded.charCodeAt(index++) - 63;
+          result |= (byte & 0x1f) << shift;
+          shift += 5;
+        } while (byte >= 0x20);
+        lng += result & 1 ? ~(result >> 1) : result >> 1;
+
+        path.push([lng / 1e5, lat / 1e5]);
+      }
+
+      return path;
+    };
+
+    const legs = route.legs ?? [];
+    return {
+      provider: "google",
+      distanceMeters: Math.round(
+        legs.reduce((sum, leg) => sum + (leg.distance?.value ?? 0), 0),
+      ),
+      durationSeconds: Math.round(
+        legs.reduce((sum, leg) => sum + (leg.duration?.value ?? 0), 0),
+      ),
+      geometry: {
+        type: "LineString" as const,
+        coordinates: decodePolyline(route.overview_polyline?.points ?? ""),
+      },
+    };
+  }
 
   if (orsApiKey) {
     const response = await fetch(
@@ -495,10 +742,7 @@ export async function resolveRealRoute(params: {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          coordinates: [
-            [origin.lng, origin.lat],
-            [destination.lng, destination.lat],
-          ],
+          coordinates,
         }),
       },
     );
@@ -527,7 +771,9 @@ export async function resolveRealRoute(params: {
   }
 
   const response = await fetch(
-    `https://router.project-osrm.org/route/v1/driving/${origin.lng},${origin.lat};${destination.lng},${destination.lat}?overview=full&geometries=geojson`,
+    `https://router.project-osrm.org/route/v1/driving/${coordinates
+      .map(([lng, lat]) => `${lng},${lat}`)
+      .join(";")}?overview=full&geometries=geojson`,
   );
   if (!response.ok) {
     throw new Error(`OSRM falhou com status ${response.status}.`);

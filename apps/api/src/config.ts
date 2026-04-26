@@ -10,6 +10,7 @@ const envSchema = z.object({
   JWT_SECRET: z.string().min(8),
   COOKIE_SECRET: z.string().min(8),
   FRONTEND_URL: z.string().default("http://localhost:8080"),
+  GOOGLE_MAPS_SERVER_API_KEY: z.string().optional(),
   ORS_API_KEY: z.string().optional(),
 });
 

@@ -12,6 +12,11 @@ enum SubscriptionPlanKey {
   VETERANO
 }
 
+enum UserRole {
+  PASSAGEIRO
+  MOTORISTA
+}
+
 enum SubscriptionStatus {
   ACTIVE
   CANCELLED
@@ -33,7 +38,26 @@ enum BookingType {
 
 enum BookingStatus {
   ACTIVE
+  PENDING_APPROVAL
   CANCELLED
+}
+
+enum RouteStatus {
+  ATIVA
+  PENDENTE_CONFIRMACAO
+}
+
+enum RouteVisibilityMode {
+  PUBLICA
+  PRIVADA
+  HIBRIDA
+}
+
+enum RouteChangeConfirmationStatus {
+  PENDING
+  CONFIRMED
+  DECLINED
+  EXPIRED
 }
 
 enum RideStatus {
@@ -51,6 +75,57 @@ enum WalletTransactionType {
   CREDITO_PERDIDO
   REPASSE
   EXTRA_CREDIT_PURCHASE
+  NEGOCIACAO_EXTRA_COBRADO
+  NEGOCIACAO_EXTRA_REPASSE
+}
+
+enum ConnectionKind {
+  MOTORISTA_PASSAGEIRO
+  PASSAGEIRO_PASSAGEIRO
+}
+
+enum RideNegotiationStatus {
+  PENDING
+  COUNTERED
+  ACCEPTED
+  REJECTED
+  EXPIRED
+  CANCELLED
+}
+
+enum NotificationKind {
+  NEGOTIATION_PROPOSAL
+  NEGOTIATION_COUNTER
+  NEGOTIATION_ACCEPTED
+  NEGOTIATION_REJECTED
+  NEGOTIATION_EXPIRED
+  NEGOTIATION_CANCELLED
+  BOOKING_NEW_PASSENGER
+  BOOKING_PASSENGER_JOINED
+  BOOKING_CANCELLED_BY_DRIVER
+  BOOKING_CANCELLED_BY_PASSENGER
+  RIDE_CONFIRMATION_REMINDER
+  RIDE_CONFIRMATION_URGENT
+  RIDE_CONFIRMED
+  RIDE_CANCELLED_AUTO
+  RIDE_DISPUTE_OPENED
+  RIDE_COMPLETED
+  REVIEW_RECEIVED
+  STREAK_INCREASED
+  STREAK_REWARD
+  CONNECTION_CREATED
+  ROTA_ALTERADA_RECONFIRMACAO
+  ROTA_ALTERADA_REMOVIDO
+  ECONOMIA_SEMANAL
+  RESERVA_PRIVADA_PENDENTE
+  RESERVA_PRIVADA_APROVADA
+  RESERVA_PRIVADA_RECUSADA
+}
+
+enum NotificationStatus {
+  UNREAD
+  READ
+  ACTED
 }
 
 model University {
@@ -66,14 +141,30 @@ model User {
   email                String                   @unique
   passwordHash         String
   name                 String
+  role                 UserRole                 @default(PASSAGEIRO)
   course               String?
   photoUrl             String?
+  bio                  String?
+  birthYear            Int?
+  petsPref             String?
+  baggageSize          String?
+  temperaturePref      String?
+  restrictions         String?
+  socialStyle          String?
+  conversationStyle    String?
+  musicPref            String?
+  chatPref             String?
+  punctualityPref      String?
+  interests            String[]
   isEmailVerified      Boolean                  @default(false)
+  passengerOnboardingSeenAt DateTime?
+  driverOnboardingSeenAt    DateTime?
   createdAt            DateTime                 @default(now())
   updatedAt            DateTime                 @updatedAt
   universityId         String?
   university           University?              @relation(fields: [universityId], references: [id])
   vehicle              Vehicle?
+  streak               UserStreak?
   drivenRoutes         Route[]                  @relation("DriverRoutes")
   bookings             Booking[]
   subscriptions        UserSubscription[]
@@ -82,6 +173,13 @@ model User {
   reviewsAuthored      Review[]                 @relation("ReviewAuthor")
   reviewsReceived      Review[]                 @relation("ReviewTarget")
   emailVerifications   EmailVerificationToken[]
+  routeMessages        RouteChatMessage[]
+  connections          Connection[]             @relation("UserConnections")
+  connectedBy          Connection[]             @relation("ConnectedUserConnections")
+  passengerNegotiations RideNegotiation[]       @relation("PassengerNegotiations")
+  driverNegotiations    RideNegotiation[]       @relation("DriverNegotiations")
+  notifications         Notification[]
+  routeChangeConfirmations RouteChangeConfirmation[]
 }
 
 model Vehicle {
@@ -143,28 +241,40 @@ model Route {
   weekdays          Json
   departureTime     String
   seats             Int
+  version           Int           @default(1)
+  status            RouteStatus   @default(ATIVA)
+  editCount         Int           @default(0)
+  visibilityMode    RouteVisibilityMode @default(PUBLICA)
+  publicSeats       Int?
+  privateSeats      Int?
   createdAt         DateTime      @default(now())
   updatedAt         DateTime      @updatedAt
   driver            User          @relation("DriverRoutes", fields: [driverId], references: [id])
   rideInstances     RideInstance[]
   bookings          Booking[]
   reviews           Review[]
+  chatMessages      RouteChatMessage[]
+  negotiations      RideNegotiation[]
+  changeConfirmations RouteChangeConfirmation[]
 }
 
 model RideInstance {
-  id                 String       @id @default(cuid())
-  routeId            String
-  scheduledAt        DateTime
-  status             RideStatus   @default(SCHEDULED)
-  driverConfirmedAt  DateTime?
-  passengerConfirmedAt DateTime?
-  passengerBoarded   Boolean?
-  createdAt          DateTime     @default(now())
-  updatedAt          DateTime     @updatedAt
-  route              Route        @relation(fields: [routeId], references: [id])
-  bookings           Booking[]
-  creditEntries      CreditLedgerEntry[]
-  walletTransactions WalletTransaction[]
+  id                    String       @id @default(cuid())
+  routeId               String
+  scheduledAt           DateTime
+  status                RideStatus   @default(SCHEDULED)
+  driverConfirmedAt     DateTime?
+  passengerConfirmedAt  DateTime?
+  passengerBoarded      Boolean?
+  reminderSentAt        DateTime?
+  urgentReminderSentAt  DateTime?
+  createdAt             DateTime     @default(now())
+  updatedAt             DateTime     @updatedAt
+  route                 Route        @relation(fields: [routeId], references: [id])
+  bookings              Booking[]
+  creditEntries         CreditLedgerEntry[]
+  walletTransactions    WalletTransaction[]
+  negotiations          RideNegotiation[]
 }
 
 model Booking {
@@ -175,14 +285,52 @@ model Booking {
   type           BookingType
   status         BookingStatus @default(ACTIVE)
   weekdays       Json
+  negotiatedPickupLabel String?
+  negotiatedPickupLat   Float?
+  negotiatedPickupLng   Float?
+  negotiatedExtraAmount Decimal       @default(0) @db.Decimal(10, 2)
   createdAt      DateTime      @default(now())
   updatedAt      DateTime      @updatedAt
   cancelledAt    DateTime?
+  approvedAt     DateTime?
+  approvedByDriverAt DateTime?
+  lastConfirmedRouteVersion Int?
   user           User          @relation(fields: [userId], references: [id])
   route          Route         @relation(fields: [routeId], references: [id])
   rideInstance   RideInstance? @relation(fields: [rideInstanceId], references: [id])
   creditEntries  CreditLedgerEntry[]
   walletTransactions WalletTransaction[]
+  routeChangeConfirmations RouteChangeConfirmation[]
+}
+
+model RouteChangeConfirmation {
+  id                    String                        @id @default(cuid())
+  routeId               String
+  bookingId             String
+  userId                String
+  fromVersion           Int
+  toVersion             Int
+  status                RouteChangeConfirmationStatus @default(PENDING)
+  deadlineAt            DateTime
+  previousDepartureTime String
+  nextDepartureTime     String
+  previousOriginLabel   String
+  nextOriginLabel       String
+  previousDestinationLabel String
+  nextDestinationLabel  String
+  previousDistanceMeters Int
+  nextDistanceMeters    Int
+  previousDurationSeconds Int
+  nextDurationSeconds   Int
+  impactMinutes         Int
+  createdAt             DateTime                      @default(now())
+  updatedAt             DateTime                      @updatedAt
+  route                 Route                         @relation(fields: [routeId], references: [id])
+  booking               Booking                       @relation(fields: [bookingId], references: [id])
+  user                  User                          @relation(fields: [userId], references: [id])
+
+  @@index([userId, status, deadlineAt])
+  @@index([routeId, status])
 }
 
 model CreditLedgerEntry {
@@ -240,4 +388,102 @@ model EmailVerificationToken {
   usedAt    DateTime?
   createdAt DateTime @default(now())
   user      User     @relation(fields: [userId], references: [id])
+}
+
+model UserStreak {
+  id              String    @id @default(cuid())
+  userId          String    @unique
+  currentStreak   Int       @default(0)
+  longestStreak   Int       @default(0)
+  lastRideAt      DateTime?
+  totalRides      Int       @default(0)
+  freeRidesEarned Int       @default(0)
+  milestone5      Boolean   @default(false)
+  milestone10     Boolean   @default(false)
+  milestone20     Boolean   @default(false)
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+  user            User      @relation(fields: [userId], references: [id])
+}
+
+model RouteChatMessage {
+  id        String   @id @default(cuid())
+  routeId    String
+  authorId  String
+  body      String
+  createdAt DateTime @default(now())
+  route     Route    @relation(fields: [routeId], references: [id])
+  author    User     @relation(fields: [authorId], references: [id])
+
+  @@index([routeId, createdAt])
+}
+
+model Connection {
+  id               String         @id @default(cuid())
+  userId           String
+  connectedUserId  String
+  kind             ConnectionKind
+  tripsTogether    Int            @default(1)
+  lastInteractedAt DateTime
+  isHidden         Boolean        @default(false)
+  isBlocked        Boolean        @default(false)
+  createdAt        DateTime       @default(now())
+  updatedAt        DateTime       @updatedAt
+  user             User           @relation("UserConnections", fields: [userId], references: [id])
+  connectedUser    User           @relation("ConnectedUserConnections", fields: [connectedUserId], references: [id])
+
+  @@unique([userId, connectedUserId])
+  @@index([userId, lastInteractedAt])
+}
+
+model RideNegotiation {
+  id                        String                @id @default(cuid())
+  routeId                   String
+  rideInstanceId            String
+  passengerId               String
+  driverId                  String
+  status                    RideNegotiationStatus @default(PENDING)
+  proposedLatReal           Float
+  proposedLngReal           Float
+  counterLatReal            Float?
+  counterLngReal            Float?
+  passengerMessage          String?
+  driverMessage             String?
+  extraAmountCents          Int                   @default(400)
+  counterExtraAmountCents   Int?
+  estimatedDetourMinutes    Int
+  estimatedDetourMeters     Int
+  acceptedGeometry          Json?
+  acceptedDistanceMeters    Int?
+  acceptedDurationSeconds   Int?
+  expiresAt                 DateTime
+  roundsUsed                Int                   @default(1)
+  createdAt                 DateTime              @default(now())
+  updatedAt                 DateTime              @updatedAt
+  route                     Route                 @relation(fields: [routeId], references: [id])
+  rideInstance              RideInstance          @relation(fields: [rideInstanceId], references: [id])
+  passenger                 User                  @relation("PassengerNegotiations", fields: [passengerId], references: [id])
+  driver                    User                  @relation("DriverNegotiations", fields: [driverId], references: [id])
+
+  @@index([rideInstanceId, status])
+  @@index([passengerId, updatedAt])
+  @@index([driverId, updatedAt])
+}
+
+model Notification {
+  id             String             @id @default(cuid())
+  userId         String
+  kind           NotificationKind
+  status         NotificationStatus @default(UNREAD)
+  title          String
+  message        String
+  actionRequired Boolean            @default(false)
+  deepLink       String?
+  expiresAt      DateTime?
+  metadata       Json?
+  createdAt      DateTime           @default(now())
+  updatedAt      DateTime           @updatedAt
+  user           User               @relation(fields: [userId], references: [id])
+
+  @@index([userId, status, createdAt])
 }

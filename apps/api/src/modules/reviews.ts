@@ -1,5 +1,6 @@
 import type { FastifyInstance } from "fastify";
 import { z } from "zod";
+import { createNotification } from "../lib/notifications.js";
 import { prisma } from "../prisma.js";
 
 export async function registerReviewsModule(app: FastifyInstance) {
@@ -13,14 +14,30 @@ export async function registerReviewsModule(app: FastifyInstance) {
       })
       .parse(request.body);
 
-    const review = await prisma.review.create({
-      data: {
-        routeId: body.routeId,
-        fromId: request.auth!.userId,
-        toId: body.toId,
-        rating: body.rating,
-        body: body.body,
-      },
+    const [review, reviewer] = await Promise.all([
+      prisma.review.create({
+        data: {
+          routeId: body.routeId,
+          fromId: request.auth!.userId,
+          toId: body.toId,
+          rating: body.rating,
+          body: body.body,
+        },
+      }),
+      prisma.user.findUnique({
+        where: { id: request.auth!.userId },
+        select: { name: true },
+      }),
+    ]);
+
+    void createNotification({
+      userId: body.toId,
+      kind: "REVIEW_RECEIVED",
+      title: "Nova avaliação recebida",
+      message: reviewer
+        ? `${reviewer.name} deixou uma avaliação de ${body.rating} estrelas para você.`
+        : `Você recebeu uma avaliação de ${body.rating} estrelas.`,
+      deepLink: "/app/perfil",
     });
 
     return reply.code(201).send(review);

@@ -1,10 +1,11 @@
-import type { SubscriptionPlanKey } from "@prisma/client";
+import type { SubscriptionPlanKey, UserRole } from "@prisma/client";
 
 declare module "fastify" {
   interface FastifyRequest {
     auth?: {
       userId: string;
       email: string;
+      role?: UserRole;
     };
   }
 }
@@ -14,10 +15,12 @@ declare module "@fastify/jwt" {
     payload: {
       userId: string;
       email: string;
+      role?: UserRole;
     };
     user: {
       userId: string;
       email: string;
+      role?: UserRole;
     };
   }
 }
@@ -28,6 +31,7 @@ export interface SignupBody {
   name: string;
   course?: string;
   universityName: string;
+  role?: UserRole;
 }
 
 export interface LoginBody {

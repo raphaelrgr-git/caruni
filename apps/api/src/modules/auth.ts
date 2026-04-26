@@ -1,4 +1,5 @@
 import bcrypt from "bcryptjs";
+import { UserRole } from "@prisma/client";
 import { randomUUID } from "node:crypto";
 import { z } from "zod";
 import type { FastifyInstance } from "fastify";
@@ -14,6 +15,7 @@ export async function registerAuthModule(app: FastifyInstance) {
         name: z.string().min(2),
         course: z.string().optional(),
         universityName: z.string().min(2),
+        role: z.nativeEnum(UserRole).default(UserRole.PASSAGEIRO),
       })
       .parse(request.body);
 
@@ -32,6 +34,7 @@ export async function registerAuthModule(app: FastifyInstance) {
         email: body.email.toLowerCase(),
         passwordHash,
         name: body.name,
+        role: body.role,
         course: body.course,
         universityId: university?.id,
       },
@@ -96,7 +99,7 @@ export async function registerAuthModule(app: FastifyInstance) {
 
     const user = await prisma.user.findUnique({
       where: { email: body.email.toLowerCase() },
-      include: { university: true },
+      include: { university: true, vehicle: true },
     });
 
     if (!user) {
@@ -115,6 +118,7 @@ export async function registerAuthModule(app: FastifyInstance) {
     const token = await setAuthCookie(app, reply, {
       userId: user.id,
       email: user.email,
+      role: user.role,
     });
 
     return {
@@ -123,42 +127,34 @@ export async function registerAuthModule(app: FastifyInstance) {
         id: user.id,
         email: user.email,
         name: user.name,
+        role: user.role,
         course: user.course,
-        university: user.university?.name ?? null,
+        photoUrl: user.photoUrl,
+        isEmailVerified: user.isEmailVerified,
+        university: user.university
+          ? {
+              id: user.university.id,
+              name: user.university.name,
+              city: user.university.city,
+            }
+          : null,
+        vehicle: user.vehicle ?? null,
+        drivenRoutesCount: 0,
+        onboarding: {
+          passengerSeen: Boolean(user.passengerOnboardingSeenAt),
+          driverSeen: Boolean(user.driverOnboardingSeenAt),
+          shouldShow:
+            user.role === UserRole.MOTORISTA
+              ? !user.driverOnboardingSeenAt
+              : !user.passengerOnboardingSeenAt,
+        },
       },
     };
   });
 
-  app.get("/me", { preHandler: app.authenticate }, async (request) => {
-    const user = await prisma.user.findUnique({
-      where: { id: request.auth!.userId },
-      include: {
-        university: true,
-        vehicle: true,
-        drivenRoutes: true,
-      },
-    });
-
-    if (!user) {
-      throw app.httpErrors.notFound("Usuario nao encontrado.");
-    }
-
-    return {
-      id: user.id,
-      email: user.email,
-      name: user.name,
-      course: user.course,
-      photoUrl: user.photoUrl,
-      isEmailVerified: user.isEmailVerified,
-      university: user.university
-        ? {
-            id: user.university.id,
-            name: user.university.name,
-            city: user.university.city,
-          }
-        : null,
-      vehicle: user.vehicle,
-      drivenRoutesCount: user.drivenRoutes.length,
-    };
+  app.post("/auth/logout", { preHandler: app.authenticate }, async (_request, reply) => {
+    reply.clearCookie("caruni_token", { path: "/" });
+    return { ok: true };
   });
+
 }
