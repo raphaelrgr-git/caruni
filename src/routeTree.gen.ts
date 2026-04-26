@@ -24,6 +24,7 @@ import { Route as AppMinhasCaronasRouteImport } from './routes/app.minhas-carona
 import { Route as AppCarteiraRouteImport } from './routes/app.carteira'
 import { Route as AppBuscarRouteImport } from './routes/app.buscar'
 import { Route as AdminLoginRouteImport } from './routes/admin.login'
+import { Route as AdminLeadsRouteImport } from './routes/admin.leads'
 import { Route as AppRotaIdRouteImport } from './routes/app.rota.$id'
 import { Route as AppChatRotaIdRouteImport } from './routes/app.chat.$rotaId'
 
@@ -102,6 +103,11 @@ const AdminLoginRoute = AdminLoginRouteImport.update({
   path: '/admin/login',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AdminLeadsRoute = AdminLeadsRouteImport.update({
+  id: '/admin/leads',
+  path: '/admin/leads',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AppRotaIdRoute = AppRotaIdRouteImport.update({
   id: '/rota/$id',
   path: '/rota/$id',
@@ -117,6 +123,7 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/app': typeof AppRouteWithChildren
   '/selecao': typeof SelecaoRoute
+  '/admin/leads': typeof AdminLeadsRoute
   '/admin/login': typeof AdminLoginRoute
   '/app/buscar': typeof AppBuscarRoute
   '/app/carteira': typeof AppCarteiraRoute
@@ -135,6 +142,7 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/selecao': typeof SelecaoRoute
+  '/admin/leads': typeof AdminLeadsRoute
   '/admin/login': typeof AdminLoginRoute
   '/app/buscar': typeof AppBuscarRoute
   '/app/carteira': typeof AppCarteiraRoute
@@ -155,6 +163,7 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/app': typeof AppRouteWithChildren
   '/selecao': typeof SelecaoRoute
+  '/admin/leads': typeof AdminLeadsRoute
   '/admin/login': typeof AdminLoginRoute
   '/app/buscar': typeof AppBuscarRoute
   '/app/carteira': typeof AppCarteiraRoute
@@ -176,6 +185,7 @@ export interface FileRouteTypes {
     | '/'
     | '/app'
     | '/selecao'
+    | '/admin/leads'
     | '/admin/login'
     | '/app/buscar'
     | '/app/carteira'
@@ -194,6 +204,7 @@ export interface FileRouteTypes {
   to:
     | '/'
     | '/selecao'
+    | '/admin/leads'
     | '/admin/login'
     | '/app/buscar'
     | '/app/carteira'
@@ -213,6 +224,7 @@ export interface FileRouteTypes {
     | '/'
     | '/app'
     | '/selecao'
+    | '/admin/leads'
     | '/admin/login'
     | '/app/buscar'
     | '/app/carteira'
@@ -233,6 +245,7 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AppRoute: typeof AppRouteWithChildren
   SelecaoRoute: typeof SelecaoRoute
+  AdminLeadsRoute: typeof AdminLeadsRoute
   AdminLoginRoute: typeof AdminLoginRoute
 }
 
@@ -343,6 +356,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminLoginRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/admin/leads': {
+      id: '/admin/leads'
+      path: '/admin/leads'
+      fullPath: '/admin/leads'
+      preLoaderRoute: typeof AdminLeadsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/app/rota/$id': {
       id: '/app/rota/$id'
       path: '/rota/$id'
@@ -398,6 +418,7 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AppRoute: AppRouteWithChildren,
   SelecaoRoute: SelecaoRoute,
+  AdminLeadsRoute: AdminLeadsRoute,
   AdminLoginRoute: AdminLoginRoute,
 }
 export const routeTree = rootRouteImport
