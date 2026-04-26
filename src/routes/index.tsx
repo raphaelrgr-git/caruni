@@ -1,11 +1,14 @@
 import * as React from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { ArrowRight, ShieldCheck, Repeat, Users, MessageCircle, Zap, Wallet, Car, Phone, BadgeCheck, Leaf, CheckCircle2, XCircle } from "lucide-react";
+import { ArrowRight, ShieldCheck, Repeat, Users, MessageCircle, Zap, Wallet, Car, Phone, BadgeCheck, Leaf, CheckCircle2, XCircle, Loader2, Sparkles } from "lucide-react";
 import { BrandLogo, BrandMark, CnhBadge, Avatar, PresenceBar, StarRating } from "@/components/Brand";
 import { useTheme } from "@/lib/theme";
 import { Sun, Moon } from "lucide-react";
 import { ganhosMes, formatBRL, calcDivisao, rotas } from "@/data/mock";
 import { RouteMap } from "@/components/RouteMap";
+import { z } from "zod";
+import { toast } from "sonner";
+import { supabase } from "@/integrations/supabase/client";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -366,6 +369,9 @@ function Landing() {
           <div className="flex items-center gap-5">
             <span>Feito em Joinville · SC</span>
             <span className="num">v0.1 demo</span>
+            <Link to="/admin/login" className="text-muted-foreground/40 hover:text-foreground transition-colors">
+              admin
+            </Link>
           </div>
         </div>
       </footer>
@@ -373,45 +379,160 @@ function Landing() {
   );
 }
 
+const leadSchema = z.object({
+  nome: z.string().trim().min(2, "Nome muito curto").max(100, "Nome muito longo"),
+  email: z.string().trim().toLowerCase().email("E-mail inválido").max(255),
+});
+
 function WaitlistForm() {
   const [modo, setModo] = React.useState<"motorista" | "passageiro">("motorista");
+  const [nome, setNome] = React.useState("");
+  const [email, setEmail] = React.useState("");
+  const [loading, setLoading] = React.useState(false);
+  const [success, setSuccess] = React.useState<{ nome: string; tipo: "motorista" | "passageiro" } | null>(null);
+
+  const isMotorista = modo === "motorista";
+
+  async function handleSubmit(e: React.FormEvent) {
+    e.preventDefault();
+    if (loading) return;
+
+    const parsed = leadSchema.safeParse({ nome, email });
+    if (!parsed.success) {
+      toast.error(parsed.error.issues[0]?.message ?? "Confira os dados");
+      return;
+    }
+
+    setLoading(true);
+    const payload = {
+      nome: parsed.data.nome,
+      email: parsed.data.email,
+      tipo: modo,
+      origem: "landing_waitlist" as const,
+      user_agent: typeof navigator !== "undefined" ? navigator.userAgent.slice(0, 500) : null,
+    };
+
+    const { error } = await supabase.from("leads").insert(payload);
+    setLoading(false);
+
+    if (error) {
+      // 23505 = unique violation
+      if (error.code === "23505") {
+        toast.success("Você já está na nossa lista 💚", {
+          description: "Te avisamos assim que abrir vaga em Joinville.",
+        });
+        setSuccess({ nome: parsed.data.nome, tipo: modo });
+        return;
+      }
+      console.error("[waitlist] insert error", error);
+      toast.error("Não conseguimos te cadastrar agora", {
+        description: "Tenta de novo em instantes.",
+      });
+      return;
+    }
+
+    toast.success("Pronto! Você está na lista.", {
+      description: "Te avisamos assim que abrir vaga em Joinville.",
+    });
+    setSuccess({ nome: parsed.data.nome, tipo: modo });
+    setNome("");
+    setEmail("");
+  }
+
+  function reset() {
+    setSuccess(null);
+    setNome("");
+    setEmail("");
+  }
 
   return (
     <div className="mx-auto mt-12 max-w-md rounded-2xl border border-border bg-surface shadow-xl overflow-hidden text-left">
-      <div className="flex p-2 bg-surface-2 gap-2 border-b border-border/50">
-        <button 
-          onClick={() => setModo("motorista")} 
-          className={`flex-1 rounded-lg py-3 text-sm font-semibold transition-all ${modo === "motorista" ? "bg-background text-primary shadow-sm ring-1 ring-border" : "text-muted-foreground hover:text-foreground"}`}
-        >
-          Para Motoristas
-        </button>
-        <button 
-          onClick={() => setModo("passageiro")} 
-          className={`flex-1 rounded-lg py-3 text-sm font-semibold transition-all ${modo === "passageiro" ? "bg-background text-primary shadow-sm ring-1 ring-border" : "text-muted-foreground hover:text-foreground"}`}
-        >
-          Para Passageiros
-        </button>
-      </div>
+      {!success && (
+        <div className="flex p-2 bg-surface-2 gap-2 border-b border-border/50">
+          <button
+            type="button"
+            onClick={() => setModo("motorista")}
+            className={`flex-1 rounded-lg py-3 text-sm font-semibold transition-all ${isMotorista ? "bg-background text-primary shadow-sm ring-1 ring-border" : "text-muted-foreground hover:text-foreground"}`}
+          >
+            Para Motoristas
+          </button>
+          <button
+            type="button"
+            onClick={() => setModo("passageiro")}
+            className={`flex-1 rounded-lg py-3 text-sm font-semibold transition-all ${!isMotorista ? "bg-background text-primary shadow-sm ring-1 ring-border" : "text-muted-foreground hover:text-foreground"}`}
+          >
+            Para Passageiros
+          </button>
+        </div>
+      )}
 
       <div className="p-6 md:p-8 bg-surface">
-        {modo === "motorista" ? (
-          <div className="animate-in fade-in slide-in-from-bottom-2 duration-300">
-            <h3 className="text-xl font-semibold flex items-center gap-2 text-foreground"><Car size={20} className="text-primary"/> Quero ser Motorista</h3>
-            <p className="mt-2 text-sm leading-relaxed text-muted-foreground">Transforme seus assentos vazios em dinheiro todo mês e ajude a reduzir o trânsito da sua cidade.</p>
-            <form className="mt-8 flex flex-col gap-4" onSubmit={(e) => { e.preventDefault(); alert("Cadastro realizado na lista de espera para motoristas!"); }}>
-              <input type="text" placeholder="Qual o seu nome?" required className="w-full rounded-lg border border-border bg-background px-4 py-3 text-sm outline-none transition-colors focus:border-primary focus:ring-1 focus:ring-primary" />
-              <input type="email" placeholder="Seu melhor e-mail" required className="w-full rounded-lg border border-border bg-background px-4 py-3 text-sm outline-none transition-colors focus:border-primary focus:ring-1 focus:ring-primary" />
-              <button type="submit" className="w-full mt-2 rounded-lg bg-primary px-4 py-3 text-sm font-semibold text-primary-foreground shadow-md transition-transform hover:-translate-y-0.5 hover:shadow-lg">Zerar meu gasto com combustível</button>
-            </form>
+        {success ? (
+          <div className="animate-in fade-in zoom-in-95 duration-500 text-center">
+            <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-primary/15 text-primary">
+              <Sparkles size={26} />
+            </div>
+            <h3 className="text-xl font-semibold text-foreground">Você está dentro, {success.nome.split(" ")[0]}.</h3>
+            <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
+              Anotamos sua inscrição como <span className="font-semibold text-foreground">{success.tipo}</span>. Assim que liberarmos rotas em Joinville, você é um dos primeiros a saber.
+            </p>
+            <div className="mt-6 flex flex-col gap-2 sm:flex-row sm:justify-center">
+              <button
+                type="button"
+                onClick={reset}
+                className="rounded-lg border border-border bg-background px-4 py-2 text-sm font-medium text-foreground hover:bg-surface-2"
+              >
+                Inscrever outro perfil
+              </button>
+              <Link
+                to="/selecao"
+                className="rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground hover:bg-primary/90"
+              >
+                Conhecer o app demo
+              </Link>
+            </div>
           </div>
         ) : (
           <div className="animate-in fade-in slide-in-from-bottom-2 duration-300">
-            <h3 className="text-xl font-semibold flex items-center gap-2 text-foreground"><Users size={20} className="text-primary"/> Quero ser Passageiro</h3>
-            <p className="mt-2 text-sm leading-relaxed text-muted-foreground">Economize em relação ao ônibus, viaje com conforto e tenha sempre uma carona recorrente garantida.</p>
-            <form className="mt-8 flex flex-col gap-4" onSubmit={(e) => { e.preventDefault(); alert("Cadastro realizado na lista de espera para passageiros!"); }}>
-              <input type="text" placeholder="Qual o seu nome?" required className="w-full rounded-lg border border-border bg-background px-4 py-3 text-sm outline-none transition-colors focus:border-primary focus:ring-1 focus:ring-primary" />
-              <input type="email" placeholder="Seu melhor e-mail" required className="w-full rounded-lg border border-border bg-background px-4 py-3 text-sm outline-none transition-colors focus:border-primary focus:ring-1 focus:ring-primary" />
-              <button type="submit" className="w-full mt-2 rounded-lg bg-primary px-4 py-3 text-sm font-semibold text-primary-foreground shadow-md transition-transform hover:-translate-y-0.5 hover:shadow-lg">Quero caronas mais baratas</button>
+            <h3 className="text-xl font-semibold flex items-center gap-2 text-foreground">
+              {isMotorista ? <Car size={20} className="text-primary" /> : <Users size={20} className="text-primary" />}
+              {isMotorista ? "Quero ser Motorista" : "Quero ser Passageiro"}
+            </h3>
+            <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
+              {isMotorista
+                ? "Transforme seus assentos vazios em dinheiro todo mês e ajude a reduzir o trânsito da sua cidade."
+                : "Economize em relação ao ônibus, viaje com conforto e tenha sempre uma carona recorrente garantida."}
+            </p>
+            <form className="mt-8 flex flex-col gap-4" onSubmit={handleSubmit}>
+              <input
+                type="text"
+                placeholder="Qual o seu nome?"
+                required
+                disabled={loading}
+                value={nome}
+                onChange={(e) => setNome(e.target.value)}
+                className="w-full rounded-lg border border-border bg-background px-4 py-3 text-sm outline-none transition-colors focus:border-primary focus:ring-1 focus:ring-primary disabled:opacity-60"
+              />
+              <input
+                type="email"
+                placeholder="Seu melhor e-mail"
+                required
+                disabled={loading}
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                className="w-full rounded-lg border border-border bg-background px-4 py-3 text-sm outline-none transition-colors focus:border-primary focus:ring-1 focus:ring-primary disabled:opacity-60"
+              />
+              <button
+                type="submit"
+                disabled={loading}
+                className="w-full mt-2 rounded-lg bg-primary px-4 py-3 text-sm font-semibold text-primary-foreground shadow-md transition-transform hover:-translate-y-0.5 hover:shadow-lg disabled:opacity-70 disabled:cursor-not-allowed disabled:hover:translate-y-0 inline-flex items-center justify-center gap-2"
+              >
+                {loading && <Loader2 size={16} className="animate-spin" />}
+                {loading ? "Salvando..." : isMotorista ? "Zerar meu gasto com combustível" : "Quero caronas mais baratas"}
+              </button>
+              <p className="text-[10px] text-muted-foreground text-center">
+                Ao se cadastrar você concorda em receber notícias do CarUni. Sem spam.
+              </p>
             </form>
           </div>
         )}
